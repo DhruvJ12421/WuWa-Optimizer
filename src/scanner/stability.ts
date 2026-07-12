@@ -15,9 +15,9 @@ export class StableFrameDetector {
   private readonly changedThreshold: number
 
   constructor(options: StabilityOptions = {}) {
-    this.requiredStableFrames = options.requiredStableFrames ?? 3
-    this.stableThreshold = options.stableThreshold ?? 0.025
-    this.changedThreshold = options.changedThreshold ?? 0.07
+    this.requiredStableFrames = options.requiredStableFrames ?? 1
+    this.stableThreshold = options.stableThreshold ?? 0.035
+    this.changedThreshold = options.changedThreshold ?? 0.035
   }
 
   observe(fingerprint: number[]) {

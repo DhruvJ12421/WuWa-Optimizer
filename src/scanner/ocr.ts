@@ -15,6 +15,10 @@ function getWorker(onProgress?: (progress: number, status: string) => void) {
   return workerPromise
 }
 
+export async function warmEnglishOcr(onProgress?: (progress: number, status: string) => void) {
+  await getWorker(onProgress)
+}
+
 export async function scanEnglishEcho(imageDataUrl: string, source: ScanCandidate['source'], onProgress?: (progress: number, status: string) => void) {
   const worker = await getWorker(onProgress)
   try {

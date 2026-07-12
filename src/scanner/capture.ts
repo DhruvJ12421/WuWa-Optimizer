@@ -6,12 +6,37 @@ export interface CapturedPanel {
   calibrated: boolean
 }
 
+export interface PanelProbe {
+  fingerprint: number[]
+  sourceWidth: number
+  sourceHeight: number
+  calibrated: boolean
+}
+
 // Compact Echo details column, relative to a calibrated 16:9 game frame.
 export const ECHO_CROP = { x: 0.77, y: 0.12, width: 0.22, height: 0.86 }
 
 function cropForSize(width: number, height: number) {
   const calibrated = Math.abs(width / height - 16 / 9) < 0.08
   return { calibrated, crop: calibrated ? ECHO_CROP : { x: 0, y: 0, width: 1, height: 1 } }
+}
+
+export function probeEchoPanel(video: HTMLVideoElement): PanelProbe | undefined {
+  if (!video.videoWidth || !video.videoHeight) return
+  const { calibrated, crop } = cropForSize(video.videoWidth, video.videoHeight)
+  const sample = document.createElement('canvas')
+  sample.width = 32
+  sample.height = 16
+  const context = sample.getContext('2d', { willReadFrequently: true })
+  if (!context) return
+  // The header and stat block change immediately when another Echo is selected.
+  context.drawImage(video, video.videoWidth * crop.x, video.videoHeight * crop.y, video.videoWidth * crop.width, video.videoHeight * crop.height * 0.46, 0, 0, 32, 16)
+  const pixels = context.getImageData(0, 0, 32, 16).data
+  const fingerprint = Array.from({ length: 512 }, (_, index) => {
+    const offset = index * 4
+    return Math.round((pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722) / 16)
+  })
+  return { fingerprint, sourceWidth: video.videoWidth, sourceHeight: video.videoHeight, calibrated }
 }
 
 export async function requestGameWindow() {
@@ -24,8 +49,9 @@ export function stopGameWindow(stream: MediaStream) {
 }
 
 export function captureEchoPanel(video: HTMLVideoElement): CapturedPanel | undefined {
-  if (!video.videoWidth || !video.videoHeight) return
-  const { calibrated, crop } = cropForSize(video.videoWidth, video.videoHeight)
+  const probe = probeEchoPanel(video)
+  if (!probe) return
+  const { calibrated, crop } = cropForSize(probe.sourceWidth, probe.sourceHeight)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(video.videoWidth * crop.width)
   canvas.height = Math.round(video.videoHeight * crop.height)
@@ -33,18 +59,7 @@ export function captureEchoPanel(video: HTMLVideoElement): CapturedPanel | undef
   if (!context) return
   context.drawImage(video, video.videoWidth * crop.x, video.videoHeight * crop.y, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height)
 
-  const sample = document.createElement('canvas')
-  sample.width = 16
-  sample.height = 16
-  const sampleContext = sample.getContext('2d', { willReadFrequently: true })
-  if (!sampleContext) return
-  sampleContext.drawImage(canvas, 0, 0, 16, 16)
-  const pixels = sampleContext.getImageData(0, 0, 16, 16).data
-  const fingerprint = Array.from({ length: 256 }, (_, index) => {
-    const offset = index * 4
-    return Math.round((pixels[offset] + pixels[offset + 1] + pixels[offset + 2]) / 3 / 16)
-  })
-  return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), fingerprint, sourceWidth: video.videoWidth, sourceHeight: video.videoHeight, calibrated }
+  return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), fingerprint: probe.fingerprint, sourceWidth: video.videoWidth, sourceHeight: video.videoHeight, calibrated }
 }
 
 export function fingerprintDistance(left: number[], right: number[]) {

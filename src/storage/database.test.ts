@@ -1,5 +1,5 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
-import { db, ensureSeedData, exportAccount, importAccount, validateAccount } from './database'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { db, ensureSeedData, exportAccount, importAccount, requestPersistentStorage, validateAccount } from './database'
 
 describe('local account persistence', () => {
   beforeEach(async () => {
@@ -28,5 +28,16 @@ describe('local account persistence', () => {
 
   it('rejects malformed nested records', () => {
     expect(validateAccount({ schemaVersion: 1, gameDataVersion: 'x', exportedAt: '', echoes: [{ id: 'broken' }], builds: [], teams: [], settings: {} })).toBe(false)
+  })
+
+  it('requests persistent browser storage when it is not already granted', async () => {
+    const persisted = vi.fn().mockResolvedValue(false)
+    const persist = vi.fn().mockResolvedValue(true)
+    vi.stubGlobal('navigator', { storage: { persisted, persist } })
+
+    await expect(requestPersistentStorage()).resolves.toBe(true)
+    expect(persisted).toHaveBeenCalledOnce()
+    expect(persist).toHaveBeenCalledOnce()
+    vi.unstubAllGlobals()
   })
 })

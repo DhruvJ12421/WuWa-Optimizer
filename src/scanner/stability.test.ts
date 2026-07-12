@@ -4,6 +4,11 @@ import { StableFrameDetector } from './stability'
 const frame = (value: number) => Array.from({ length: 256 }, () => value)
 
 describe('stable frame detector', () => {
+  it('captures a settled panel on the second lightweight probe by default', () => {
+    const detector = new StableFrameDetector()
+    expect(detector.observe(frame(4))).toBe(false)
+    expect(detector.observe(frame(4))).toBe(true)
+  })
   it('emits once after the required number of stable observations', () => {
     const detector = new StableFrameDetector({ requiredStableFrames: 2 })
     expect(detector.observe(frame(2))).toBe(false)

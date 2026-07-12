@@ -23,6 +23,12 @@ class TacetDatabase extends Dexie {
 
 export const db = new TacetDatabase()
 
+export async function requestPersistentStorage(): Promise<boolean | undefined> {
+  if (typeof navigator === 'undefined' || !navigator.storage?.persist) return undefined
+  if (navigator.storage.persisted && await navigator.storage.persisted()) return true
+  return navigator.storage.persist()
+}
+
 export async function ensureSeedData() {
   const builds: Build[] = resonators.map((resonator, index) => ({
     id: `build-${resonator.id}`,

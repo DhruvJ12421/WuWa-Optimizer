@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, ensureSeedData, getSettings } from '../storage/database'
+import { db, ensureSeedData, getSettings, requestPersistentStorage } from '../storage/database'
 import type { AppSettings, Build, Echo, Team } from '../domain/types'
 import { defaultSettings } from '../game-data'
 
@@ -22,6 +22,7 @@ export function useAppData() {
   }
 
   useEffect(() => {
+    void requestPersistentStorage().catch(() => undefined)
     ensureSeedData().then(refresh).catch((caught) => setError(caught instanceof Error ? caught.message : 'The local archive could not be opened.')).finally(() => setReady(true))
   }, [])
 

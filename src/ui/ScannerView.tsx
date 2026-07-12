@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { captureEchoPanel, cropScreenshot, fileToDataUrl, requestGameWindow, stopGameWindow } from '../scanner/capture'
-import { scanEnglishEcho } from '../scanner/ocr'
+import { captureEchoPanel, cropScreenshot, fileToDataUrl, probeEchoPanel, requestGameWindow, stopGameWindow } from '../scanner/capture'
+import { scanEnglishEcho, warmEnglishOcr } from '../scanner/ocr'
 import { candidateErrors, candidateToEcho, parseEchoText } from '../scanner/parser'
 import { StableFrameDetector } from '../scanner/stability'
 import { db } from '../storage/database'
@@ -9,6 +9,7 @@ import { Icon, PageHeader, Panel } from './components'
 import { ScanReviewCard } from './ScanReviewCard'
 
 const manualText = `Unknown Echo\nCost 1\n5 Star\nLv. 0\nUnknown Sonata\nATK % 18.0%`
+type QueuedScan = { dataUrl: string; source: ScanCandidate['source'] }
 
 export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[]; refresh: () => Promise<void>; scanIntervalMs: number }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -16,6 +17,7 @@ export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[
   const streamRef = useRef<MediaStream | null>(null)
   const detector = useRef(new StableFrameDetector())
   const scanning = useRef(false)
+  const pendingScans = useRef<QueuedScan[]>([])
   const [streaming, setStreaming] = useState(false)
   const [candidates, setCandidates] = useState<ScanCandidate[]>([])
   const [progress, setProgress] = useState(0)
@@ -29,12 +31,18 @@ export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[
   }
 
   const runOcr = async (dataUrl: string, source: ScanCandidate['source']) => {
-    if (scanning.current) { setError('Wait for the current English OCR pass to finish.'); return }
-    scanning.current = true; setError(''); setProgress(0); setStatus('Loading English OCR...')
+    const requested: QueuedScan = { dataUrl, source }
+    pendingScans.current.push(requested)
+    if (scanning.current) { setStatus(`Echo captured · ${pendingScans.current.length} queued`); return }
+    scanning.current = true
     try {
-      const candidate = await scanEnglishEcho(dataUrl, source, (value, nextStatus) => { setProgress(value); setStatus(nextStatus) })
-      setCandidates((current) => [markDuplicate(candidate), ...current])
-      setStatus('Review required')
+      let current: QueuedScan | undefined
+      while ((current = pendingScans.current.shift())) {
+        setError(''); setProgress(0); setStatus('Echo captured · reading details...')
+        const candidate = await scanEnglishEcho(current.dataUrl, current.source, (value, nextStatus) => { setProgress(value); setStatus(nextStatus) })
+        setCandidates((queued) => [markDuplicate(candidate), ...queued])
+      }
+      setStatus('Watching for the next Echo')
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'OCR failed.'); setStatus('Scan failed') }
     finally { scanning.current = false }
   }
@@ -52,11 +60,12 @@ export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[
   useEffect(() => {
     if (!streaming) return
     const timer = window.setInterval(() => {
-      if (scanning.current || !videoRef.current) return
+      if (!videoRef.current) return
+      const probe = probeEchoPanel(videoRef.current)
+      if (!probe || !detector.current.observe(probe.fingerprint)) return
       const panel = captureEchoPanel(videoRef.current)
-      if (!panel) return
-      if (detector.current.observe(panel.fingerprint)) void runOcr(panel.dataUrl, 'screen')
-    }, Math.max(250, scanIntervalMs))
+      if (panel) void runOcr(panel.dataUrl, 'screen')
+    }, Math.min(100, scanIntervalMs))
     return () => window.clearInterval(timer)
   }, [streaming, scanIntervalMs])
 
@@ -66,12 +75,14 @@ export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[
     setError('')
     try {
       const stream = await requestGameWindow(); streamRef.current = stream
+      void warmEnglishOcr((value, nextStatus) => { setProgress(value); setStatus(nextStatus) })
       if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
       stream.getVideoTracks()[0].addEventListener('ended', () => { setStreaming(false); setStatus('Share ended') })
-      setStreaming(true); setStatus('Watching for a stable Echo panel')
+      detector.current.reset(); pendingScans.current = []
+      setStreaming(true); setStatus('Watching for Echo changes')
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Window sharing was cancelled.') }
   }
-  const stop = () => { if (streamRef.current) stopGameWindow(streamRef.current); streamRef.current = null; if (videoRef.current) videoRef.current.srcObject = null; detector.current.reset(); setStreaming(false); setStatus('Share ended') }
+  const stop = () => { if (streamRef.current) stopGameWindow(streamRef.current); streamRef.current = null; if (videoRef.current) videoRef.current.srcObject = null; detector.current.reset(); pendingScans.current = []; setStreaming(false); setStatus('Share ended') }
   const acceptFile = async (file?: File) => {
     if (!file) return
     try {
