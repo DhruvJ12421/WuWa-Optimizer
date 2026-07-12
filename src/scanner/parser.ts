@@ -51,7 +51,7 @@ const normalizedIdentity = (value: string) => value.toLowerCase().replace(/[^a-z
 
 function catalogMatch(lines: string[]): EchoCatalogEntry | undefined {
   const text = normalizedIdentity(lines.join(' '))
-  return echoCatalog.find((entry) => [entry.name, ...(entry.aliases ?? [])].some((name) => text.includes(normalizedIdentity(name))))
+  return echoCatalog.find((entry) => text.includes(normalizedIdentity(entry.name)))
 }
 
 function confidence(found: boolean, base: number) { return found ? base : 0.25 }

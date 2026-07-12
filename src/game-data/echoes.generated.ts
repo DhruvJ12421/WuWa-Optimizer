@@ -3410,4 +3410,4 @@ export const generatedEchoCatalog:GeneratedEchoCatalogEntry[]=[
     "iconSourceUrl": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconMonsterHead/T_IconMonsterHead_31082_UI.webp"
   }
 ]
-export const echoCatalogProvenance={"source":"https://static.nanoka.cc/ww/3.5/echo.json","dataVersion":"3.5","generatedAt":"2026-07-12T16:58:21.657Z"} as const
+export const echoCatalogProvenance={"source":"https://static.nanoka.cc/ww/3.5/echo.json","dataVersion":"3.5","generatedAt":"2026-07-12T18:45:35.262Z"} as const

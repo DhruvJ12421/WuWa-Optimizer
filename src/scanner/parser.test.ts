@@ -25,7 +25,7 @@ describe('English Echo OCR parser', () => {
   })
 
   it('uses catalog metadata and limits tuned stats to the detail block', async () => {
-    const candidate = await parseEchoText('Cyan Feathered Heron +25\nCOST 3\nSpectro DMG Bonus 30.0%\nATK 100\nCrit. DMG 12.6%\nEcho Skills: Countermeasures\nAero DMG 236.80%\nEquipped by Lucy', 'data:image/png;base64,cyan', 'screenshot', { rarity: { value: 5, confidence: 0.94 } })
+    const candidate = await parseEchoText('Cyan Feathered Heron +25\nCOST 3\nCelestial Light\nSpectro DMG Bonus 30.0%\nATK 100\nCrit. DMG 12.6%\nEcho Skills: Countermeasures\nAero DMG 236.80%\nEquipped by Lucy', 'data:image/png;base64,cyan', 'screenshot', { rarity: { value: 5, confidence: 0.94 } })
     expect(candidate.fields.name.value).toBe('Cyan-Feathered Heron')
     expect(candidate.fields.sonata.value).toBe('Celestial Light')
     expect(candidate.fields.subStats).toHaveLength(2)
@@ -34,8 +34,8 @@ describe('English Echo OCR parser', () => {
 
   it('reads equipment only from the footer instead of skill prose', async () => {
     const candidate = await parseEchoText('Reminiscence - Nightmare: Adam Smasher +25\nCOST 4\nCrit. Rate 220%\nATK 150\nCrit. DMG 186%\nCrit. Rate 63%\nDEF 50\nHeavy Attack DMG Bonus 7.9%\nEcho Skill\nWhen Lucy uses this skill, if equipped by Lucy press the Echo Skill button\nEquipped by Lucy\nSwitch\nUpgrade', 'data:image/png;base64,adam', 'screenshot')
-    expect(candidate.fields.name.value).toBe('Reminiscence: Nightmare - Adam Smasher')
-    expect(candidate.fields.sonata.value).toBe('Molten Rift')
+    expect(candidate.fields.name.value).toBe('Reminiscence - Nightmare: Adam Smasher')
+    expect(candidate.fields.sonata.value).toBe('Shadow of Shattered Dreams')
     expect(candidate.fields.mainStat.value.value).toBe(22)
     expect(candidate.fields.subStats.map((field) => field.value.value)).toEqual([150, 18.6, 6.3, 50, 7.9])
     expect(candidate.fields.equippedBy.value).toBe('Lucy')

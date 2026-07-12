@@ -16,7 +16,7 @@ describe('OCR fixture accuracy accounting', () => {
   })
 
   it('reports mismatched fields instead of rounding them into a pass', async () => {
-    const candidate = await parseEchoText('Hooscamp\nCost 3\n5 Star\nLv. 25\nLingering Tunes\nATK % 18.0%\nCrit. Rate 6.3%', 'data:image/png;base64,fixture', 'screenshot')
+    const candidate = await parseEchoText('Hooscamp\nCost 1\n5 Star\nLv. 24\nLingering Tunes\nATK % 18.0%\nCrit. Rate 6.3%', 'data:image/png;base64,fixture', 'screenshot')
     expect(evaluateCandidate(candidate, expected).accuracy).toBeLessThan(1)
   })
 })
