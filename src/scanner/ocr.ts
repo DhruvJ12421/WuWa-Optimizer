@@ -1,6 +1,7 @@
 import { createWorker, type Worker } from 'tesseract.js'
 import type { ScanCandidate } from '../domain/types'
 import { parseEchoText } from './parser'
+import { recognizeVisualFields } from './visual'
 
 let workerPromise: Promise<Worker> | undefined
 let progressListener: ((progress: number, status: string) => void) | undefined
@@ -17,8 +18,8 @@ function getWorker(onProgress?: (progress: number, status: string) => void) {
 export async function scanEnglishEcho(imageDataUrl: string, source: ScanCandidate['source'], onProgress?: (progress: number, status: string) => void) {
   const worker = await getWorker(onProgress)
   try {
-    const result = await worker.recognize(imageDataUrl)
-    return parseEchoText(result.data.text, imageDataUrl, source)
+    const [result, visual] = await Promise.all([worker.recognize(imageDataUrl), recognizeVisualFields(imageDataUrl)])
+    return parseEchoText(result.data.text, imageDataUrl, source, visual)
   } finally {
     progressListener = undefined
   }

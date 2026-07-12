@@ -10,7 +10,7 @@ const candidate = (valid: boolean): ScanCandidate => ({
     name: { value: valid ? 'Hooscamp' : 'Unknown Echo', confidence: .2 },
     cost: { value: 1, confidence: 1 }, rarity: { value: 5, confidence: 1 }, level: { value: 25, confidence: 1 },
     sonata: { value: valid ? 'Lingering Tunes' : 'Unknown Sonata', confidence: .2 },
-    mainStat: { value: { key: 'atkPercent', value: 18 }, confidence: 1 }, subStats: []
+    mainStat: { value: { key: 'atkPercent', value: 18 }, confidence: 1 }, subStats: [], equippedBy: { value: '', confidence: 0.25 }
   }
 })
 

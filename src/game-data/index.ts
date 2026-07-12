@@ -1,4 +1,5 @@
 import type { AppSettings, Resonator, StatKey, Weapon } from '../domain/types'
+export { echoCatalog, type EchoCatalogEntry } from './echoes'
 
 export const GAME_DATA_VERSION = 'mvp-2026.07-unverified'
 

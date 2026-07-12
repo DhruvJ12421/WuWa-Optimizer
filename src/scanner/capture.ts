@@ -6,7 +6,8 @@ export interface CapturedPanel {
   calibrated: boolean
 }
 
-const ECHO_CROP = { x: 0.5, y: 0.04, width: 0.49, height: 0.92 }
+// Compact Echo details column, relative to a calibrated 16:9 game frame.
+export const ECHO_CROP = { x: 0.77, y: 0.12, width: 0.22, height: 0.86 }
 
 function cropForSize(width: number, height: number) {
   const calibrated = Math.abs(width / height - 16 / 9) < 0.08

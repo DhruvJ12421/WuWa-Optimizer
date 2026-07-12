@@ -3,7 +3,7 @@ import type { ScanCandidate, StatLine } from '../domain/types'
 export interface ExpectedEchoFields {
   name: string
   cost: 1 | 3 | 4
-  rarity: 2 | 3 | 4 | 5
+  rarity: 1 | 2 | 3 | 4 | 5
   level: number
   sonata: string
   mainStat: StatLine

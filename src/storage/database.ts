@@ -109,12 +109,13 @@ function isStatLine(value: unknown) {
 function isEcho(value: unknown) {
   if (!isRecord(value)) return false
   return typeof value.id === 'string' && typeof value.name === 'string'
-    && [1, 3, 4].includes(Number(value.cost)) && [2, 3, 4, 5].includes(Number(value.rarity))
+    && [1, 3, 4].includes(Number(value.cost)) && [1, 2, 3, 4, 5].includes(Number(value.rarity))
     && isFiniteNumber(value.level) && value.level >= 0 && value.level <= 25
     && typeof value.sonata === 'string' && isStatLine(value.mainStat)
     && Array.isArray(value.subStats) && value.subStats.length <= 5 && value.subStats.every(isStatLine)
     && typeof value.locked === 'boolean' && typeof value.excluded === 'boolean'
     && (value.equippedBy === undefined || typeof value.equippedBy === 'string')
+    && (value.equippedByName === undefined || typeof value.equippedByName === 'string')
     && isFiniteNumber(value.createdAt) && ['scan', 'screenshot', 'manual', 'import'].includes(String(value.source))
 }
 

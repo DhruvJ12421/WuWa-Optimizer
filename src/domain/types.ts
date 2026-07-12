@@ -2,7 +2,7 @@ export type StatKey = 'hp' | 'hpPercent' | 'atk' | 'atkPercent' | 'def' | 'defPe
 export type DamageType = 'basic' | 'heavy' | 'skill' | 'liberation' | 'echo' | 'healing'
 export type Element = 'spectro' | 'fusion' | 'glacio'
 export interface StatLine { key: StatKey; value: number }
-export interface Echo { id: string; name: string; cost: 1 | 3 | 4; rarity: 2 | 3 | 4 | 5; level: number; sonata: string; mainStat: StatLine; subStats: StatLine[]; locked: boolean; excluded: boolean; equippedBy?: string; createdAt: number; source: 'scan' | 'screenshot' | 'manual' | 'import' }
+export interface Echo { id: string; name: string; cost: 1 | 3 | 4; rarity: 1 | 2 | 3 | 4 | 5; level: number; sonata: string; mainStat: StatLine; subStats: StatLine[]; locked: boolean; excluded: boolean; equippedBy?: string; equippedByName?: string; createdAt: number; source: 'scan' | 'screenshot' | 'manual' | 'import' }
 export interface AttackDefinition { id: string; name: string; type: DamageType; element: Element; multiplier: number; hits: number; scalesWith: 'atk' | 'hp' }
 export interface Resonator { id: string; name: string; element: Element; role: string; accent: string; baseStats: Pick<AggregatedStats, 'hp' | 'atk' | 'def' | 'critRate' | 'critDamage'>; attacks: AttackDefinition[] }
 export interface Weapon { id: string; name: string; type: 'sword' | 'pistols' | 'rectifier'; baseAtk: number; stat?: StatLine }
@@ -15,7 +15,7 @@ export interface AggregatedStats { baseHp: number; baseAtk: number; baseDef: num
 export interface DamageResult { normal: number; critical: number; expected: number; hits: number; attackId: string }
 export interface RotationResult { total: number; dps: number; actions: Array<DamageResult & { timestamp: number; buildId: string }>; byBuild: Record<string, number>; byType: Partial<Record<DamageType, number>> }
 export interface ScanField<T> { value: T; confidence: number; raw?: string }
-export interface ScanCandidate { id: string; createdAt: number; imageDataUrl: string; fingerprint: string; fields: { name: ScanField<string>; cost: ScanField<1 | 3 | 4>; rarity: ScanField<2 | 3 | 4 | 5>; level: ScanField<number>; sonata: ScanField<string>; mainStat: ScanField<StatLine>; subStats: ScanField<StatLine>[] }; source: 'screen' | 'screenshot' | 'manual'; duplicateOf?: string }
+export interface ScanCandidate { id: string; createdAt: number; imageDataUrl: string; fingerprint: string; fields: { name: ScanField<string>; cost: ScanField<1 | 3 | 4>; rarity: ScanField<1 | 2 | 3 | 4 | 5>; level: ScanField<number>; sonata: ScanField<string>; mainStat: ScanField<StatLine>; subStats: ScanField<StatLine>[]; equippedBy: ScanField<string> }; source: 'screen' | 'screenshot' | 'manual'; duplicateOf?: string }
 export type OptimizerStatKey = Exclude<keyof AggregatedStats, 'baseHp' | 'baseAtk' | 'baseDef'>
 export type OptimizerObjective = 'expected' | 'normal' | 'critical' | OptimizerStatKey
 export interface OptimizerRequest { requestId: string; echoes: Echo[]; resonator: Resonator; weapon: Weapon; attack: AttackDefinition; enemy: EnemyConfig; objective: OptimizerObjective; minimumStats: Partial<Record<OptimizerStatKey, number>>; requiredSonata?: string; limit: number }
