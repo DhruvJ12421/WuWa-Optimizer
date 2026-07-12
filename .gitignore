@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.vite/
+*.local
+*.log
+*.tsbuildinfo
+
+# Local Codex project memory; intentionally not committed.
+AGENTS.md

@@ -1,0 +1,249 @@
+.notice.success {
+  color: #b8f0e5;
+  background: rgba(141, 228, 212, .07);
+  border: 1px solid rgba(141, 228, 212, .22);
+}
+
+.sort-select {
+  min-height: 40px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: #080b0c;
+  color: #cbd4d1;
+  padding: 0 9px;
+}
+
+.stat-editor {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 100px auto;
+  gap: 7px;
+  align-items: center;
+  position: relative;
+}
+
+.stat-editor.main {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(130px, 1fr) 100px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.stat-editor.main > span {
+  grid-column: 1 / -1;
+  color: #899491;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.stat-editor select,
+.stat-editor input {
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: #090c0d;
+  color: white;
+  padding: 0 8px;
+}
+
+.stat-editor .confidence {
+  left: -35px;
+  top: 11px;
+  right: auto;
+}
+
+.substat-editor {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+}
+
+.substat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #899491;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.echo-edit-modal {
+  max-height: min(850px, calc(100vh - 30px));
+  overflow-y: auto;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.edit-grid label,
+.build-controls label,
+.score-weights label {
+  display: grid;
+  gap: 5px;
+  color: #899491;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.score-line {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 9px;
+  padding-top: 5px;
+  margin-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+}
+
+.score-line b,
+.echo-grade {
+  color: var(--gold);
+}
+
+.echo-grade {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.edit-grid input,
+.edit-grid select,
+.build-controls input,
+.build-controls select,
+.score-weights input {
+  min-height: 35px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: #090c0d;
+  color: white;
+  padding: 0 8px;
+}
+
+.build-controls {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.score-weights {
+  border: 1px solid rgba(255, 255, 255, .07);
+  padding: 9px;
+  margin-bottom: 9px;
+}
+
+.score-weights summary {
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.score-weights p {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+  margin: 8px 0;
+}
+
+.score-weights label {
+  grid-template-columns: 1fr 70px;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.build-card.mode-compact {
+  grid-template-rows: 230px auto;
+}
+
+.build-card.mode-compact .character-art {
+  grid-row: 1;
+}
+
+.build-card.mode-compact .forte-card {
+  display: none;
+}
+
+.build-card.mode-compact .equipped-row {
+  grid-row: 2;
+}
+
+.build-card.mode-compact .substats {
+  min-height: 70px;
+}
+
+.rotation-editors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+  margin-bottom: 11px;
+}
+
+.rotation-editors > .panel {
+  padding: 20px;
+}
+
+.action-editor-list,
+.buff-editor-list {
+  display: grid;
+  gap: 6px;
+}
+
+.action-editor {
+  display: grid;
+  grid-template-columns: 75px 1fr 1.4fr auto;
+  gap: 6px;
+}
+
+.buff-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  padding: 8px;
+}
+
+.action-editor input,
+.action-editor select,
+.buff-editor input,
+.buff-editor select {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: #090c0d;
+  color: white;
+  padding: 0 7px;
+}
+
+.muted-copy {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .rotation-editors {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .sort-select {
+    flex: 1;
+  }
+
+  .stat-editor {
+    grid-template-columns: 1fr 80px;
+  }
+
+  .stat-editor button {
+    grid-column: 1 / -1;
+  }
+
+  .edit-grid,
+  .action-editor,
+  .buff-editor {
+    grid-template-columns: 1fr;
+  }
+}
