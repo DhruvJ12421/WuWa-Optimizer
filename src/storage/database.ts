@@ -47,7 +47,7 @@ export async function getSettings(): Promise<AppSettings> {
   const row = await db.settings.get('settings')
   if (!row) return structuredClone(defaultSettings)
   const { id: _, ...settings } = row
-  return settings
+  return { ...structuredClone(defaultSettings), ...settings }
 }
 
 export async function saveSettings(settings: AppSettings) {
@@ -95,7 +95,10 @@ function isOwnedCharacter(value: unknown) {
   return isRecord(value) && typeof value.id === 'string' && typeof value.catalogId === 'string'
     && isFiniteNumber(value.level) && value.level >= 1 && value.level <= 90
     && isFiniteNumber(value.sequence) && value.sequence >= 0 && value.sequence <= 6
-    && typeof value.locked === 'boolean' && isFiniteNumber(value.createdAt)
+    && typeof value.locked === 'boolean'
+    && (value.favorite === undefined || typeof value.favorite === 'boolean')
+    && (value.skillLevels === undefined || (Array.isArray(value.skillLevels) && value.skillLevels.length === 5 && value.skillLevels.every((level) => isFiniteNumber(level) && level >= 1 && level <= 10)))
+    && isFiniteNumber(value.createdAt)
 }
 
 function isOwnedWeapon(value: unknown) {
@@ -167,6 +170,7 @@ function isTeam(value: unknown) {
 function isSettings(value: unknown) {
   return isRecord(value) && typeof value.displayName === 'string' && typeof value.privacyMode === 'boolean'
     && ['signal', 'tacet', 'plain'].includes(String(value.background))
+    && (value.roverGender === undefined || ['male', 'female'].includes(String(value.roverGender)))
     && isFiniteNumber(value.scanIntervalMs) && value.scanIntervalMs >= 250 && value.scanIntervalMs <= 10_000
     && isRecord(value.scoreWeights) && Object.values(value.scoreWeights).every((weights) => isRecord(weights)
       && Object.entries(weights).every(([key, weight]) => key in statLabels && isFiniteNumber(weight)))

@@ -71,7 +71,10 @@ function damageBonus(stats: AggregatedStats, attack: AttackDefinition): number {
       : attack.type === 'skill' ? stats.skillDamage
         : attack.type === 'liberation' ? stats.liberationDamage : 0
   const elementBonus = attack.element === 'spectro' ? stats.spectroDamage
-    : attack.element === 'fusion' ? stats.fusionDamage : stats.glacioDamage
+    : attack.element === 'fusion' ? stats.fusionDamage
+      : attack.element === 'glacio' ? stats.glacioDamage
+        : attack.element === 'electro' ? stats.electroDamage
+          : attack.element === 'aero' ? stats.aeroDamage : stats.havocDamage
   return typeBonus + elementBonus
 }
 

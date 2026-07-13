@@ -1,8 +1,9 @@
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from 'react'
 import { echoCatalog, statLabels } from '../game-data'
+import { substatTierPoints } from '../domain/echo-grade'
 import type { Echo, StatKey } from '../domain/types'
 
-export function Icon({ name }: { name: 'home' | 'scan' | 'echo' | 'build' | 'team' | 'optimize' | 'download' | 'upload' | 'lock' | 'trash' | 'edit' | 'plus' }) {
+export function Icon({ name }: { name: 'home' | 'scan' | 'echo' | 'build' | 'team' | 'optimize' | 'download' | 'upload' | 'lock' | 'unlock' | 'trash' | 'edit' | 'plus' }) {
   const paths: Record<typeof name, ReactNode> = {
     home: <><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M9 20v-6h6v6"/></>,
     scan: <><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M7 12h10M12 7v10"/></>,
@@ -13,6 +14,7 @@ export function Icon({ name }: { name: 'home' | 'scan' | 'echo' | 'build' | 'tea
     download: <><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></>,
     upload: <><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></>,
     lock: <><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></>,
+    unlock: <><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M16 10V7a4 4 0 0 0-7.7-1.5"/></>,
     trash: <><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/></>,
     edit: <><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10L4 20Z"/><path d="m13.5 7 3.5 3.5"/></>,
     plus: <><path d="M12 5v14M5 12h14"/></>
@@ -32,13 +34,14 @@ export function StatValue({ label, value, accent = false }: { label: string; val
   return <div className="stat-value"><span>{label}</span><strong className={accent ? 'accent' : ''}>{value}</strong></div>
 }
 
-export function EchoMiniCard({ echo, selected, onClick, actions, grade, scoreLabel = 'ROLL QUALITY' }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; grade?: string; scoreLabel?: string }) {
+export function EchoMiniCard({ echo, selected, onClick, actions, equipment, grade, scoreLabel = 'ROLL QUALITY' }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; equipment?: ReactNode; grade?: string; scoreLabel?: string }) {
   const catalog = echoCatalog.find((item) => item.name === echo.name)
   return <article className={`echo-card ${selected ? 'selected' : ''} ${echo.excluded ? 'excluded' : ''}`} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick() } } : undefined}>
     <div className="echo-card-head"><div className="echo-portrait">{catalog?.iconSourceUrl ? <img src={catalog.iconSourceUrl} alt="" loading="lazy"/> : <span>◎</span>}<b className={`cost-orb cost-${echo.cost}`}>{echo.cost}</b></div><div className="echo-identity"><h3>{echo.name}</h3><span>{echo.sonata}</span><small>LV. {echo.level} · {'★'.repeat(echo.rarity)}</small></div>{echo.locked && <Icon name="lock" />}</div>
     <div className="main-stat"><span><i>✦</i>{statLabels[echo.mainStat.key]}</span><strong>{formatStat(echo.mainStat.key, echo.mainStat.value)}</strong></div>
-    <div className="substats">{echo.subStats.map((stat, index) => <div key={`${stat.key}-${index}`}><span><i>{statGlyph(stat.key)}</i>{statLabels[stat.key]}</span><b>{formatStat(stat.key, stat.value)}</b></div>)}</div>
+    <div className="substats">{echo.subStats.map((stat, index) => { const tier = substatTierPoints(stat.key, stat.value); return <div key={`${stat.key}-${index}`}><span><i>{statGlyph(stat.key)}</i>{statLabels[stat.key]}</span><b className={`roll-tier-${tier}`} title={tier ? `Roll tier ${tier}/8` : 'Unknown roll tier'}>{formatStat(stat.key, stat.value)}</b></div> })}</div>
     <footer>{grade && <><span>{scoreLabel}</span><strong className="echo-score">{grade}</strong></>}{actions}</footer>
+    {equipment && <div className="echo-equipment">{equipment}</div>}
   </article>
 }
 

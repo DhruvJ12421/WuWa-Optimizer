@@ -1,34 +1,142 @@
+import { useMemo, useState } from 'react'
 import { calculateRotation, formatDamage } from '../domain/damage'
-import { resonators, weapons } from '../game-data'
+import { characterCatalog, echoCatalog, statAliases, weaponCatalog } from '../game-data'
 import { db } from '../storage/database'
-import type { BuffEffect, Build, Echo, RotationAction, Team } from '../domain/types'
-import { Icon, PageHeader, Panel } from './components'
+import type { AttackDefinition, Build, Echo, Element, OwnedCharacter, OwnedWeapon, Resonator, RotationAction, StatLine, Team, Weapon } from '../domain/types'
+import { Icon } from './components'
 
-export function TeamsView({ echoes, builds, teams, refresh }: { echoes: Echo[]; builds: Build[]; teams: Team[]; refresh: () => Promise<void> }) {
-  const team = teams[0]
-  if (!team) return <><PageHeader eyebrow="Team roster" title="Teams" description="Connect owned characters into three-member teams."/><Panel className="empty-state"><div className="empty-glyph">03</div><h2>No team has been created yet</h2><p>Team creation will use the owned characters and their saved loadouts.</p></Panel></>
-  const rotation = calculateRotation(team, builds, resonators, weapons, echoes)
+const elementNames: Record<string, Element> = { spectro: 'spectro', fusion: 'fusion', glacio: 'glacio', electro: 'electro', aero: 'aero', havoc: 'havoc' }
+
+function characterFor(build?: Build) {
+  return characterCatalog.find((entry) => entry.id === build?.resonatorId)
+}
+
+function ownedCharacterFor(build: Build, owned: OwnedCharacter[]) {
+  return owned.find((entry) => entry.catalogId === build.resonatorId)
+}
+
+function attacksFor(build: Build, owned: OwnedCharacter[]): AttackDefinition[] {
+  const character = characterFor(build)
+  const levels = ownedCharacterFor(build, owned)?.skillLevels ?? [build.skillLevel, build.skillLevel, build.skillLevel, build.skillLevel, build.skillLevel]
+  const element = elementNames[character?.element.toLowerCase() ?? ''] ?? 'spectro'
+  return (character?.attacks ?? []).map((attack) => {
+    const level = Math.max(1, Math.min(attack.multipliers.length, levels[attack.skillLevelIndex] ?? build.skillLevel))
+    return { id: attack.id, name: attack.name, type: attack.type, element, multiplier: attack.multipliers[level - 1] ?? 0, hits: 1, scalesWith: attack.scalesWith }
+  })
+}
+
+function runtimeResonator(build: Build, owned: OwnedCharacter[]): Resonator | undefined {
+  const character = characterFor(build)
+  if (!character) return undefined
+  return {
+    id: character.id,
+    name: character.name,
+    element: elementNames[character.element.toLowerCase()] ?? 'spectro',
+    role: character.role,
+    accent: character.rarity === 5 ? '#d6a85f' : '#9a7be8',
+    baseStats: character.baseStats,
+    attacks: attacksFor(build, owned)
+  }
+}
+
+function weaponStat(name: string, formattedValue: string): StatLine | undefined {
+  const match = statAliases.find(([pattern]) => pattern.test(name))
+  const value = Number.parseFloat(formattedValue)
+  return match && Number.isFinite(value) ? { key: match[1], value } : undefined
+}
+
+function runtimeWeapon(build: Build, ownedWeapons: OwnedWeapon[]): Weapon | undefined {
+  const owned = ownedWeapons.find((entry) => entry.id === build.weaponId)
+  const catalog = weaponCatalog.find((entry) => entry.id === owned?.catalogId)
+  if (!owned || !catalog) return undefined
+  const level = [...catalog.levelStats].sort((left, right) => Math.abs(left.level - owned.level) - Math.abs(right.level - owned.level))[0]
+  return {
+    id: owned.id,
+    name: catalog.name,
+    type: catalog.type.toLowerCase() as Weapon['type'],
+    baseAtk: level?.baseAtk ?? catalog.baseAtk,
+    stat: weaponStat(catalog.secondaryStat, level?.secondaryStatValue ?? catalog.secondaryStatValue)
+  }
+}
+
+function calculateTeam(team: Team, builds: Build[], characters: OwnedCharacter[], weapons: OwnedWeapon[], echoes: Echo[]) {
+  const teamBuilds = builds.filter((build) => team.buildIds.includes(build.id))
+  const runtimeCharacters = teamBuilds.map((build) => runtimeResonator(build, characters)).filter((entry): entry is Resonator => Boolean(entry))
+  const runtimeWeapons = teamBuilds.map((build) => runtimeWeapon(build, weapons)).filter((entry): entry is Weapon => Boolean(entry))
+  return calculateRotation(team, builds, runtimeCharacters, runtimeWeapons, echoes)
+}
+
+function TeamMember({ build, team, builds, characters, weapons, echoes, contribution, total }: { build?: Build; team: Team; builds: Build[]; characters: OwnedCharacter[]; weapons: OwnedWeapon[]; echoes: Echo[]; contribution: number; total: number }) {
+  if (!build) return <div className="go-team-member empty"><div className="go-empty-avatar">+</div><div><strong>Empty slot</strong><small>Add a character in team details</small></div></div>
+  const character = characterFor(build)
+  const ownedCharacter = ownedCharacterFor(build, characters)
+  const ownedWeapon = weapons.find((entry) => entry.id === build.weaponId)
+  const weapon = weaponCatalog.find((entry) => entry.id === ownedWeapon?.catalogId)
+  const equipped = build.echoIds.map((id) => echoes.find((echo) => echo.id === id)).filter((entry): entry is Echo => Boolean(entry))
+  const mainEcho = echoCatalog.find((entry) => entry.name === equipped[0]?.name)
+  const percent = total > 0 ? contribution / total * 100 : 0
+  return <div className="go-team-member" style={{ '--member-art': `url("${character?.portraitSourceUrl ?? character?.iconSourceUrl ?? ''}")` } as React.CSSProperties}>
+    <div className="go-member-portrait"><img src={character?.iconSourceUrl} alt=""/><span>{ownedCharacter?.level ?? build.level}/90</span><b>S{ownedCharacter?.sequence ?? 0}</b></div>
+    <div className="go-member-copy"><strong>{character?.name ?? 'Unknown character'}</strong><small><Icon name="team"/>{build.name}</small><small><Icon name="build"/>{weapon?.name ?? 'No weapon'} · Lv. {ownedWeapon?.level ?? 1} · R{ownedWeapon?.rank ?? 1}</small></div>
+    <div className="go-member-loadout">{weapon && <img src={weapon.iconSourceUrl} alt=""/>}{mainEcho && <img src={mainEcho.iconSourceUrl} alt=""/>}<span>{equipped.length}/5</span></div>
+    <div className="go-member-damage"><strong>{formatDamage(contribution)}</strong><span>{percent.toFixed(1)}%</span></div>
+  </div>
+}
+
+function TeamEditor({ team, builds, characters, weapons, echoes, refresh, close }: { team: Team; builds: Build[]; characters: OwnedCharacter[]; weapons: OwnedWeapon[]; echoes: Echo[]; refresh: () => Promise<void>; close: () => void }) {
+  const rotation = calculateTeam(team, builds, characters, weapons, echoes)
   const update = async (patch: Partial<Team>) => { await db.teams.update(team.id, patch); await refresh() }
   const updateAction = async (id: string, patch: Partial<RotationAction>) => update({ actions: team.actions.map((action) => action.id === id ? { ...action, ...patch } : action) })
   const addAction = async () => {
-    const build = builds.find((item) => team.buildIds.includes(item.id))
-    const resonator = resonators.find((item) => item.id === build?.resonatorId)
-    if (!build || !resonator) return
-    await update({ actions: [...team.actions, { id: crypto.randomUUID(), timestamp: Math.min(team.rotationDuration, Math.ceil((team.actions.at(-1)?.timestamp ?? 0) + 1)), buildId: build.id, attackId: resonator.attacks[0].id }] })
+    const build = builds.find((entry) => team.buildIds.includes(entry.id))
+    const attack = build && attacksFor(build, characters)[0]
+    if (!build || !attack) return
+    await update({ actions: [...team.actions, { id: crypto.randomUUID(), timestamp: Math.min(team.rotationDuration, Math.ceil((team.actions.at(-1)?.timestamp ?? 0) + 1)), buildId: build.id, attackId: attack.id }] })
   }
-  const updateBuff = async (id: string, patch: Partial<BuffEffect>) => update({ buffs: (team.buffs ?? []).map((buff) => buff.id === id ? { ...buff, ...patch } : buff) })
-  const addBuff = async () => {
-    const build = builds.find((item) => team.buildIds.includes(item.id))
-    const resonator = resonators.find((item) => item.id === build?.resonatorId)
-    if (!build || !resonator) return
-    await update({ buffs: [...(team.buffs ?? []), { id: crypto.randomUUID(), name: 'Team modifier', sourceBuildId: build.id, target: 'team', triggerAttackId: resonator.attacks[0].id, duration: 10, stat: 'atkPercent', value: 10, stackingGroup: `custom-${crypto.randomUUID()}` }] })
+  const chooseMember = async (slot: number, buildId: string) => {
+    const next = [...team.buildIds]
+    if (buildId) next[slot] = buildId
+    else next.splice(slot, 1)
+    const buildIds = next.filter((id, index) => id && next.indexOf(id) === index).slice(0, 3)
+    await update({ buildIds, actions: team.actions.filter((action) => buildIds.includes(action.buildId)) })
   }
-  return <>
-    <PageHeader eyebrow="Rotation room" title="Team damage timeline" description="Sequence real actions against a configured target and see exactly where expected damage comes from." />
-    <div className="team-config"><Panel><label>Enemy level<input type="number" min="1" max="200" value={team.enemy.level} onChange={(event) => update({ enemy: { ...team.enemy, level: Math.min(200, Math.max(1, Number(event.target.value))) } })}/></label><label>Resistance %<input type="number" min="-100" max="100" value={team.enemy.resistance} onChange={(event) => update({ enemy: { ...team.enemy, resistance: Math.min(100, Math.max(-100, Number(event.target.value))) } })}/></label><label>Rotation seconds<input type="number" min="1" max="600" value={team.rotationDuration} onChange={(event) => update({ rotationDuration: Math.min(600, Math.max(1, Number(event.target.value))) })}/></label></Panel><Panel className="rotation-total"><span>EXPECTED ROTATION</span><strong>{formatDamage(rotation.total)}</strong><small>{formatDamage(rotation.dps)} damage / second</small></Panel></div>
-    <div className="team-grid"><Panel><div className="section-heading"><div><span className="eyebrow">Three-member field unit</span><h2>{team.name}</h2></div></div><div className="team-members">{team.buildIds.map((id, index) => { const build = builds.find((item) => item.id === id); const resonator = resonators.find((item) => item.id === build?.resonatorId); const contribution = rotation.byBuild[id] ?? 0; return <article key={id} style={{ '--accent': resonator?.accent } as React.CSSProperties}><span>0{index + 1}</span><div className="avatar">{resonator?.name[0]}</div><h3>{resonator?.name}</h3><p>{resonator?.role}</p><strong>{formatDamage(contribution)}</strong><small>{rotation.total ? Math.round(contribution / rotation.total * 100) : 0}% contribution</small></article> })}</div></Panel><Panel><div className="section-heading"><div><span className="eyebrow">Ordered actions</span><h2>{team.rotationDuration}s timeline</h2></div></div><div className="timeline">{rotation.actions.map((action, index) => { const build = builds.find((item) => item.id === action.buildId); const resonator = resonators.find((item) => item.id === build?.resonatorId); const attack = resonator?.attacks.find((item) => item.id === action.attackId); return <div key={`${action.buildId}-${index}`}><time>{action.timestamp.toFixed(1)}s</time><i style={{ '--accent': resonator?.accent } as React.CSSProperties}/><span><strong>{resonator?.name}</strong><small>{attack?.name}</small></span><b>{formatDamage(action.expected)}</b></div> })}</div></Panel></div>
-    <div className="rotation-editors"><Panel><div className="section-heading"><div><span className="eyebrow">Rotation authoring</span><h2>Actions</h2></div><button className="secondary" onClick={addAction}><Icon name="plus"/>Add action</button></div><div className="action-editor-list">{[...team.actions].sort((left, right) => left.timestamp - right.timestamp).map((action) => { const actionBuild = builds.find((item) => item.id === action.buildId); const actionResonator = resonators.find((item) => item.id === actionBuild?.resonatorId); return <div className="action-editor" key={action.id}><input aria-label="Timestamp" type="number" min="0" max={team.rotationDuration} step="0.1" value={action.timestamp} onChange={(event) => updateAction(action.id, { timestamp: Number(event.target.value) })}/><select aria-label="Character" value={action.buildId} onChange={(event) => { const nextBuild = builds.find((item) => item.id === event.target.value); const nextResonator = resonators.find((item) => item.id === nextBuild?.resonatorId); void updateAction(action.id, { buildId: event.target.value, attackId: nextResonator?.attacks[0].id ?? '' }) }}>{team.buildIds.map((id) => { const item = builds.find((entry) => entry.id === id); const character = resonators.find((entry) => entry.id === item?.resonatorId); return <option key={id} value={id}>{character?.name}</option> })}</select><select aria-label="Attack" value={action.attackId} onChange={(event) => updateAction(action.id, { attackId: event.target.value })}>{actionResonator?.attacks.map((attack) => <option key={attack.id} value={attack.id}>{attack.name}</option>)}</select><button className="text-button" onClick={() => update({ actions: team.actions.filter((item) => item.id !== action.id) })}>Remove</button></div> })}</div></Panel>
-      <Panel><div className="section-heading"><div><span className="eyebrow">Declarative effects</span><h2>Buffs</h2></div><button className="secondary" onClick={addBuff}><Icon name="plus"/>Add buff</button></div><div className="buff-editor-list">{(team.buffs ?? []).map((buff) => { const sourceBuild = builds.find((item) => item.id === buff.sourceBuildId); const sourceResonator = resonators.find((item) => item.id === sourceBuild?.resonatorId); return <div className="buff-editor" key={buff.id}><input aria-label="Buff name" value={buff.name} onChange={(event) => updateBuff(buff.id, { name: event.target.value })}/><select aria-label="Source" value={buff.sourceBuildId} onChange={(event) => { const nextBuild = builds.find((item) => item.id === event.target.value); const nextResonator = resonators.find((item) => item.id === nextBuild?.resonatorId); void updateBuff(buff.id, { sourceBuildId: event.target.value, triggerAttackId: nextResonator?.attacks[0].id ?? '' }) }}>{team.buildIds.map((id) => { const item = builds.find((entry) => entry.id === id); const character = resonators.find((entry) => entry.id === item?.resonatorId); return <option key={id} value={id}>{character?.name}</option> })}</select><select aria-label="Trigger" value={buff.triggerAttackId} onChange={(event) => updateBuff(buff.id, { triggerAttackId: event.target.value })}>{sourceResonator?.attacks.map((attack) => <option key={attack.id} value={attack.id}>{attack.name}</option>)}</select><select aria-label="Target" value={buff.target} onChange={(event) => updateBuff(buff.id, { target: event.target.value as BuffEffect['target'] })}><option value="self">Self</option><option value="next">Next character</option><option value="team">Team</option></select><select aria-label="Modifier" value={buff.stat} onChange={(event) => updateBuff(buff.id, { stat: event.target.value as BuffEffect['stat'] })}><option value="atkPercent">ATK %</option><option value="hpPercent">HP %</option><option value="critRate">Crit. Rate</option><option value="critDamage">Crit. DMG</option><option value="skillDamage">Skill DMG</option><option value="liberationDamage">Liberation DMG</option><option value="amplify">Amplify</option></select><input aria-label="Value" type="number" step="0.1" value={buff.value} onChange={(event) => updateBuff(buff.id, { value: Number(event.target.value) })}/><input aria-label="Duration" type="number" min="0" step="0.1" value={buff.duration} onChange={(event) => updateBuff(buff.id, { duration: Number(event.target.value) })}/><button className="text-button" onClick={() => update({ buffs: (team.buffs ?? []).filter((item) => item.id !== buff.id) })}>Remove</button></div> })}{!(team.buffs ?? []).length && <p className="muted-copy">No custom buffs. Add one to model an Outro, passive, or team effect.</p>}</div></Panel></div>
-    <Panel><div className="section-heading"><div><span className="eyebrow">Damage distribution</span><h2>By attack type</h2></div></div><div className="breakdown">{Object.entries(rotation.byType).map(([type, value]) => <div key={type}><span>{type}</span><div><i style={{ width: `${rotation.total ? value / rotation.total * 100 : 0}%` }}/></div><strong>{formatDamage(value)}</strong></div>)}</div></Panel>
-  </>
+  return <div className="team-editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}><section className="go-team-editor" role="dialog" aria-modal="true" aria-label={`${team.name} details`}>
+    <header><div><span>TEAM DETAILS</span><input aria-label="Team name" value={team.name} onChange={(event) => void update({ name: event.target.value })}/></div><button className="close" onClick={close}>×</button></header>
+    <div className="go-editor-summary"><div><span>EXPECTED ROTATION</span><strong>{formatDamage(rotation.total)}</strong><small>{formatDamage(rotation.dps)} DPS</small></div><label>Enemy level<input type="number" min="1" max="200" value={team.enemy.level} onChange={(event) => void update({ enemy: { ...team.enemy, level: Math.max(1, Math.min(200, Number(event.target.value))) } })}/></label><label>Resistance %<input type="number" min="-100" max="100" value={team.enemy.resistance} onChange={(event) => void update({ enemy: { ...team.enemy, resistance: Math.max(-100, Math.min(100, Number(event.target.value))) } })}/></label><label>Rotation seconds<input type="number" min="1" max="600" value={team.rotationDuration} onChange={(event) => void update({ rotationDuration: Math.max(1, Math.min(600, Number(event.target.value))) })}/></label></div>
+    <div className="go-editor-members">{Array.from({ length: 3 }, (_, index) => <label key={index}><span>Member {index + 1}</span><select value={team.buildIds[index] ?? ''} onChange={(event) => void chooseMember(index, event.target.value)}><option value="">Empty slot</option>{builds.map((build) => <option key={build.id} value={build.id} disabled={team.buildIds.includes(build.id) && team.buildIds[index] !== build.id}>{characterFor(build)?.name ?? build.name}</option>)}</select></label>)}</div>
+    <div className="go-rotation-heading"><div><span>NANOKA 3.5 MULTIPLIERS</span><h2>Rotation actions</h2></div><button className="go-cyan-button" onClick={() => void addAction()}><Icon name="plus"/>Add action</button></div>
+    <div className="go-action-list">{[...team.actions].sort((left, right) => left.timestamp - right.timestamp).map((action) => {
+      const build = builds.find((entry) => entry.id === action.buildId)
+      const attacks = build ? attacksFor(build, characters) : []
+      const attack = attacks.find((entry) => entry.id === action.attackId)
+      const result = rotation.actions.find((entry) => entry.buildId === action.buildId && entry.timestamp === action.timestamp && entry.attackId === action.attackId)
+      return <div className="go-action-row" key={action.id}><input aria-label="Timestamp" type="number" min="0" max={team.rotationDuration} step="0.1" value={action.timestamp} onChange={(event) => void updateAction(action.id, { timestamp: Number(event.target.value) })}/><select aria-label="Character" value={action.buildId} onChange={(event) => { const next = builds.find((entry) => entry.id === event.target.value); void updateAction(action.id, { buildId: event.target.value, attackId: next ? attacksFor(next, characters)[0]?.id ?? '' : '' }) }}>{team.buildIds.map((id) => { const member = builds.find((entry) => entry.id === id); return <option key={id} value={id}>{characterFor(member)?.name ?? member?.name}</option> })}</select><select aria-label="Attack" value={action.attackId} onChange={(event) => void updateAction(action.id, { attackId: event.target.value })}>{attacks.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select><b>{attack ? `${(attack.multiplier * 100).toFixed(2)}% ${attack.scalesWith.toUpperCase()}` : 'Select an attack'}</b><strong>{formatDamage(result?.expected ?? 0)}</strong><button className="go-remove" aria-label="Remove action" onClick={() => void update({ actions: team.actions.filter((entry) => entry.id !== action.id) })}>×</button></div>
+    })}{!team.actions.length && <div className="go-empty-actions">Add an action to calculate damage from Nanoka skill percentages.</div>}</div>
+  </section></div>
+}
+
+export function TeamsView({ echoes, builds, teams, characters, weapons, refresh }: { echoes: Echo[]; builds: Build[]; teams: Team[]; characters: OwnedCharacter[]; weapons: OwnedWeapon[]; refresh: () => Promise<void> }) {
+  const [query, setQuery] = useState('')
+  const [characterFilter, setCharacterFilter] = useState('')
+  const [descending, setDescending] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const eligibleBuilds = useMemo(() => builds.filter((build) => characterFor(build)), [builds])
+  const visible = teams.filter((team) => team.name.toLowerCase().includes(query.toLowerCase()) && (!characterFilter || team.buildIds.some((id) => builds.find((build) => build.id === id)?.resonatorId === characterFilter))).sort((left, right) => (descending ? -1 : 1) * left.name.localeCompare(right.name))
+  const selected = teams.find((team) => team.id === selectedId)
+  const addTeam = async () => {
+    const members = eligibleBuilds.slice(0, 3)
+    const team: Team = { id: crypto.randomUUID(), name: `Team Name ${teams.length + 1}`, buildIds: members.map((build) => build.id), enemy: { level: 90, resistance: 10, damageReduction: 0 }, rotationDuration: 20, actions: members.flatMap((build, index) => { const attack = attacksFor(build, characters)[0]; return attack ? [{ id: crypto.randomUUID(), timestamp: index * 3, buildId: build.id, attackId: attack.id }] : [] }), buffs: [] }
+    await db.teams.add(team)
+    await refresh()
+    setSelectedId(team.id)
+  }
+  const removeTeam = async (team: Team) => { if (!confirm(`Delete ${team.name}?`)) return; await db.teams.delete(team.id); await refresh() }
+  return <div className="go-teams-page">
+    <section className="go-team-toolbar"><div className="go-team-filters"><label><span>Characters</span><select value={characterFilter} onChange={(event) => setCharacterFilter(event.target.value)}><option value="">Characters</option>{eligibleBuilds.map((build) => <option key={build.id} value={build.resonatorId}>{characterFor(build)?.name}</option>)}</select></label><label><span>Team Name</span><input value={query} onChange={(event) => setQuery(event.target.value)}/></label></div><div className="go-team-result-row"><p>Showing <strong>{visible.length}</strong> out of <strong>{teams.length}</strong> Teams</p><div><span>Sort By:</span><button>Name <small>⌄</small></button><button onClick={() => setDescending((value) => !value)}>☰ {descending ? 'Descending' : 'Ascending'}</button></div></div></section>
+    <div className="go-team-actions"><button onClick={() => void addTeam()} disabled={!eligibleBuilds.length}><Icon name="plus"/>Add Team</button><button disabled title="Team files are handled by the account backup tools"><Icon name="upload"/>Import Team</button></div>
+    {!eligibleBuilds.length && <div className="go-team-notice">Equip a weapon or Echo on a character first to create a build, then return here to add a team.</div>}
+    <div className="go-team-grid">{visible.map((team) => { const rotation = calculateTeam(team, builds, characters, weapons, echoes); return <article className="go-team-card" key={team.id}><header><button onClick={() => setSelectedId(team.id)}><h2>{team.name}</h2><span title="Open team details">i</span></button><button className="go-card-delete" aria-label={`Delete ${team.name}`} onClick={() => void removeTeam(team)}><Icon name="trash"/></button></header><button className="go-team-card-body" onClick={() => setSelectedId(team.id)}>{Array.from({ length: 3 }, (_, index) => { const build = builds.find((entry) => entry.id === team.buildIds[index]); return <TeamMember key={build?.id ?? index} build={build} team={team} builds={builds} characters={characters} weapons={weapons} echoes={echoes} contribution={build ? rotation.byBuild[build.id] ?? 0 : 0} total={rotation.total}/> })}<footer><span>Expected rotation</span><strong>{formatDamage(rotation.total)}</strong><b>{formatDamage(rotation.dps)} DPS</b></footer></button></article> })}</div>
+    {!visible.length && teams.length > 0 && <div className="go-team-notice">No teams match the current filters.</div>}
+    {selected && <TeamEditor team={selected} builds={builds} characters={characters} weapons={weapons} echoes={echoes} refresh={refresh} close={() => setSelectedId(null)}/>} 
+  </div>
 }

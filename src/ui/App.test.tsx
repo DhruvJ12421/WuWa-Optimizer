@@ -14,7 +14,7 @@ describe('application shell', () => {
 
   it('opens the local archive and navigates core workflows', async () => {
     render(<App/>)
-    expect(await screen.findByText('Wuthering Waves archive')).toBeInTheDocument()
+    expect(await screen.findByText('Wuthering Waves Archive')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Characters 60/ })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Echoes/ }))
     expect(await screen.findByText('Echo inventory')).toBeInTheDocument()
@@ -24,7 +24,7 @@ describe('application shell', () => {
 
   it('warns before leaving a scanner session with unsaved Echo data', async () => {
     render(<App/>)
-    await screen.findByText('Wuthering Waves archive')
+    await screen.findByText('Wuthering Waves Archive')
     fireEvent.click(screen.getByRole('button', { name: /Scanner/ }))
     fireEvent.click(await screen.findByRole('button', { name: /enter an Echo manually/i }))
     expect(await screen.findByText(/Review queue/)).toHaveTextContent('1')

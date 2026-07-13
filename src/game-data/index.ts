@@ -33,5 +33,6 @@ export const sonataNames = generatedSonataCatalog.map((sonata) => sonata.name)
 
 export const defaultSettings: AppSettings = {
   displayName: 'Resonator', privacyMode: false, background: 'signal', scanIntervalMs: 900,
+  roverGender: 'male',
   scoreWeights: {}
 }

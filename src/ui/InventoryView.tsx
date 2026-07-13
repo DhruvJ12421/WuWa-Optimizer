@@ -1,23 +1,39 @@
-import { useDeferredValue, useMemo, useState } from 'react'
-import { statLabels } from '../game-data'
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { characterCatalog, sonataNames, statLabels } from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
 import { echoRollGrade, echoRollPoints, echoRollQuality } from '../domain/echo-grade'
 import { db } from '../storage/database'
-import type { Echo, StatKey } from '../domain/types'
+import type { Build, Echo, StatKey } from '../domain/types'
 import { EchoMiniCard, Icon, PageHeader, Panel } from './components'
 import { EchoEditModal } from './EchoEditModal'
-import { SonataPicker } from './SonataPicker'
 
 type SortKey = 'score' | 'newest' | 'name' | 'cost' | 'level'
 
 const echoScore = echoRollQuality
 
-export function InventoryView({ echoes, refresh, openScanner, embedded = false }: { echoes: Echo[]; refresh: () => Promise<void>; openScanner: () => void; embedded?: boolean }) {
+function MultiSelect({ label, values, options, emptyLabel, onChange, icon }: { label: string; values: string[]; options: Array<{ value: string; label: string }>; emptyLabel: string; onChange: (values: string[]) => void; icon?: (value: string) => ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<string[]>(values)
+  const show = () => { setDraft(values); setOpen(true) }
+  const toggle = (value: string) => setDraft((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])
+  return <label className="multi-filter">{label}<div className="multi-select">
+    <button type="button" className="multi-select-trigger" aria-expanded={open} onClick={() => open ? setOpen(false) : show()}>
+      <span className="multi-select-values">{values.length ? values.map((value) => <span className="multi-select-chip" key={value}>{icon?.(value)}<b>{options.find((option) => option.value === value)?.label ?? value}</b><i role="button" aria-label={`Remove ${value}`} onClick={(event) => { event.stopPropagation(); onChange(values.filter((item) => item !== value)) }}>x</i></span>) : <em>{emptyLabel}</em>}</span><strong>⌄</strong>
+    </button>
+    {open && <div className="multi-select-menu">
+      <div className="multi-select-options">{options.map((option) => <button type="button" className={draft.includes(option.value) ? 'active' : ''} onClick={() => toggle(option.value)} key={option.value}>{icon?.(option.value)}<span>{option.label}</span><i>{draft.includes(option.value) ? '✓' : ''}</i></button>)}</div>
+      <footer><button type="button" className="text-button" onClick={() => setOpen(false)}>Cancel</button><button type="button" className="primary" onClick={() => { onChange(draft); setOpen(false) }}>Apply</button></footer>
+    </div>}
+  </div></label>
+}
+
+export function InventoryView({ echoes, builds = [], refresh, openScanner, embedded = false }: { echoes: Echo[]; builds?: Build[]; refresh: () => Promise<void>; openScanner: () => void; embedded?: boolean }) {
   const [query, setQuery] = useState('')
   const [costs, setCosts] = useState<number[]>([])
   const [rarities, setRarities] = useState<number[]>([])
-  const [sonata, setSonata] = useState('all')
-  const [mainStat, setMainStat] = useState('all')
-  const [subStat, setSubStat] = useState('all')
+  const [sonatas, setSonatas] = useState<string[]>([])
+  const [mainStats, setMainStats] = useState<string[]>([])
+  const [subStats, setSubStats] = useState<string[]>([])
   const [lockState, setLockState] = useState<'all' | 'locked' | 'unlocked'>('all')
   const [assignment, setAssignment] = useState<'all' | 'equipped' | 'unequipped'>('all')
   const [showExcluded, setShowExcluded] = useState(false)
@@ -28,15 +44,15 @@ export function InventoryView({ echoes, refresh, openScanner, embedded = false }
   const deferredQuery = useDeferredValue(query.trim().toLowerCase())
   const statKeys = Object.keys(statLabels) as StatKey[]
   const toggle = (values: number[], value: number, change: (next: number[]) => void) => change(values.includes(value) ? values.filter((item) => item !== value) : [...values, value])
-  const reset = () => { setQuery(''); setCosts([]); setRarities([]); setSonata('all'); setMainStat('all'); setSubStat('all'); setLockState('all'); setAssignment('all'); setShowExcluded(false); setSort('score'); setDescending(true) }
+  const reset = () => { setQuery(''); setCosts([]); setRarities([]); setSonatas([]); setMainStats([]); setSubStats([]); setLockState('all'); setAssignment('all'); setShowExcluded(false); setSort('score'); setDescending(true) }
 
   const filtered = useMemo(() => echoes.filter((echo) =>
     (showExcluded || !echo.excluded) &&
     (!costs.length || costs.includes(echo.cost)) &&
     (!rarities.length || rarities.includes(echo.rarity)) &&
-    (sonata === 'all' || echo.sonata === sonata) &&
-    (mainStat === 'all' || echo.mainStat.key === mainStat) &&
-    (subStat === 'all' || echo.subStats.some((stat) => stat.key === subStat)) &&
+    (!sonatas.length || sonatas.includes(echo.sonata)) &&
+    (!mainStats.length || mainStats.includes(echo.mainStat.key)) &&
+    (!subStats.length || subStats.every((key) => echo.subStats.some((stat) => stat.key === key))) &&
     (lockState === 'all' || echo.locked === (lockState === 'locked')) &&
     (assignment === 'all' || Boolean(echo.equippedBy) === (assignment === 'equipped')) &&
     (!deferredQuery || `${echo.name} ${echo.sonata} ${statLabels[echo.mainStat.key]} ${echo.subStats.map((stat) => statLabels[stat.key]).join(' ')}`.toLowerCase().includes(deferredQuery))
@@ -47,7 +63,7 @@ export function InventoryView({ echoes, refresh, openScanner, embedded = false }
     if (sort === 'cost') return (left.cost - right.cost) * direction || (left.level - right.level) * direction
     if (sort === 'level') return (left.level - right.level) * direction || (left.cost - right.cost) * direction
     return (left.createdAt - right.createdAt) * direction
-  }), [assignment, costs, deferredQuery, descending, echoes, lockState, mainStat, rarities, showExcluded, sonata, sort, subStat])
+  }), [assignment, costs, deferredQuery, descending, echoes, lockState, mainStats, rarities, showExcluded, sonatas, sort, subStats])
 
   const patchEcho = async (echo: Echo, patch: Partial<Echo>) => {
     const exclusivePatch = patch.locked ? { ...patch, excluded: false } : patch.excluded ? { ...patch, locked: false } : patch
@@ -74,16 +90,16 @@ export function InventoryView({ echoes, refresh, openScanner, embedded = false }
       {filtersOpen && <div className="filter-body">
         <div className="filter-group"><span>Cost</span><div className="filter-chips">{[1,3,4].map((value) => <button className={costs.includes(value) ? 'active' : ''} onClick={() => toggle(costs, value, setCosts)} key={value}>{value} cost</button>)}</div></div>
         <div className="filter-group"><span>Rarity</span><div className="filter-chips">{[5,4,3,2,1].map((value) => <button className={rarities.includes(value) ? 'active' : ''} onClick={() => toggle(rarities, value, setRarities)} key={value}>{value} ★</button>)}</div></div>
-        <label>Sonata<SonataPicker id="inventory-sonata" value={sonata} onChange={setSonata} allowAll/></label>
-        <label>Main stat<select value={mainStat} onChange={(event) => setMainStat(event.target.value)}><option value="all">Any main stat</option>{statKeys.map((key) => <option value={key} key={key}>{statLabels[key]}</option>)}</select></label>
-        <label>Required substat<select value={subStat} onChange={(event) => setSubStat(event.target.value)}><option value="all">Any substat</option>{statKeys.map((key) => <option value={key} key={key}>{statLabels[key]}</option>)}</select></label>
-        <label>Lock state<select value={lockState} onChange={(event) => setLockState(event.target.value as typeof lockState)}><option value="all">Locked or unlocked</option><option value="locked">Locked only</option><option value="unlocked">Unlocked only</option></select></label>
-        <label>Assignment<select value={assignment} onChange={(event) => setAssignment(event.target.value as typeof assignment)}><option value="all">Equipped or available</option><option value="equipped">Equipped only</option><option value="unequipped">Available only</option></select></label>
-        <label className="check"><input type="checkbox" checked={showExcluded} onChange={(event) => setShowExcluded(event.target.checked)}/>Include excluded</label>
+        <MultiSelect label="Sonata" values={sonatas} options={sonataNames.map((name) => ({ value: name, label: name }))} emptyLabel="All Sonatas" onChange={setSonatas} icon={(name) => <img src={generatedSonataIconSources[name]} alt=""/>}/>
+        <MultiSelect label="Main stat" values={mainStats} options={statKeys.map((key) => ({ value: key, label: statLabels[key] }))} emptyLabel="Any main stat" onChange={setMainStats}/>
+        <MultiSelect label="Substat" values={subStats} options={statKeys.map((key) => ({ value: key, label: statLabels[key] }))} emptyLabel="Any substat" onChange={setSubStats}/>
+        <label>Lock state<select value={lockState} onChange={(event) => setLockState(event.target.value as typeof lockState)}><option value="all">All</option><option value="locked">Locked</option><option value="unlocked">Unlocked</option></select></label>
+        <label>Equipped<select value={assignment} onChange={(event) => setAssignment(event.target.value as typeof assignment)}><option value="all">All</option><option value="equipped">Equipped</option><option value="unequipped">Unequipped</option></select></label>
+        <label className="check"><input type="checkbox" checked={showExcluded} onChange={(event) => setShowExcluded(event.target.checked)}/>Include discarded</label>
       </div>}
     </Panel>
     <div className="inventory-sort"><span>Showing {filtered.length} Echoes</span><label>Sort by<select value={sort} onChange={(event) => setSort(event.target.value as SortKey)}><option value="score">Roll score</option><option value="newest">Newest</option><option value="name">Name</option><option value="cost">Cost</option><option value="level">Level</option></select></label><button className="secondary" onClick={() => setDescending((value) => !value)}>{descending ? 'Descending ↓' : 'Ascending ↑'}</button></div>
-    {filtered.length ? <div className="echo-grid">{filtered.map((echo) => { const score = echoScore(echo); return <EchoMiniCard key={echo.id} echo={echo} grade={`${score.toFixed(1)} · ${echoRollGrade(score)}`} scoreLabel={`${echoRollPoints(echo)}/40 ROLL POINTS`} actions={<div className="card-actions"><button title="Edit" onClick={(event) => { event.stopPropagation(); setEditing(echo) }}><Icon name="edit"/></button><button title={echo.locked ? 'Unlock' : 'Lock'} onClick={(event) => { event.stopPropagation(); void patchEcho(echo, { locked: !echo.locked }) }}><Icon name="lock"/></button><button title={echo.excluded ? 'Include' : 'Exclude'} onClick={(event) => { event.stopPropagation(); void patchEcho(echo, { excluded: !echo.excluded }) }}>X</button><button title="Delete" onClick={(event) => { event.stopPropagation(); void removeEcho(echo) }}><Icon name="trash"/></button></div>} /> })}</div> : <Panel className="empty-state"><div className="empty-glyph">O</div><h2>No Echoes match these filters</h2><p>Reset the filters or add another Echo.</p><button className="secondary" onClick={reset}>Reset filters</button></Panel>}
+    {filtered.length ? <div className="echo-grid">{filtered.map((echo) => { const score = echoScore(echo); const build = builds.find((entry) => entry.id === echo.equippedBy || entry.echoIds.includes(echo.id)); const character = characterCatalog.find((entry) => entry.id === build?.resonatorId); const equippedName = character?.name ?? echo.equippedByName ?? 'Unequipped'; return <EchoMiniCard key={echo.id} echo={echo} grade={`${score.toFixed(1)} · ${echoRollGrade(score)}`} scoreLabel={`${echoRollPoints(echo)}/40 ROLL POINTS`} equipment={<><span>{character?.iconSourceUrl ? <img src={character.iconSourceUrl} alt=""/> : <i>—</i>}<b>{equippedName}</b></span><button title="Edit Echo" aria-label={`Edit ${echo.name}`} onClick={(event) => { event.stopPropagation(); setEditing(echo) }}><Icon name="edit"/></button></>} actions={<div className="card-actions"><button title={echo.locked ? 'Unlock' : 'Lock'} onClick={(event) => { event.stopPropagation(); void patchEcho(echo, { locked: !echo.locked }) }}><Icon name="lock"/></button><button title={echo.excluded ? 'Restore discarded Echo' : 'Mark as discarded'} onClick={(event) => { event.stopPropagation(); void patchEcho(echo, { excluded: !echo.excluded }) }}>X</button><button title="Delete" onClick={(event) => { event.stopPropagation(); void removeEcho(echo) }}><Icon name="trash"/></button></div>} /> })}</div> : <Panel className="empty-state"><div className="empty-glyph">O</div><h2>No Echoes match these filters</h2><p>Reset the filters or add another Echo.</p><button className="secondary" onClick={reset}>Reset filters</button></Panel>}
     {editing && <EchoEditModal echo={editing} onClose={() => setEditing(null)} onSave={async (updated) => { await db.echoes.put(updated); setEditing(null); await refresh() }}/>} 
   </>
 }
