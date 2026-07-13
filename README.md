@@ -1,51 +1,69 @@
 # Tacet Lab
 
-Tacet Lab is a local-first Echo scanner, build optimizer, team calculator, and build-card generator for Wuthering Waves. It is a fan-made project and is not affiliated with Kuro Games.
+Tacet Lab is a local-first Wuthering Waves collection manager, Echo scanner, and team damage calculator. It runs in the browser, keeps account data on the device, and never interacts with the game process or automates game input.
 
-## What the MVP does
+**[Open Tacet Lab](https://dhruvj12421.github.io/WuWa-Optimizer/)**
 
-- Reads English Echo details from a user-approved WuWa window share in Chrome or Edge.
-- Accepts PNG, JPEG, and WebP screenshots when live sharing is inconvenient.
-- Requires review and correction before any OCR result enters the inventory.
-- Stores Echoes, builds, teams, and settings in browser IndexedDB.
-- Builds Spectro Rover, Chixia, and Baizhi with representative weapons.
-- Calculates normal, critical, expected, rotation, and contribution damage.
-- Searches a bounded Echo candidate pool in a cancellable Web Worker.
-- Exports full or compact build cards as PNG files.
-- Exports and restores a versioned local JSON backup.
+Tacet Lab is a fan-made project and is not affiliated with Kuro Games.
 
-## Privacy
+## Getting started
 
-There is no account, backend, analytics, telemetry, or upload endpoint.
+1. Open the site in a current version of Chrome or Edge on Windows.
+2. Add owned characters and weapons from the bundled catalog.
+3. Add Echoes by sharing the Wuthering Waves window, importing a screenshot, or entering their stats manually.
+4. Review every scanned field before saving the Echo.
+5. Equip weapons and Echoes, then inspect team rotations and expected damage for the currently supported calculation roster.
+
+Use the top-bar controls to export or restore a JSON backup. Open **Settings & data** to change local preferences or erase the browser's local data.
+
+## Current features
+
+- Browse the Nanoka 3.5 character, weapon, Sonata, and Echo catalogs.
+- Track owned characters, weapon copies, levels, sequences, ranks, locks, and assignments.
+- Scan English Echo detail screens from a user-approved window share.
+- Import PNG, JPEG, or WebP screenshots, with manual entry as a fallback.
+- Review and correct identity, cost, rarity, level, Sonata, main stat, and substats before saving.
+- Search, filter, grade, lock, exclude, edit, equip, and delete locally stored Echoes.
+- Build five-Echo, 12-cost character loadouts and connect them to three-member teams.
+- Author timestamped actions and buffs for deterministic expected rotation damage.
+- Export and restore versioned account backups as JSON.
+- Install the site as a PWA after opening it in a supported browser.
+
+## Privacy and network access
+
+There are no accounts, backend services, analytics, telemetry, cloud sync, image uploads, audio capture, or game-process access.
 
 ```text
 WuWa window -> browser MediaStream -> local crop -> local English OCR
             -> review queue -> IndexedDB
 ```
 
-Window sharing starts only after a browser permission prompt. Audio is disabled. Stopping the share ends every media track. Imported screenshots remain in memory only while their OCR candidate is being reviewed.
+Window sharing starts only after the browser permission prompt. Stopping the share ends every media track. Screenshots and captured frames are processed locally and are not persisted unless the reviewed Echo is saved.
 
-See [docs/privacy.md](docs/privacy.md) for the complete boundary.
+The app downloads catalog artwork from Nanoka and may download the Tesseract worker, WebAssembly runtime, and English language model on the first OCR run. Previously requested OCR resources and built app assets are cached for later use. See [docs/privacy.md](docs/privacy.md) for the complete boundary.
 
-## Current limitations
+## Important limitations
 
-- OCR supports English game UI only.
-- Live scanning targets 1920x1080 and 2560x1440 16:9 layouts.
-- Mobile supports viewing/editing, not live game-window capture.
-- Character and attack values are marked `mvp-2026.07-unverified` and must be checked against the current English in-game UI before damage output is considered authoritative.
-- The 95% OCR target has not been claimed because a real, anonymized fixture corpus is not present yet.
-- Optimizer searches are deliberately bounded for responsiveness and do not prove a global optimum across an unlimited inventory.
+- OCR supports the English game UI only.
+- Live scanning is designed for 1920x1080 and 2560x1440 16:9 layouts on desktop Chrome or Edge.
+- Mobile supports browsing and editing, but not live game-window capture.
+- Real 1080p and 1440p fixtures have not yet demonstrated the 95% OCR target. Every result must be reviewed.
+- The complete catalog is available for collection tracking, but authoritative combat calculations remain limited to the initial Spectro Rover, Chixia, and Baizhi data slice.
+- Formula inputs are marked `mvp-2026.07-unverified`. Damage output is illustrative until those values are verified against the current English in-game UI.
+- Catalog images require a network connection unless the browser already cached them. The first OCR run also requires network access.
 
 ## Local development
+
+Requirements: Node.js 22 or later and npm.
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Localhost is a secure browser context and supports `getDisplayMedia`. For another device or hostname, use HTTPS.
+The development server runs on localhost, which is a secure browser context and supports window sharing. Other hostnames require HTTPS.
 
-## Verification
+Run the project checks with:
 
 ```powershell
 npm run typecheck
@@ -53,10 +71,15 @@ npm test
 npm run build
 ```
 
-Automated coverage includes formulas, buff timelines, optimizer constraints, OCR parsing, stable-frame detection, account persistence, the review checkpoint, and application navigation. Real capture accuracy follows the protocol in [docs/ocr-fixtures.md](docs/ocr-fixtures.md).
+The production output is written to `dist/`. GitHub Actions runs the same checks before deploying pushes to `main` through GitHub Pages.
 
-## Deployment
+## Documentation and data sources
 
-The site is configured for static GitHub Pages hosting. After a `package-lock.json` exists and Pages is configured to use GitHub Actions, pushes to `main` or `master` run type checking, tests, and the production build before deployment.
+- [Architecture](docs/architecture.md)
+- [Privacy boundary](docs/privacy.md)
+- [Game-data verification policy](docs/game-data.md)
+- [OCR fixture and acceptance protocol](docs/ocr-fixtures.md)
 
-See [docs/architecture.md](docs/architecture.md) for module responsibilities and [docs/game-data.md](docs/game-data.md) for the data verification policy.
+Catalog metadata and artwork are imported from [Nanoka 3.5](https://ww.nanoka.cc/) with permission. Echo main-stat validation references the Wuthering Waves Wiki. The generated catalog records their source URLs and generation metadata in the repository.
+
+Do not use current damage output as an authoritative in-game reference, and do not claim the OCR accuracy target without the required fixture corpus.
