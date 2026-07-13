@@ -6,7 +6,7 @@ import { Icon, PageHeader, Panel } from './components'
 
 export function TeamsView({ echoes, builds, teams, refresh }: { echoes: Echo[]; builds: Build[]; teams: Team[]; refresh: () => Promise<void> }) {
   const team = teams[0]
-  if (!team) return null
+  if (!team) return <><PageHeader eyebrow="Team roster" title="Teams" description="Connect owned characters into three-member teams."/><Panel className="empty-state"><div className="empty-glyph">03</div><h2>No team has been created yet</h2><p>Team creation will use the owned characters and their saved loadouts.</p></Panel></>
   const rotation = calculateRotation(team, builds, resonators, weapons, echoes)
   const update = async (patch: Partial<Team>) => { await db.teams.update(team.id, patch); await refresh() }
   const updateAction = async (id: string, patch: Partial<RotationAction>) => update({ actions: team.actions.map((action) => action.id === id ? { ...action, ...patch } : action) })

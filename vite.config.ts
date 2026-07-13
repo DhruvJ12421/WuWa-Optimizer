@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: false,
       manifest: {
         name: 'Tacet Lab - WuWa Optimizer',
         short_name: 'Tacet Lab',
@@ -23,6 +23,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        importScripts: ['sw-refresh.js'],
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,traineddata}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         cleanupOutdatedCaches: true,

@@ -1,5 +1,5 @@
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from 'react'
-import { statLabels } from '../game-data'
+import { echoCatalog, statLabels } from '../game-data'
 import type { Echo, StatKey } from '../domain/types'
 
 export function Icon({ name }: { name: 'home' | 'scan' | 'echo' | 'build' | 'team' | 'optimize' | 'download' | 'upload' | 'lock' | 'trash' | 'edit' | 'plus' }) {
@@ -32,13 +32,22 @@ export function StatValue({ label, value, accent = false }: { label: string; val
   return <div className="stat-value"><span>{label}</span><strong className={accent ? 'accent' : ''}>{value}</strong></div>
 }
 
-export function EchoMiniCard({ echo, selected, onClick, actions, grade }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; grade?: string }) {
+export function EchoMiniCard({ echo, selected, onClick, actions, grade, scoreLabel = 'ROLL QUALITY' }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; grade?: string; scoreLabel?: string }) {
+  const catalog = echoCatalog.find((item) => item.name === echo.name)
   return <article className={`echo-card ${selected ? 'selected' : ''} ${echo.excluded ? 'excluded' : ''}`} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick() } } : undefined}>
-    <div className="echo-card-top"><div className={`cost-orb cost-${echo.cost}`}>{echo.cost}</div><div><h3>{echo.name}</h3><span>{echo.sonata}</span></div>{echo.locked && <Icon name="lock" />}</div>
-    <div className="main-stat"><span>{statLabels[echo.mainStat.key]}</span><strong>{formatStat(echo.mainStat.key, echo.mainStat.value)}</strong></div>
-    <div className="substats">{echo.subStats.map((stat, index) => <div key={`${stat.key}-${index}`}><span>{statLabels[stat.key]}</span><b>{formatStat(stat.key, stat.value)}</b></div>)}</div>
-    <footer><span>LV. {echo.level}</span><span>{'★'.repeat(echo.rarity)}</span>{grade && <strong className="echo-grade">{grade}</strong>}{actions}</footer>
+    <div className="echo-card-head"><div className="echo-portrait">{catalog?.iconSourceUrl ? <img src={catalog.iconSourceUrl} alt="" loading="lazy"/> : <span>◎</span>}<b className={`cost-orb cost-${echo.cost}`}>{echo.cost}</b></div><div className="echo-identity"><h3>{echo.name}</h3><span>{echo.sonata}</span><small>LV. {echo.level} · {'★'.repeat(echo.rarity)}</small></div>{echo.locked && <Icon name="lock" />}</div>
+    <div className="main-stat"><span><i>✦</i>{statLabels[echo.mainStat.key]}</span><strong>{formatStat(echo.mainStat.key, echo.mainStat.value)}</strong></div>
+    <div className="substats">{echo.subStats.map((stat, index) => <div key={`${stat.key}-${index}`}><span><i>{statGlyph(stat.key)}</i>{statLabels[stat.key]}</span><b>{formatStat(stat.key, stat.value)}</b></div>)}</div>
+    <footer>{grade && <><span>{scoreLabel}</span><strong className="echo-score">{grade}</strong></>}{actions}</footer>
   </article>
+}
+
+function statGlyph(key: StatKey) {
+  if (key.includes('crit')) return '✧'
+  if (key.includes('Damage')) return '✦'
+  if (key.includes('Percent')) return '◇'
+  if (key === 'energyRegen') return '↻'
+  return '◆'
 }
 
 export function formatStat(key: StatKey, value: number) {

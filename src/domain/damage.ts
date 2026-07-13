@@ -1,10 +1,11 @@
 import type { AggregatedStats, AttackDefinition, BuffEffect, Build, DamageResult, Echo, EnemyConfig, Resonator, RotationResult, StatKey, Team, Weapon } from './types'
+import { fixedSecondaryMainStat } from '../game-data/echo-main-stats'
 
 export const emptyStats = (): AggregatedStats => ({
   baseHp: 0, baseAtk: 0, baseDef: 0,
   hp: 0, atk: 0, def: 0, critRate: 0, critDamage: 0, energyRegen: 100,
   basicDamage: 0, heavyDamage: 0, skillDamage: 0, liberationDamage: 0,
-  spectroDamage: 0, fusionDamage: 0, glacioDamage: 0, healingBonus: 0
+  spectroDamage: 0, fusionDamage: 0, glacioDamage: 0, electroDamage: 0, aeroDamage: 0, havocDamage: 0, healingBonus: 0
 })
 
 function addStat(stats: AggregatedStats, key: StatKey, value: number) {
@@ -22,7 +23,10 @@ export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Ech
   stats.critRate = resonator.baseStats.critRate
   stats.critDamage = resonator.baseStats.critDamage
 
-  const lines = echoes.flatMap((echo) => [echo.mainStat, ...echo.subStats])
+  const lines = echoes.flatMap((echo) => {
+    const secondary = fixedSecondaryMainStat(echo)
+    return secondary ? [echo.mainStat, secondary, ...echo.subStats] : [echo.mainStat, ...echo.subStats]
+  })
   if (weapon.stat) lines.push(weapon.stat)
   for (const line of lines) {
     if (line.key === 'hpPercent') percent.hp += line.value

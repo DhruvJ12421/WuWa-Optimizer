@@ -1,0 +1,36 @@
+import type { Echo, StatKey } from './types'
+import { tunableRolls } from '../game-data/tunable-rolls'
+
+export type EchoRollGrade = 'E' | 'D' | 'C' | 'B' | 'A' | 'S' | 'SS' | 'SSS'
+
+const FLAT_STAT_POINTS = 3
+const MAX_SUBSTATS = 5
+const MAX_TIER_POINTS = 8
+const MAX_ECHO_POINTS = MAX_SUBSTATS * MAX_TIER_POINTS
+
+export function substatTierPoints(key: StatKey, value: number) {
+  if (key === 'hp' || key === 'atk' || key === 'def') return FLAT_STAT_POINTS
+  const rolls = tunableRolls[key]
+  if (!rolls?.length) return 0
+  const tierIndex = rolls.findIndex((roll) => Math.abs(roll.value - value) < 0.001)
+  return tierIndex < 0 ? 0 : tierIndex + 1
+}
+
+export function echoRollPoints(echo: Pick<Echo, 'subStats'>) {
+  return echo.subStats.slice(0, MAX_SUBSTATS).reduce((sum, stat) => sum + substatTierPoints(stat.key, stat.value), 0)
+}
+
+export function echoRollQuality(echo: Pick<Echo, 'subStats'>) {
+  return echoRollPoints(echo) / MAX_ECHO_POINTS * 100
+}
+
+export function echoRollGrade(score: number): EchoRollGrade {
+  if (score >= 93.75) return 'SSS'
+  if (score >= 81.25) return 'SS'
+  if (score >= 68.75) return 'S'
+  if (score >= 56.25) return 'A'
+  if (score >= 43.75) return 'B'
+  if (score >= 31.25) return 'C'
+  if (score >= 18.75) return 'D'
+  return 'E'
+}

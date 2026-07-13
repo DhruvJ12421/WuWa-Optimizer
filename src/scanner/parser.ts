@@ -1,8 +1,13 @@
 import { echoCatalog, sonataNames, statAliases, type EchoCatalogEntry } from '../game-data'
+import { closestTunableRoll, exactTunableRoll, tunableRolls } from '../game-data/tunable-rolls'
+import { isMainStatAllowed, mainStatError, mainStatKeysByCost } from '../game-data/echo-main-stats'
 import type { Echo, ScanCandidate, StatKey, StatLine } from '../domain/types'
 
 export interface VisualRecognition {
   rarity?: { value: Echo['rarity']; confidence: number }
+  sonata?: { value: string; confidence: number }
+  locked?: { value: boolean; confidence: number }
+  excluded?: { value: boolean; confidence: number }
 }
 
 const uuid = () => crypto.randomUUID()
@@ -15,6 +20,7 @@ const percentageLimits: Partial<Record<StatKey, number>> = {
   hpPercent: 50, atkPercent: 50, defPercent: 50, critRate: 22, critDamage: 50,
   energyRegen: 50, basicDamage: 50, heavyDamage: 50, skillDamage: 50,
   liberationDamage: 50, spectroDamage: 50, fusionDamage: 50, glacioDamage: 50,
+  electroDamage: 50, aeroDamage: 50, havocDamage: 50,
   healingBonus: 50
 }
 
@@ -42,16 +48,47 @@ export function parseStatLine(line: string): StatLine | undefined {
   return { key, value }
 }
 
-function closestSonata(lines: string[]) {
-  const lower = lines.join(' ').toLowerCase()
-  return sonataNames.find((name) => lower.includes(name.toLowerCase())) ?? 'Unknown Sonata'
+const normalizedIdentity = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+function editDistance(left: string, right: string) {
+  const row = Array.from({ length: right.length + 1 }, (_, index) => index)
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    let diagonal = row[0]
+    row[0] = leftIndex
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const previous = row[rightIndex]
+      row[rightIndex] = left[leftIndex - 1] === right[rightIndex - 1] ? diagonal : Math.min(diagonal, row[rightIndex - 1], row[rightIndex]) + 1
+      diagonal = previous
+    }
+  }
+  return row[right.length]
 }
 
-const normalizedIdentity = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
+function identitySimilarity(left: string, right: string) {
+  const normalizedLeft = normalizedIdentity(left)
+  const normalizedRight = normalizedIdentity(right)
+  if (!normalizedLeft || !normalizedRight) return 0
+  if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) return 1
+  return 1 - editDistance(normalizedLeft, normalizedRight) / Math.max(normalizedLeft.length, normalizedRight.length)
+}
+
+function closestName<T>(lines: string[], entries: T[], nameOf: (entry: T) => string, threshold: number) {
+  let best: { entry: T; score: number } | undefined
+  for (const entry of entries) for (const line of lines) {
+    const score = identitySimilarity(line.replace(/\s*\+\s*\d{1,2}.*$/, ''), nameOf(entry))
+    if (!best || score > best.score) best = { entry, score }
+  }
+  return best && best.score >= threshold ? best : undefined
+}
+
+function closestSonata(lines: string[]) {
+  return closestName(lines, sonataNames, (name) => name, 0.76)?.entry ?? 'Unknown Sonata'
+}
 
 function catalogMatch(lines: string[]): EchoCatalogEntry | undefined {
   const text = normalizedIdentity(lines.join(' '))
-  return echoCatalog.find((entry) => text.includes(normalizedIdentity(entry.name)))
+  const windows = lines.flatMap((_, index) => [lines.slice(index, index + 2).join(' '), lines.slice(index, index + 3).join(' ')])
+  return echoCatalog.find((entry) => text.includes(normalizedIdentity(entry.name))) ?? closestName([...lines, ...windows], echoCatalog, (entry) => entry.name, 0.68)?.entry
 }
 
 function confidence(found: boolean, base: number) { return found ? base : 0.25 }
@@ -71,26 +108,36 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const levelMatch = joined.match(/(?:Lv\.?|Level|\+)\s*(\d{1,2})/i)
   const costMatch = joined.match(/Cost\s*([134])/i)
   const rarityMatch = joined.match(/([1-5])\s*(?:Star|★)/i)
-  const equippedLine = [...lines].reverse().find((line) => /^\W*Equipped\s+by\s+/i.test(line))
-  const equippedMatch = equippedLine?.match(/^\W*Equipped\s+by\s+([A-Za-z][A-Za-z .'-]{0,30})/i)
+  const equippedLine = [...lines].reverse().find((line) => /Equipp?e?d\s+by\s+/i.test(line))
+  const equippedMatch = equippedLine?.match(/Equipp?e?d\s+by\s+([A-Za-z][A-Za-z .'-]{0,30})/i)
   const catalog = catalogMatch(lines)
   const detectedName = lines.find((line) => !parseStatLine(line) && !/(level|cost|sonata|equipped|locked|echo skills)/i.test(line) && line.length > 2) ?? 'Unknown Echo'
   const name = catalog?.name ?? detectedName.replace(/\s*\+\s*\d{1,2}.*$/, '').trim()
   const textSonata = closestSonata(lines)
-  const sonata = catalog?.sonatas.length === 1 ? catalog.sonatas[0] : textSonata
-  const mainStat = stats[0] ?? { key: 'atkPercent' as const, value: 0 }
+  const visualSonata = visual.sonata && (!catalog || catalog.sonatas.includes(visual.sonata.value)) ? visual.sonata : undefined
+  const sonata = visualSonata?.value ?? (catalog?.sonatas.length === 1 ? catalog.sonatas[0] : textSonata)
+  const cost = catalog?.cost ?? Number(costMatch?.[1] ?? 1) as 1 | 3 | 4
+  const mainStatIndex = stats.findIndex((stat) => isMainStatAllowed(cost, stat.key))
+  const mainStat = stats[mainStatIndex] ?? { key: mainStatKeysByCost[cost][0], value: 0 }
+  const secondaryMainKey: StatKey = cost === 1 ? 'hp' : 'atk'
+  const subStats = stats.filter((stat, index) => index !== mainStatIndex && stat.key !== secondaryMainKey).slice(0, 5).map((stat) => {
+    const roll = closestTunableRoll(stat.key, stat.value)
+    return { value: roll ? { ...stat, value: roll.value } : stat, confidence: roll ? (exactTunableRoll(stat.key, stat.value) ? 0.92 : 0.84) : 0.52, raw: String(stat.value) }
+  })
   const rarity = visual.rarity?.value ?? Number(rarityMatch?.[1] ?? 5) as Echo['rarity']
   return {
     id: uuid(), createdAt: Date.now(), imageDataUrl, fingerprint: await imageFingerprint(imageDataUrl), source,
     fields: {
       name: { value: name, confidence: catalog ? 0.98 : confidence(name !== 'Unknown Echo', 0.72), raw: detectedName },
-      cost: { value: catalog?.cost ?? Number(costMatch?.[1] ?? 1) as 1 | 3 | 4, confidence: catalog ? 0.98 : confidence(Boolean(costMatch), 0.9), raw: costMatch?.[0] },
+      cost: { value: cost, confidence: catalog ? 0.98 : confidence(Boolean(costMatch), 0.9), raw: costMatch?.[0] },
       rarity: { value: rarity, confidence: visual.rarity?.confidence ?? confidence(Boolean(rarityMatch), 0.85), raw: rarityMatch?.[0] },
       level: { value: Number(levelMatch?.[1] ?? 0), confidence: confidence(Boolean(levelMatch), 0.92), raw: levelMatch?.[0] },
-      sonata: { value: sonata, confidence: catalog?.sonatas.length === 1 ? 0.96 : confidence(sonata !== 'Unknown Sonata', 0.86), raw: textSonata },
-      mainStat: { value: mainStat, confidence: confidence(stats.length > 0, 0.82) },
-      subStats: stats.slice(1, 6).map((stat) => ({ value: stat, confidence: 0.78 })),
-      equippedBy: { value: equippedMatch?.[1]?.trim() ?? '', confidence: confidence(Boolean(equippedMatch), 0.84), raw: equippedMatch?.[0] }
+      sonata: { value: sonata, confidence: visualSonata?.confidence ?? (catalog?.sonatas.length === 1 ? 0.96 : confidence(sonata !== 'Unknown Sonata', 0.86)), raw: textSonata },
+      mainStat: { value: mainStat, confidence: confidence(mainStatIndex >= 0, 0.9) },
+      subStats,
+      equippedBy: { value: equippedMatch?.[1]?.trim() ?? '', confidence: confidence(Boolean(equippedMatch), 0.84), raw: equippedMatch?.[0] },
+      locked: { value: visual.excluded?.value ? false : (visual.locked?.value ?? false), confidence: visual.locked?.confidence ?? 0.25 },
+      excluded: { value: visual.excluded?.value ?? false, confidence: visual.excluded?.confidence ?? 0.25 }
     }
   }
 }
@@ -100,7 +147,7 @@ export function candidateToEcho(candidate: ScanCandidate): Echo {
     id: uuid(), name: candidate.fields.name.value, cost: candidate.fields.cost.value,
     rarity: candidate.fields.rarity.value, level: candidate.fields.level.value,
     sonata: candidate.fields.sonata.value, mainStat: candidate.fields.mainStat.value,
-    subStats: candidate.fields.subStats.map((field) => field.value), locked: false, excluded: false,
+    subStats: candidate.fields.subStats.map((field) => field.value), locked: candidate.fields.locked.value, excluded: candidate.fields.excluded.value,
     equippedByName: candidate.fields.equippedBy.value.trim() || undefined,
     createdAt: Date.now(), source: candidate.source === 'screen' ? 'scan' : candidate.source
   }
@@ -114,7 +161,10 @@ export function candidateErrors(candidate: ScanCandidate) {
   if (![1, 2, 3, 4, 5].includes(candidate.fields.rarity.value)) errors.push('Rarity must be between 1 and 5.')
   if (!candidate.fields.sonata.value.trim() || candidate.fields.sonata.value === 'Unknown Sonata') errors.push('Choose or enter a Sonata set.')
   if (!Number.isFinite(candidate.fields.mainStat.value.value) || candidate.fields.mainStat.value.value < 0) errors.push('Main stat must be a non-negative number.')
+  const invalidMainStat = mainStatError(candidate.fields.cost.value, candidate.fields.rarity.value, candidate.fields.level.value, candidate.fields.mainStat.value)
+  if (invalidMainStat) errors.push(invalidMainStat)
   if (candidate.fields.subStats.length > 5) errors.push('An Echo cannot have more than five substats.')
   if (candidate.fields.subStats.some((field) => !Number.isFinite(field.value.value) || field.value.value < 0)) errors.push('Substats must be non-negative numbers.')
+  if (candidate.fields.subStats.some((field) => tunableRolls[field.value.key] && !exactTunableRoll(field.value.key, field.value.value))) errors.push('Each tunable substat must match an exact in-game roll value.')
   return errors
 }

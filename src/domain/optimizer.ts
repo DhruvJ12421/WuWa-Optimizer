@@ -1,7 +1,7 @@
 import { aggregateStats, calculateDamage } from './damage'
 import type { Echo, OptimizerRequest, OptimizerResult, StatKey } from './types'
 
-const PERCENT_STATS = new Set<StatKey>(['critRate', 'critDamage', 'atkPercent', 'hpPercent', 'defPercent', 'energyRegen', 'basicDamage', 'heavyDamage', 'skillDamage', 'liberationDamage', 'spectroDamage', 'fusionDamage', 'glacioDamage', 'healingBonus'])
+const PERCENT_STATS = new Set<StatKey>(['critRate', 'critDamage', 'atkPercent', 'hpPercent', 'defPercent', 'energyRegen', 'basicDamage', 'heavyDamage', 'skillDamage', 'liberationDamage', 'spectroDamage', 'fusionDamage', 'glacioDamage', 'electroDamage', 'aeroDamage', 'havocDamage', 'healingBonus'])
 
 function lineScore(echo: Echo, objective: OptimizerRequest['objective']) {
   const lines = [echo.mainStat, ...echo.subStats]

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { optimizeBuilds } from './optimizer'
-import { resonators, weapons } from '../game-data'
-import type { Echo, OptimizerRequest } from './types'
+import type { Echo, OptimizerRequest, Resonator, Weapon } from './types'
+
+const resonator: Resonator = { id: 'test', name: 'Test', element: 'spectro', role: 'test', accent: '#fff', baseStats: { hp: 10000, atk: 400, def: 1000, critRate: 5, critDamage: 150 }, attacks: [{ id: 'attack', name: 'Attack', type: 'skill', element: 'spectro', multiplier: 1, hits: 1, scalesWith: 'atk' }] }
+const weapon: Weapon = { id: 'weapon', name: 'Weapon', type: 'sword', baseAtk: 500, stat: { key: 'critRate', value: 24.3 } }
 
 function makeEcho(id: string, crit: number, locked = false): Echo {
   return { id, name: id, cost: 1, rarity: 5, level: 25, sonata: 'Celestial Light', mainStat: { key: 'critRate', value: crit }, subStats: [], locked, excluded: false, createdAt: 1, source: 'manual' }
@@ -9,7 +11,7 @@ function makeEcho(id: string, crit: number, locked = false): Echo {
 
 describe('optimizer', () => {
   const request = (echoes: Echo[]): OptimizerRequest => ({
-    requestId: 'test', echoes, resonator: resonators[0], weapon: weapons[0], attack: resonators[0].attacks[0],
+    requestId: 'test', echoes, resonator, weapon, attack: resonator.attacks[0],
     enemy: { level: 100, resistance: 10, damageReduction: 0 }, objective: 'critRate', minimumStats: {}, limit: 20
   })
 

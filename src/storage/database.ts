@@ -1,11 +1,13 @@
 import Dexie, { type EntityTable } from 'dexie'
-import { defaultSettings, GAME_DATA_VERSION, resonators, statLabels, weapons } from '../game-data'
-import type { AccountDocument, AppSettings, Build, Echo, Team } from '../domain/types'
+import { defaultSettings, GAME_DATA_VERSION, statLabels } from '../game-data'
+import type { AccountDocument, AppSettings, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 
 type SettingsRow = AppSettings & { id: 'settings' }
 
 class TacetDatabase extends Dexie {
   echoes!: EntityTable<Echo, 'id'>
+  characters!: EntityTable<OwnedCharacter, 'id'>
+  weapons!: EntityTable<OwnedWeapon, 'id'>
   builds!: EntityTable<Build, 'id'>
   teams!: EntityTable<Team, 'id'>
   settings!: EntityTable<SettingsRow, 'id'>
@@ -17,6 +19,12 @@ class TacetDatabase extends Dexie {
       builds: 'id, resonatorId, weaponId',
       teams: 'id',
       settings: 'id'
+    })
+    this.version(2).stores({
+      echoes: 'id, name, cost, sonata, locked, excluded, equippedBy, createdAt',
+      characters: 'id, catalogId, level, sequence, locked, createdAt',
+      weapons: 'id, catalogId, level, rank, locked, equippedBy, createdAt',
+      builds: 'id, resonatorId, weaponId', teams: 'id', settings: 'id'
     })
   }
 }
@@ -30,25 +38,8 @@ export async function requestPersistentStorage(): Promise<boolean | undefined> {
 }
 
 export async function ensureSeedData() {
-  const builds: Build[] = resonators.map((resonator, index) => ({
-    id: `build-${resonator.id}`,
-    name: `${resonator.name} / Build 01`,
-    resonatorId: resonator.id,
-    weaponId: (weapons[index] ?? weapons[0]).id,
-    echoIds: [], level: 90, skillLevel: 10
-  }))
-  const team: Team = {
-    id: 'team-primary', name: 'Tacet Field Unit', buildIds: builds.map((build) => build.id),
-    enemy: { level: 100, resistance: 10, damageReduction: 0 }, rotationDuration: 20,
-    actions: builds.flatMap((build, index) => resonators[index].attacks.map((attack, attackIndex) => ({
-      id: `action-${build.id}-${attack.id}`, timestamp: index * 5 + attackIndex * 2, buildId: build.id, attackId: attack.id
-    })))
-  }
-  await db.transaction('rw', db.settings, db.builds, db.teams, async () => {
+  await db.transaction('rw', db.settings, async () => {
     if (!(await db.settings.get('settings'))) await db.settings.put({ id: 'settings', ...structuredClone(defaultSettings) })
-    const existingBuildIds = new Set((await db.builds.toArray()).map((build) => build.id))
-    await db.builds.bulkPut(builds.filter((build) => !existingBuildIds.has(build.id)))
-    if (!(await db.teams.get(team.id))) await db.teams.put(team)
   })
 }
 
@@ -65,10 +56,12 @@ export async function saveSettings(settings: AppSettings) {
 
 export async function exportAccount(): Promise<AccountDocument> {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     gameDataVersion: GAME_DATA_VERSION,
     exportedAt: new Date().toISOString(),
     echoes: await db.echoes.toArray(),
+    characters: await db.characters.toArray(),
+    weapons: await db.weapons.toArray(),
     builds: await db.builds.toArray(),
     teams: await db.teams.toArray(),
     settings: await getSettings()
@@ -76,8 +69,10 @@ export async function exportAccount(): Promise<AccountDocument> {
 }
 
 export function validateAccount(value: unknown): value is AccountDocument {
-  if (!isRecord(value) || value.schemaVersion !== 1 || typeof value.gameDataVersion !== 'string' || typeof value.exportedAt !== 'string') return false
+  if (!isRecord(value) || ![1, 2].includes(Number(value.schemaVersion)) || typeof value.gameDataVersion !== 'string' || typeof value.exportedAt !== 'string') return false
   return Array.isArray(value.echoes) && value.echoes.every(isEcho)
+    && (value.schemaVersion === 1 || (Array.isArray(value.characters) && value.characters.every(isOwnedCharacter)))
+    && (value.schemaVersion === 1 || (Array.isArray(value.weapons) && value.weapons.every(isOwnedWeapon)))
     && Array.isArray(value.builds) && value.builds.every(isBuild)
     && Array.isArray(value.teams) && value.teams.every(isTeam)
     && isSettings(value.settings)
@@ -85,13 +80,30 @@ export function validateAccount(value: unknown): value is AccountDocument {
 
 export async function importAccount(document: AccountDocument) {
   if (!validateAccount(document)) throw new Error('The account backup is invalid or unsupported.')
-  await db.transaction('rw', db.echoes, db.builds, db.teams, db.settings, async () => {
-    await Promise.all([db.echoes.clear(), db.builds.clear(), db.teams.clear(), db.settings.clear()])
+  await db.transaction('rw', [db.echoes, db.characters, db.weapons, db.builds, db.teams, db.settings], async () => {
+    await Promise.all([db.echoes.clear(), db.characters.clear(), db.weapons.clear(), db.builds.clear(), db.teams.clear(), db.settings.clear()])
     await db.echoes.bulkPut(document.echoes.map((echo) => ({ ...echo, source: 'import' })))
+    await db.characters.bulkPut(document.characters ?? [])
+    await db.weapons.bulkPut(document.weapons ?? [])
     await db.builds.bulkPut(document.builds)
     await db.teams.bulkPut(document.teams)
     await saveSettings(document.settings)
   })
+}
+
+function isOwnedCharacter(value: unknown) {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.catalogId === 'string'
+    && isFiniteNumber(value.level) && value.level >= 1 && value.level <= 90
+    && isFiniteNumber(value.sequence) && value.sequence >= 0 && value.sequence <= 6
+    && typeof value.locked === 'boolean' && isFiniteNumber(value.createdAt)
+}
+
+function isOwnedWeapon(value: unknown) {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.catalogId === 'string'
+    && isFiniteNumber(value.level) && value.level >= 1 && value.level <= 90
+    && isFiniteNumber(value.rank) && value.rank >= 1 && value.rank <= 5
+    && typeof value.locked === 'boolean' && (value.equippedBy === undefined || typeof value.equippedBy === 'string')
+    && isFiniteNumber(value.createdAt)
 }
 
 export async function clearAccount() {

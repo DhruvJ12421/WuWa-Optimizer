@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { aggregateStats, calculateDamage, calculateRotation, defenseMultiplier, resistanceMultiplier } from './damage'
-import { resonators, weapons } from '../game-data'
-import type { Build, Echo, Team } from './types'
+import type { Build, Echo, Resonator, Team, Weapon } from './types'
+
+const resonators: Resonator[] = ['alpha','beta'].map((id) => ({ id, name: id, element: 'spectro', role: 'test', accent: '#fff', baseStats: { hp: 10000, atk: 412, def: 1000, critRate: 5, critDamage: 150 }, attacks: [{ id: `${id}-attack`, name: 'Test attack', type: 'skill', element: 'spectro', multiplier: 1, hits: 1, scalesWith: 'atk' }] }))
+const weapons: Weapon[] = resonators.map((_, index) => ({ id: `weapon-${index}`, name: 'Test weapon', type: 'sword', baseAtk: 587, stat: { key: 'critRate', value: 24.3 } }))
 
 const echo = (id: string, mainKey: Echo['mainStat']['key'], value: number): Echo => ({
   id, name: `Echo ${id}`, cost: 1, rarity: 5, level: 25, sonata: 'Unknown Sonata',

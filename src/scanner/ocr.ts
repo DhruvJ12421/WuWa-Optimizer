@@ -23,7 +23,12 @@ export async function scanEnglishEcho(imageDataUrl: string, source: ScanCandidat
   const worker = await getWorker(onProgress)
   try {
     const [result, visual] = await Promise.all([worker.recognize(imageDataUrl), recognizeVisualFields(imageDataUrl)])
-    return parseEchoText(result.data.text, imageDataUrl, source, visual)
+    const firstPass = await parseEchoText(result.data.text, imageDataUrl, source, visual)
+    if (firstPass.fields.name.confidence >= .9 && firstPass.fields.equippedBy.value && firstPass.fields.sonata.value !== 'Unknown Sonata') return firstPass
+    const image = new Image(); image.src = imageDataUrl; await image.decode()
+    const header = await worker.recognize(imageDataUrl, { rectangle: { left: 0, top: 0, width: image.naturalWidth, height: Math.round(image.naturalHeight * .16) } })
+    const footer = await worker.recognize(imageDataUrl, { rectangle: { left: 0, top: Math.round(image.naturalHeight * .78), width: image.naturalWidth, height: Math.round(image.naturalHeight * .22) } })
+    return parseEchoText(`${header.data.text}\n${result.data.text}\n${footer.data.text}`, imageDataUrl, source, visual)
   } finally {
     progressListener = undefined
   }

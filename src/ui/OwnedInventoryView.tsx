@@ -1,0 +1,101 @@
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { characterCatalog, weaponCatalog } from '../game-data'
+import { db } from '../storage/database'
+import type { Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
+import { EchoMiniCard, Icon, Panel } from './components'
+
+function Chips<T extends string | number>({ values, selected, label, onChange }: { values: T[]; selected: T | 'all'; label: string; onChange: (value: T | 'all') => void }) {
+  return <div className="owned-chip-filter"><span>{label}</span><div className="filter-chips"><button className={selected === 'all' ? 'active' : ''} onClick={() => onChange('all')}>All</button>{values.map((value) => <button className={selected === value ? 'active' : ''} key={value} onClick={() => onChange(value)}>{typeof value === 'number' ? `${value} ★` : value}</button>)}</div></div>
+}
+
+function CatalogPicker({ title, query, setQuery, children, onClose }: { title: string; query: string; setQuery: (value: string) => void; children: ReactNode; onClose: () => void }) {
+  return <div className="catalog-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="catalog-picker" role="dialog" aria-modal="true" aria-label={title}><header><div><span className="eyebrow">Add to local inventory</span><h2>{title}</h2></div><button className="text-button" onClick={onClose}>Close</button></header><label className="search"><span>⌕</span><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${title.toLowerCase()}...`}/></label><div className="catalog-picker-grid">{children}</div></section></div>
+}
+
+function CharacterDetail({ character, ownedWeapons, echoes, builds, teams, refresh, onClose }: { character: OwnedCharacter; ownedWeapons: OwnedWeapon[]; echoes: Echo[]; builds: Build[]; teams: Team[]; refresh: () => Promise<void>; onClose: () => void }) {
+  const catalog = characterCatalog.find((entry) => entry.id === character.catalogId)
+  if (!catalog) return null
+  const build = builds.find((entry) => entry.resonatorId === character.catalogId)
+  const equippedEchoes = build ? build.echoIds.map((id) => echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)) : []
+  const compatibleWeapons = ownedWeapons.map((item) => ({ item, catalog: weaponCatalog.find((entry) => entry.id === item.catalogId) })).filter((entry) => entry.catalog?.type.toLowerCase() === catalog.weaponType.toLowerCase())
+  const equippedWeapon = compatibleWeapons.find(({ item }) => item.id === build?.weaponId) ?? compatibleWeapons[0]
+  const memberships = build ? teams.filter((team) => team.buildIds.includes(build.id)) : []
+  const ensureBuild = async () => {
+    if (build) return build
+    const created: Build = { id: crypto.randomUUID(), name: `${catalog.name} build`, resonatorId: character.catalogId, weaponId: compatibleWeapons[0]?.item.id ?? '', echoIds: [], level: character.level, skillLevel: 1 }
+    await db.builds.add(created)
+    return created
+  }
+  const toggleEcho = async (echo: Echo) => {
+    const target = await ensureBuild()
+    const selected = target.echoIds.includes(echo.id)
+    if (!selected && echo.equippedBy && echo.equippedBy !== target.id) return
+    if (!selected && target.echoIds.length >= 5) return
+    const currentCost = target.echoIds.map((id) => echoes.find((item) => item.id === id)?.cost ?? 0).reduce<number>((sum, value) => sum + value, 0)
+    if (!selected && currentCost + echo.cost > 12) return
+    const echoIds = selected ? target.echoIds.filter((id) => id !== echo.id) : [...target.echoIds, echo.id]
+    await db.transaction('rw', db.builds, db.echoes, async () => { await db.builds.update(target.id, { echoIds }); await db.echoes.update(echo.id, { equippedBy: selected ? undefined : target.id }) })
+    await refresh()
+  }
+  return <div className="character-detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="character-detail" role="dialog" aria-modal="true" aria-label={`${catalog.name} build`}>
+    <header><div><span className="eyebrow">Character loadout</span><h2>{catalog.name}</h2></div><button className="close" onClick={onClose}>×</button></header>
+    <aside className="character-detail-identity"><img src={catalog.iconSourceUrl} alt=""/><div><span className={`element element-${catalog.element.toLowerCase()}`}>{catalog.element}</span><h1>{catalog.name}</h1><p>{catalog.weaponType} · {'★'.repeat(catalog.rarity)}</p></div><dl><div><dt>Level</dt><dd>{character.level}/90</dd></div><div><dt>Sequence</dt><dd>S{character.sequence}</dd></div><div><dt>Build</dt><dd>{build ? `${equippedEchoes.length}/5 Echoes` : 'Not created'}</dd></div></dl></aside>
+    <main className="character-detail-workspace"><Panel className="detail-weapon"><div className="section-heading"><div><span className="eyebrow">Weapon</span><h3>{equippedWeapon?.catalog?.name ?? 'No compatible weapon owned'}</h3></div></div>{equippedWeapon?.catalog && <div className="detail-weapon-body"><img src={equippedWeapon.catalog.iconSourceUrl} alt=""/><div><strong>Lv. {equippedWeapon.item.level} · R{equippedWeapon.item.rank}</strong><span>ATK {equippedWeapon.catalog.baseAtk}</span><small>{equippedWeapon.catalog.secondaryStat}</small></div></div>}</Panel>
+      <Panel className="detail-echoes"><div className="section-heading"><div><span className="eyebrow">Echo loadout</span><h3>{equippedEchoes.length}/5 equipped</h3></div><b>{equippedEchoes.reduce((sum, echo) => sum + echo.cost, 0)}/12 cost</b></div><div className="detail-echo-grid">{Array.from({ length: 5 }, (_, index) => equippedEchoes[index] ? <EchoMiniCard key={equippedEchoes[index].id} echo={equippedEchoes[index]}/> : <div className="detail-empty" key={index}><span>+</span><small>EMPTY</small></div>)}</div><div className="detail-equip-list"><span className="eyebrow">Equip from inventory</span>{echoes.filter((echo) => !echo.excluded && (!echo.equippedBy || echo.equippedBy === build?.id)).map((echo) => <button className={build?.echoIds.includes(echo.id) ? 'active' : ''} key={echo.id} onClick={() => void toggleEcho(echo)}><span>{echo.name}</span><small>{echo.cost} cost · +{echo.level}</small><b>{build?.echoIds.includes(echo.id) ? 'Unequip' : 'Equip'}</b></button>)}</div></Panel>
+      <Panel className="detail-teams"><div className="section-heading"><div><span className="eyebrow">Team connections</span><h3>Teams using {catalog.name}</h3></div></div>{memberships.length ? memberships.map((team) => <article key={team.id}><strong>{team.name}</strong><span>{team.buildIds.length}/3 members · {team.rotationDuration}s rotation</span></article>) : <div className="detail-empty-team"><strong>Not assigned to a team</strong><span>Create or edit a team from the Teams tab.</span></div>}</Panel>
+      {!build && <div className="notice warning">This full-catalog character has no calculation build yet. The overlay shows owned data only; combat stats will appear when the calculation roster supports this character.</div>}
+    </main>
+  </section></div>
+}
+
+export function CharacterInventory({ owned, weapons = [], echoes = [], builds = [], teams = [], refresh }: { owned: OwnedCharacter[]; weapons?: OwnedWeapon[]; echoes?: Echo[]; builds?: Build[]; teams?: Team[]; refresh: () => Promise<void> }) {
+  const [query, setQuery] = useState(''), [element, setElement] = useState<string | 'all'>('all'), [rarity, setRarity] = useState<number | 'all'>('all'), [pickerOpen, setPickerOpen] = useState(false), [pickerQuery, setPickerQuery] = useState(''), [selected, setSelected] = useState<OwnedCharacter | null>(null)
+  const deferred = useDeferredValue(query.toLowerCase())
+  const visible = useMemo(() => owned.map((item) => ({ item, catalog: characterCatalog.find((entry) => entry.id === item.catalogId) })).filter(({ catalog }) => catalog && (element === 'all' || catalog.element === element) && (rarity === 'all' || catalog.rarity === rarity) && `${catalog.name} ${catalog.element} ${catalog.weaponType}`.toLowerCase().includes(deferred)), [deferred, element, owned, rarity])
+  const available = characterCatalog.filter((entry) => !owned.some((item) => item.catalogId === entry.id) && `${entry.name} ${entry.element} ${entry.weaponType}`.toLowerCase().includes(pickerQuery.toLowerCase()))
+  const add = async (catalogId: string) => { await db.characters.add({ id: crypto.randomUUID(), catalogId, level: 1, sequence: 0, locked: false, createdAt: Date.now() }); setPickerOpen(false); await refresh() }
+  const update = async (item: OwnedCharacter, patch: Partial<OwnedCharacter>) => { await db.characters.update(item.id, patch); await refresh() }
+  return <><Panel className="owned-add"><div><span className="eyebrow">Character roster</span><strong>Select a character card to open their loadout.</strong></div><button className="primary" onClick={() => setPickerOpen(true)}><Icon name="plus"/>Add character</button></Panel><Panel className="owned-filter chip-toolbar"><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search characters..."/></label><Chips label="Element" values={[...new Set(characterCatalog.map((item) => item.element))]} selected={element} onChange={setElement}/><Chips label="Rarity" values={[5, 4]} selected={rarity} onChange={setRarity}/><span>{visible.length} / {owned.length}</span></Panel>
+    <div className="owned-grid">{visible.map(({ item, catalog }) => catalog && <article className="owned-card character-owned clickable" key={item.id} onClick={() => setSelected(item)}><div className="owned-art"><img src={catalog.iconSourceUrl} alt=""/><span className={`element element-${catalog.element.toLowerCase()}`}>{catalog.element.slice(0, 1)}</span></div><div className="owned-copy"><h2>{catalog.name}</h2><p>{catalog.element} · {catalog.weaponType} · {'★'.repeat(catalog.rarity)}</p><div className="owned-fields" onClick={(event) => event.stopPropagation()}><label>Level<input type="number" min="1" max="90" value={item.level} onChange={(event) => void update(item, { level: Math.max(1, Math.min(90, Number(event.target.value))) })}/></label><label>Sequence<select value={item.sequence} onChange={(event) => void update(item, { sequence: Number(event.target.value) })}>{[0, 1, 2, 3, 4, 5, 6].map((value) => <option key={value} value={value}>S{value}</option>)}</select></label></div><footer><span className="owned-state">Open build</span><button className="text-button" onClick={async (event) => { event.stopPropagation(); await db.characters.delete(item.id); await refresh() }}><Icon name="trash"/>Remove</button></footer></div></article>)}</div>
+    {pickerOpen && <CatalogPicker title="Choose a character" query={pickerQuery} setQuery={setPickerQuery} onClose={() => setPickerOpen(false)}>{available.map((entry) => <button className="catalog-choice character-choice" key={entry.id} onClick={() => void add(entry.id)}><img src={entry.iconSourceUrl} alt=""/><span><strong>{entry.name}</strong><small>{entry.element} · {entry.weaponType}</small><b>{'★'.repeat(entry.rarity)}</b></span></button>)}</CatalogPicker>}{selected && <CharacterDetail character={selected} ownedWeapons={weapons} echoes={echoes} builds={builds} teams={teams} refresh={refresh} onClose={() => setSelected(null)}/>}</>
+}
+
+function WeaponDetail({ weapon, characters, builds, refresh, onClose }: { weapon: OwnedWeapon; characters: OwnedCharacter[]; builds: Build[]; refresh: () => Promise<void>; onClose: () => void }) {
+  const catalog = weaponCatalog.find((entry) => entry.id === weapon.catalogId)
+  if (!catalog) return null
+  const compatible = characters.map((item) => ({ item, catalog: characterCatalog.find((entry) => entry.id === item.catalogId) })).filter((entry) => entry.catalog?.weaponType.toLowerCase() === catalog.type.toLowerCase())
+  const equip = async (characterId: string) => {
+    const character = characters.find((item) => item.id === characterId)
+    if (!character) { await db.weapons.update(weapon.id, { equippedBy: undefined }); await refresh(); return }
+    let build = builds.find((item) => item.resonatorId === character.catalogId)
+    await db.transaction('rw', db.weapons, db.builds, async () => {
+      await db.weapons.where('equippedBy').equals(character.id).modify({ equippedBy: undefined })
+      await db.weapons.update(weapon.id, { equippedBy: character.id })
+      if (!build) { build = { id: crypto.randomUUID(), name: `${character.catalogId} build`, resonatorId: character.catalogId, weaponId: weapon.id, echoIds: [], level: character.level, skillLevel: 1 }; await db.builds.add(build) }
+      else await db.builds.update(build.id, { weaponId: weapon.id })
+    })
+    await refresh()
+  }
+  const update = async (patch: Partial<OwnedWeapon>) => { await db.weapons.update(weapon.id, patch); await refresh() }
+  return <div className="weapon-detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="weapon-detail" role="dialog" aria-modal="true" aria-label={`${catalog.name} details`}><header><div><span className="eyebrow">Weapon details</span><h2>{catalog.name}</h2></div><button className="close" onClick={onClose}>×</button></header><div className="weapon-detail-art"><img src={catalog.iconSourceUrl} alt=""/><span>{'★'.repeat(catalog.rarity)}</span><p>{catalog.description}</p></div><div className="weapon-detail-copy"><div className="weapon-edit-row"><label>Level<input type="number" min="1" max="90" value={weapon.level} onChange={(event) => void update({ level: Math.max(1, Math.min(90, Number(event.target.value))) })}/></label><label>Rank<select value={weapon.rank} onChange={(event) => void update({ rank: Number(event.target.value) })}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>R{value}</option>)}</select></label><button className={weapon.locked ? 'primary' : 'secondary'} onClick={() => void update({ locked: !weapon.locked })}><Icon name="lock"/>{weapon.locked ? 'Locked' : 'Lock'}</button></div><Panel className="weapon-main-stats"><span>Stats at level 90</span><div><strong>ATK</strong><b>{catalog.baseAtk}</b></div><div><strong>{catalog.secondaryStat}</strong><b>{catalog.secondaryStatValue}</b></div></Panel><Panel className="weapon-passive"><span>Passive / effect</span><h3>{catalog.passiveName} · Rank {weapon.rank}</h3><p>{catalog.passiveEffects[weapon.rank - 1]}</p></Panel><label className="weapon-equip-select">Equipped character<select value={weapon.equippedBy ?? ''} onChange={(event) => void equip(event.target.value)}><option value="">Unequipped</option>{compatible.map(({ item, catalog: character }) => <option key={item.id} value={item.id}>{character?.name}</option>)}</select></label></div></section></div>
+}
+
+export function WeaponInventory({ owned, characters = [], builds = [], refresh }: { owned: OwnedWeapon[]; characters?: OwnedCharacter[]; builds?: Build[]; refresh: () => Promise<void> }) {
+  const [query, setQuery] = useState(''), [type, setType] = useState<string | 'all'>('all'), [rarity, setRarity] = useState<number | 'all'>('all'), [pickerOpen, setPickerOpen] = useState(false), [pickerQuery, setPickerQuery] = useState(''), [selected, setSelected] = useState<OwnedWeapon | null>(null)
+  const deferred = useDeferredValue(query.toLowerCase())
+  const visible = useMemo(() => owned.map((item) => ({ item, catalog: weaponCatalog.find((entry) => entry.id === item.catalogId) })).filter(({ catalog }) => catalog && (type === 'all' || catalog.type === type) && (rarity === 'all' || catalog.rarity === rarity) && `${catalog.name} ${catalog.type} ${catalog.secondaryStat}`.toLowerCase().includes(deferred)), [deferred, owned, rarity, type])
+  const available = weaponCatalog.filter((entry) => `${entry.name} ${entry.type}`.toLowerCase().includes(pickerQuery.toLowerCase()))
+  const add = async (catalogId: string) => { await db.weapons.add({ id: crypto.randomUUID(), catalogId, level: 1, rank: 1, locked: false, createdAt: Date.now() }); setPickerOpen(false); await refresh() }
+  const update = async (item: OwnedWeapon, patch: Partial<OwnedWeapon>) => { await db.weapons.update(item.id, patch); await refresh() }
+  const equipCard = async (item: OwnedWeapon, characterId: string) => {
+    await db.weapons.update(item.id, { equippedBy: characterId || undefined })
+    const character = characters.find((entry) => entry.id === characterId)
+    if (character) {
+      const build = builds.find((entry) => entry.resonatorId === character.catalogId)
+      if (build) await db.builds.update(build.id, { weaponId: item.id })
+      else await db.builds.add({ id: crypto.randomUUID(), name: `${character.catalogId} build`, resonatorId: character.catalogId, weaponId: item.id, echoIds: [], level: character.level, skillLevel: 1 })
+    }
+    await refresh()
+  }
+  return <><Panel className="owned-add"><div><span className="eyebrow">Weapon collection</span><strong>Manage each owned weapon copy.</strong></div><button className="primary" onClick={() => setPickerOpen(true)}><Icon name="plus"/>Add weapon</button></Panel><Panel className="owned-filter chip-toolbar"><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search weapons..."/></label><Chips label="Type" values={[...new Set(weaponCatalog.map((item) => item.type))]} selected={type} onChange={setType}/><Chips label="Rarity" values={[5, 4, 3, 2, 1]} selected={rarity} onChange={setRarity}/><span>{visible.length} / {owned.length}</span></Panel><div className="owned-grid">{visible.map(({ item, catalog }) => catalog && <article className="owned-card weapon-owned clickable" key={item.id} onClick={() => setSelected(item)}><div className="owned-art"><img src={catalog.iconSourceUrl} alt=""/><span className="weapon-rarity">{'★'.repeat(catalog.rarity)}</span></div><div className="owned-copy weapon-owned-copy"><div className="weapon-card-heading"><h2>{catalog.name}</h2><span>Lv. {item.level} · R{item.rank}</span></div><div className="weapon-card-stats"><p><span>ATK</span><strong>{catalog.baseAtk}</strong></p><p><span>{catalog.secondaryStat}</span><strong>{catalog.secondaryStatValue}</strong></p></div><div className="weapon-card-passive"><b>{catalog.passiveName}</b><p>{catalog.passiveEffects[item.rank - 1]}</p></div><label className="weapon-card-equip" onClick={(event) => event.stopPropagation()}>Equipped by<select value={item.equippedBy ?? ''} onChange={(event) => void equipCard(item, event.target.value)}><option value="">Unequipped</option>{characters.map((character) => { const entry = characterCatalog.find((candidate) => candidate.id === character.catalogId); return entry?.weaponType.toLowerCase() === catalog.type.toLowerCase() ? <option key={character.id} value={character.id}>{entry.name}</option> : null })}</select></label><footer><button className="text-button" onClick={() => void update(item, { locked: !item.locked })}><Icon name="lock"/>{item.locked ? 'Locked' : 'Unlocked'}</button><button className="text-button" disabled={item.locked || Boolean(item.equippedBy)} onClick={async () => { await db.weapons.delete(item.id); await refresh() }}><Icon name="trash"/>Remove</button></footer></div></article>)}</div>{pickerOpen && <CatalogPicker title="Choose a weapon" query={pickerQuery} setQuery={setPickerQuery} onClose={() => setPickerOpen(false)}>{available.map((entry) => <button className="catalog-choice weapon-choice" key={entry.id} onClick={() => void add(entry.id)}><img src={entry.iconSourceUrl} alt=""/><span><strong>{entry.name}</strong><small>{entry.type} · ATK {entry.baseAtk}</small><b>{'★'.repeat(entry.rarity)}</b></span></button>)}</CatalogPicker>}{selected && <WeaponDetail weapon={selected} characters={characters} builds={builds} refresh={refresh} onClose={() => setSelected(null)}/>}</>
+}

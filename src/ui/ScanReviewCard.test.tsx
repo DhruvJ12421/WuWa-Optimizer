@@ -10,7 +10,8 @@ const candidate = (valid: boolean): ScanCandidate => ({
     name: { value: valid ? 'Hooscamp' : 'Unknown Echo', confidence: .2 },
     cost: { value: 1, confidence: 1 }, rarity: { value: 5, confidence: 1 }, level: { value: 25, confidence: 1 },
     sonata: { value: valid ? 'Lingering Tunes' : 'Unknown Sonata', confidence: .2 },
-    mainStat: { value: { key: 'atkPercent', value: 18 }, confidence: 1 }, subStats: [], equippedBy: { value: '', confidence: 0.25 }
+    mainStat: { value: { key: 'atkPercent', value: 18 }, confidence: 1 }, subStats: [], equippedBy: { value: '', confidence: 0.25 },
+    locked: { value: false, confidence: 1 }, excluded: { value: false, confidence: 1 }
   }
 })
 
@@ -30,7 +31,8 @@ describe('scan review checkpoint', () => {
     const onSave = vi.fn()
     render(<Harness initial={candidate(false)} onSave={onSave}/>)
     fireEvent.change(screen.getByLabelText(/Name/), { target: { value: 'Hooscamp' } })
-    fireEvent.change(screen.getByLabelText(/Sonata/), { target: { value: 'Lingering Tunes' } })
+    fireEvent.click(screen.getByRole('button', { name: /Sonata/ }))
+    fireEvent.click(screen.getByText('Lingering Tunes'))
     fireEvent.click(screen.getByRole('button', { name: 'Approve & save' }))
     expect(onSave).toHaveBeenCalledOnce()
   })

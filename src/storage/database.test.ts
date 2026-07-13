@@ -10,12 +10,12 @@ describe('local account persistence', () => {
 
   afterAll(() => db.close())
 
-  it('repairs missing seed records even when settings already exist', async () => {
+  it('creates settings without seeding fabricated builds or teams', async () => {
     await ensureSeedData()
     await db.builds.clear()
     await ensureSeedData()
-    expect(await db.builds.count()).toBe(3)
-    expect(await db.teams.count()).toBe(1)
+    expect(await db.builds.count()).toBe(0)
+    expect(await db.teams.count()).toBe(0)
   })
 
   it('round-trips a versioned account document atomically', async () => {
@@ -23,7 +23,7 @@ describe('local account persistence', () => {
     const exported = await exportAccount()
     expect(validateAccount(exported)).toBe(true)
     await importAccount(exported)
-    expect((await exportAccount()).builds).toHaveLength(3)
+    expect((await exportAccount()).builds).toHaveLength(0)
   })
 
   it('rejects malformed nested records', () => {

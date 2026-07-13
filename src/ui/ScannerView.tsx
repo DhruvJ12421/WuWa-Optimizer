@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { captureEchoPanel, cropScreenshot, fileToDataUrl, probeEchoPanel, requestGameWindow, stopGameWindow } from '../scanner/capture'
 import { scanEnglishEcho, warmEnglishOcr } from '../scanner/ocr'
 import { candidateErrors, candidateToEcho, parseEchoText } from '../scanner/parser'
@@ -11,7 +11,7 @@ import { ScanReviewCard } from './ScanReviewCard'
 const manualText = `Unknown Echo\nCost 1\n5 Star\nLv. 0\nUnknown Sonata\nATK % 18.0%`
 type QueuedScan = { dataUrl: string; source: ScanCandidate['source'] }
 
-export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[]; refresh: () => Promise<void>; scanIntervalMs: number }) {
+export function ScannerView({ echoes, refresh, scanIntervalMs, onSessionRiskChange }: { echoes: Echo[]; refresh: () => Promise<void>; scanIntervalMs: number; onSessionRiskChange?: (atRisk: boolean) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -24,6 +24,10 @@ export function ScannerView({ echoes, refresh, scanIntervalMs }: { echoes: Echo[
   const [status, setStatus] = useState('Idle')
   const [error, setError] = useState('')
   const [dropActive, setDropActive] = useState(false)
+
+  useLayoutEffect(() => {
+    onSessionRiskChange?.(streaming || candidates.length > 0 || scanning.current || pendingScans.current.length > 0)
+  })
 
   const markDuplicate = (candidate: ScanCandidate) => {
     const duplicate = echoes.find((echo) => echo.name === candidate.fields.name.value && echo.level === candidate.fields.level.value && echo.cost === candidate.fields.cost.value && echo.mainStat.key === candidate.fields.mainStat.value.key && echo.mainStat.value === candidate.fields.mainStat.value.value)
