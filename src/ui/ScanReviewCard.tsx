@@ -1,45 +1,125 @@
-import { statLabels } from '../game-data'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { characterCatalog, echoCatalog, statLabels } from '../game-data'
 import { candidateErrors } from '../scanner/parser'
-import type { ScanCandidate, StatKey } from '../domain/types'
+import type { Echo, ScanCandidate, StatKey } from '../domain/types'
 import { tunableRolls } from '../game-data/tunable-rolls'
-import { mainStatKeysByCost } from '../game-data/echo-main-stats'
-import { Confidence, Panel } from './components'
+import { fixedSecondaryMainStat, mainStatKeysByCost, maxLevelByRarity, maxSubStatsForLevel, normalizeEchoMainStat } from '../game-data/echo-main-stats'
+import { Confidence, formatStat, Panel } from './components'
 import { SonataPicker } from './SonataPicker'
+import type { DiagnosticScanCandidate } from '../scanner/types'
 
-const statKeys = Object.keys(statLabels) as StatKey[]
+const subStatKeys = Object.keys(tunableRolls) as StatKey[]
+const levelStops = [0, 5, 10, 15, 20, 25]
 
-export function ScanReviewCard({ candidate, onChange, onDiscard, onSave }: {
-  candidate: ScanCandidate
-  onChange: (candidate: ScanCandidate) => void
+function EchoPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = echoCatalog.find((entry) => entry.name === value)
+  const options = useMemo(() => echoCatalog.filter((entry) => `${entry.name} ${entry.cost} ${entry.sonatas.join(' ')}`.toLowerCase().includes(query.toLowerCase())), [query])
+  useEffect(() => {
+    if (!open) return
+    const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [open])
+  return <div className="echo-search-picker scan-echo-picker" ref={ref}>
+    <button type="button" className="echo-search-trigger" aria-label={`Name ${value}`} aria-expanded={open} onClick={() => { setOpen((current) => !current); setQuery('') }}>{selected?.iconSourceUrl ? <img src={selected.iconSourceUrl} alt=""/> : <span>◇</span>}<b>{value}</b><i>⌄</i></button>
+    {open && <div className="echo-search-menu"><input autoFocus aria-label="Filter Echo names" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter Echoes by name, cost, or Sonata..."/><div>{options.map((entry) => <button type="button" className={entry.name === value ? 'active' : ''} key={entry.id ?? entry.name} onClick={() => { onChange(entry.name); setOpen(false) }}>{entry.iconSourceUrl ? <img src={entry.iconSourceUrl} alt="" loading="lazy"/> : <span>◇</span>}<b>{entry.name}</b><small>{entry.cost} cost · {entry.sonatas.join(' / ')}</small></button>)}</div></div>}
+  </div>
+}
+
+function CharacterPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = characterCatalog.find((entry) => entry.name === value)
+  const options = useMemo(() => characterCatalog
+    .filter((entry, index, entries) => entries.findIndex((candidate) => candidate.name === entry.name) === index)
+    .filter((entry) => `${entry.name} ${entry.element} ${entry.weaponType}`.toLowerCase().includes(query.toLowerCase())), [query])
+  useEffect(() => {
+    if (!open) return
+    const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [open])
+  return <div className="echo-search-picker scan-character-picker" ref={ref}>
+    <button type="button" className="echo-search-trigger" aria-label={`Equipped by ${value || 'Unassigned'}`} aria-expanded={open} onClick={() => { setOpen((current) => !current); setQuery('') }}>{selected ? <img src={selected.iconSourceUrl} alt=""/> : <span>—</span>}<b>{value || 'Unassigned'}</b><i>⌄</i></button>
+    {open && <div className="echo-search-menu"><input autoFocus aria-label="Filter characters" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter characters..."/><div><button type="button" className={!value ? 'active' : ''} onClick={() => { onChange(''); setOpen(false) }}><span>—</span><b>Unassigned</b><small>No character</small></button>{options.map((entry) => <button type="button" className={entry.name === value ? 'active' : ''} key={entry.name} onClick={() => { onChange(entry.name); setOpen(false) }}><img src={entry.iconSourceUrl} alt="" loading="lazy"/><b>{entry.name}</b><small>{entry.element} · {entry.weaponType}</small></button>)}</div></div>}
+  </div>
+}
+
+export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selected, onSelect, onRerunField, onMarkDuplicate, onCopyDiagnostic }: {
+  candidate: DiagnosticScanCandidate
+  onChange: (candidate: DiagnosticScanCandidate) => void
   onDiscard: () => void
   onSave: () => void
+  selected?: boolean
+  onSelect?: (selected: boolean) => void
+  onRerunField?: (regionId: string) => void
+  onMarkDuplicate?: () => void
+  onCopyDiagnostic?: (includeImages: boolean) => void
 }) {
   const errors = candidateErrors(candidate)
-  const setField = (field: 'name' | 'sonata' | 'equippedBy', value: string) => onChange({ ...candidate, fields: { ...candidate.fields, [field]: { ...candidate.fields[field], value, confidence: 1 } } })
-  const setNumberField = (field: 'level' | 'cost' | 'rarity', value: number) => onChange({ ...candidate, fields: { ...candidate.fields, [field]: { ...candidate.fields[field], value, confidence: 1 } } } as ScanCandidate)
-  const setMainStat = (patch: Partial<{ key: StatKey; value: number }>) => onChange({ ...candidate, fields: { ...candidate.fields, mainStat: { ...candidate.fields.mainStat, confidence: 1, value: { ...candidate.fields.mainStat.value, ...patch } } } })
-  const setSubStat = (index: number, patch: Partial<{ key: StatKey; value: number }>) => onChange({ ...candidate, fields: { ...candidate.fields, subStats: candidate.fields.subStats.map((field, fieldIndex) => fieldIndex === index ? { ...field, confidence: 1, value: { ...field.value, ...patch } } : field) } })
-  const removeSubStat = (index: number) => onChange({ ...candidate, fields: { ...candidate.fields, subStats: candidate.fields.subStats.filter((_, fieldIndex) => fieldIndex !== index) } })
-  const addSubStat = () => onChange({ ...candidate, fields: { ...candidate.fields, subStats: [...candidate.fields.subStats, { value: { key: 'critRate', value: 0 }, confidence: 1 }] } })
-  const setState = (field: 'locked' | 'excluded', value: boolean) => onChange({ ...candidate, fields: { ...candidate.fields, [field]: { value, confidence: 1 }, ...(value ? { [field === 'locked' ? 'excluded' : 'locked']: { value: false, confidence: 1 } } : {}) } })
+  const selectedEcho = echoCatalog.find((entry) => entry.name === candidate.fields.name.value)
+  const rarityOptions = selectedEcho?.rarities?.filter((value): value is Echo['rarity'] => [1, 2, 3, 4, 5].includes(value)) ?? [1, 2, 3, 4, 5] as Echo['rarity'][]
+  const maxLevel = maxLevelByRarity[candidate.fields.rarity.value]
+  const maxSubStats = maxSubStatsForLevel(candidate.fields.level.value)
+  const secondary = fixedSecondaryMainStat({ cost: candidate.fields.cost.value, rarity: candidate.fields.rarity.value, level: candidate.fields.level.value })
+  const updateFields = (fields: Partial<ScanCandidate['fields']>) => onChange({ ...candidate, fields: { ...candidate.fields, ...fields } })
+  const normalizedMain = (cost: Echo['cost'], rarity: Echo['rarity'], level: number, key = candidate.fields.mainStat.value.key) => normalizeEchoMainStat({ cost, rarity, level, mainStat: { key, value: candidate.fields.mainStat.value.value } })
+  const selectEcho = (name: string) => {
+    const entry = echoCatalog.find((item) => item.name === name)
+    if (!entry) return
+    const sonata = entry.sonatas.includes(candidate.fields.sonata.value) ? candidate.fields.sonata.value : entry.sonatas[0] ?? candidate.fields.sonata.value
+    const supportedRarities = entry.rarities?.filter((value): value is Echo['rarity'] => [1, 2, 3, 4, 5].includes(value)) ?? [1, 2, 3, 4, 5] as Echo['rarity'][]
+    const rarity = supportedRarities.includes(candidate.fields.rarity.value) ? candidate.fields.rarity.value : Math.max(...supportedRarities) as Echo['rarity']
+    const level = Math.min(candidate.fields.level.value, maxLevelByRarity[rarity])
+    updateFields({
+      name: { value: name, confidence: 1 },
+      cost: { value: entry.cost, confidence: 1 },
+      rarity: { value: rarity, confidence: 1 },
+      level: { value: level, confidence: 1 },
+      sonata: { value: sonata, confidence: 1 },
+      mainStat: { value: normalizedMain(entry.cost, rarity, level), confidence: 1 },
+      subStats: candidate.fields.subStats.slice(0, maxSubStatsForLevel(level))
+    })
+  }
+  const setRarity = (rarity: Echo['rarity']) => {
+    const level = Math.min(candidate.fields.level.value, maxLevelByRarity[rarity])
+    updateFields({ rarity: { value: rarity, confidence: 1 }, level: { value: level, confidence: 1 }, mainStat: { value: normalizedMain(candidate.fields.cost.value, rarity, level), confidence: 1 }, subStats: candidate.fields.subStats.slice(0, maxSubStatsForLevel(level)) })
+  }
+  const setLevel = (level: number) => updateFields({ level: { value: level, confidence: 1 }, mainStat: { value: normalizedMain(candidate.fields.cost.value, candidate.fields.rarity.value, level), confidence: 1 }, subStats: candidate.fields.subStats.slice(0, maxSubStatsForLevel(level)) })
+  const setMainStat = (key: StatKey) => updateFields({ mainStat: { value: normalizedMain(candidate.fields.cost.value, candidate.fields.rarity.value, candidate.fields.level.value, key), confidence: 1 } })
+  const setSubStat = (index: number, key: StatKey, rollIndex?: number) => updateFields({ subStats: candidate.fields.subStats.map((field, fieldIndex) => {
+    if (fieldIndex !== index) return field
+    const rolls = tunableRolls[key] ?? []
+    const currentIndex = rolls.findIndex((roll) => Math.abs(roll.value - field.value.value) < .001)
+    return { value: { key, value: rolls[Math.max(0, rollIndex ?? currentIndex)]?.value ?? 0 }, confidence: 1 }
+  }) })
+  const setState = (field: 'locked' | 'excluded', value: boolean) => updateFields({ [field]: { value, confidence: 1 }, ...(value ? { [field === 'locked' ? 'excluded' : 'locked']: { value: false, confidence: 1 } } : {}) })
+  const lowConfidence = Object.values(candidate.evidence ?? {}).some((entry) => entry.confidence < .55 || !entry.validation.valid)
+  const [evidenceOpen, setEvidenceOpen] = useState(() => errors.length > 0 || lowConfidence)
 
-  return <Panel className="review-card">
-    {candidate.imageDataUrl ? <img src={candidate.imageDataUrl} alt="Captured Echo detail region"/> : <div className="manual-preview">MANUAL</div>}
+  return <Panel className={`review-card ${errors.length === 0 && !lowConfidence && !evidenceOpen ? 'valid-compact' : ''}`}>
+    <div className="review-preview">{onSelect && <label className="review-select"><input type="checkbox" checked={Boolean(candidate.selected)} onChange={(event) => onSelect(event.target.checked)}/>Select</label>}{candidate.imageDataUrl ? <img src={candidate.imageDataUrl} alt="Captured Echo detail region"/> : <div className="manual-preview">MANUAL</div>}<button className="text-button" type="button" onClick={() => setEvidenceOpen((open) => !open)}>{evidenceOpen ? 'Hide field evidence' : 'Show field evidence'}</button></div>
     <div className="review-fields">
-      <label>Name <Confidence value={candidate.fields.name.confidence}/><input value={candidate.fields.name.value} onChange={(event) => setField('name', event.target.value)}/></label>
-      <div className="field-row">
-        <label>Cost <Confidence value={candidate.fields.cost.confidence}/><select value={candidate.fields.cost.value} onChange={(event) => setNumberField('cost', Number(event.target.value))}><option value="1">1</option><option value="3">3</option><option value="4">4</option></select></label>
-        <label>Level <Confidence value={candidate.fields.level.confidence}/><input type="number" min="0" max="25" value={candidate.fields.level.value} onChange={(event) => setNumberField('level', Number(event.target.value))}/></label>
-        <label>Rarity <Confidence value={candidate.fields.rarity.confidence}/><select value={candidate.fields.rarity.value} onChange={(event) => setNumberField('rarity', Number(event.target.value))}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} star</option>)}</select></label>
+      <label className="scan-name-field">Name <Confidence value={candidate.fields.name.confidence}/><EchoPicker value={candidate.fields.name.value} onChange={selectEcho}/></label>
+      <label>Sonata <Confidence value={candidate.fields.sonata.confidence}/><SonataPicker id={`sonata-options-${candidate.id}`} value={candidate.fields.sonata.value} allowedNames={selectedEcho?.sonatas} onChange={(value) => updateFields({ sonata: { value, confidence: 1 } })}/></label>
+      <label>Rarity <Confidence value={candidate.fields.rarity.confidence}/><select value={candidate.fields.rarity.value} onChange={(event) => setRarity(Number(event.target.value) as Echo['rarity'])}>{rarityOptions.map((value) => <option key={value} value={value}>{value} star</option>)}</select></label>
+      <label>Cost <Confidence value={candidate.fields.cost.confidence}/><div className="scan-readonly-field"><b>{candidate.fields.cost.value}</b><small>From Echo catalog</small></div></label>
+      <label>Equipped by <Confidence value={candidate.fields.equippedBy.confidence}/><CharacterPicker value={candidate.fields.equippedBy.value} onChange={(value) => updateFields({ equippedBy: { value, confidence: 1 } })}/></label>
+      <div className="echo-level-editor scan-level-editor"><label>Level <Confidence value={candidate.fields.level.confidence}/><strong>+{candidate.fields.level.value}</strong><input aria-label="Level" type="range" min="0" max={maxLevel} value={candidate.fields.level.value} onChange={(event) => setLevel(Number(event.target.value))}/></label><div>{levelStops.filter((level) => level <= maxLevel).map((level) => <button type="button" className={candidate.fields.level.value === level ? 'active' : ''} onClick={() => setLevel(level)} key={level}>+{level}</button>)}</div></div>
+      <div className="echo-state-review"><span>In-game state</span><label><input type="checkbox" checked={candidate.fields.locked.value} onChange={(event) => setState('locked', event.target.checked)}/>Locked <Confidence value={candidate.fields.locked.confidence}/></label><label><input type="checkbox" checked={candidate.fields.excluded.value} onChange={(event) => setState('excluded', event.target.checked)}/>Discarded <Confidence value={candidate.fields.excluded.confidence}/></label><small>Read independently from the C lock and Z discard icons. Confidence now reflects the captured icon pixels.</small></div>
+      <div className="echo-main-stat-group scan-main-stat-group">
+        <div className="echo-stat-line main"><span>Primary <Confidence value={candidate.fields.mainStat.confidence}/></span><select value={candidate.fields.mainStat.value.key} onChange={(event) => setMainStat(event.target.value as StatKey)}>{mainStatKeysByCost[candidate.fields.cost.value].map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><div className="echo-fixed-stat"><span>Level value</span><strong>{formatStat(candidate.fields.mainStat.value.key, candidate.fields.mainStat.value.value)}</strong></div></div>
+        <div className="echo-stat-line secondary-main"><span>Secondary</span><div className="echo-readonly-name">{statLabels[secondary.key]}</div><div className="echo-fixed-stat"><span>Fixed value</span><strong>{formatStat(secondary.key, secondary.value)}</strong></div></div>
       </div>
-      <label>Sonata <Confidence value={candidate.fields.sonata.confidence}/><SonataPicker id={`sonata-options-${candidate.id}`} value={candidate.fields.sonata.value} onChange={(value) => setField('sonata', value)}/></label>
-      <label>Equipped by <Confidence value={candidate.fields.equippedBy.confidence}/><input value={candidate.fields.equippedBy.value} placeholder="Unassigned" onChange={(event) => setField('equippedBy', event.target.value)}/></label>
-      <div className="echo-state-review"><span>In-game state</span><label><input type="checkbox" checked={candidate.fields.locked.value} onChange={(event) => setState('locked', event.target.checked)}/>Locked <Confidence value={candidate.fields.locked.confidence}/></label><label><input type="checkbox" checked={candidate.fields.excluded.value} onChange={(event) => setState('excluded', event.target.checked)}/>Discarded <Confidence value={candidate.fields.excluded.confidence}/></label><small>Read from the C lock and Z discard icons. These states cannot both be active.</small></div>
-      <div className="stat-editor main"><span>Main stat <Confidence value={candidate.fields.mainStat.confidence}/></span><select value={candidate.fields.mainStat.value.key} onChange={(event) => setMainStat({ key: event.target.value as StatKey })}>{mainStatKeysByCost[candidate.fields.cost.value].map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><input type="number" min="0" step="0.1" value={candidate.fields.mainStat.value.value} onChange={(event) => setMainStat({ value: Number(event.target.value) })}/></div>
-      <div className="substat-editor"><div className="substat-head"><span>Substats ({candidate.fields.subStats.length}/5) · exact rolls</span><button type="button" className="text-button" disabled={candidate.fields.subStats.length >= 5} onClick={addSubStat}>+ Add substat</button></div>{candidate.fields.subStats.map((field, index) => { const listId = `roll-options-${candidate.id}-${index}`; return <div className="stat-editor" key={`${candidate.id}-${index}`}><Confidence value={field.confidence}/><select value={field.value.key} onChange={(event) => setSubStat(index, { key: event.target.value as StatKey })}>{statKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><input type="number" min="0" step="0.1" list={listId} value={field.value.value} onChange={(event) => setSubStat(index, { value: Number(event.target.value) })}/><datalist id={listId}>{tunableRolls[field.value.key]?.map((roll) => <option key={roll.value} value={roll.value}/>)}</datalist><button type="button" className="text-button" onClick={() => removeSubStat(index)}>Remove</button></div> })}</div>
+      <div className="echo-editor-substats scan-substats"><header><div><span className="eyebrow">Fixed roll values</span><h3>Substats</h3></div><b>{candidate.fields.subStats.length}/{maxSubStats}</b></header>{candidate.fields.subStats.map((field, index) => { const rolls = tunableRolls[field.value.key] ?? []; const rollIndex = Math.max(0, rolls.findIndex((roll) => Math.abs(roll.value - field.value.value) < .001)); return <div className="echo-substat-row" key={`${candidate.id}-${index}`}><div className="echo-stat-line"><span>#{index + 1} <Confidence value={field.confidence}/></span><select value={field.value.key} onChange={(event) => setSubStat(index, event.target.value as StatKey, 0)}>{subStatKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><strong>{formatStat(field.value.key, rolls[rollIndex]?.value ?? field.value.value)}</strong><button type="button" className="text-button" onClick={() => updateFields({ subStats: candidate.fields.subStats.filter((_, fieldIndex) => fieldIndex !== index) })}>Remove</button></div><div className="echo-roll-slider"><input aria-label={`Substat ${index + 1} roll`} type="range" min="0" max={Math.max(0, rolls.length - 1)} step="1" value={rollIndex} onChange={(event) => setSubStat(index, field.value.key, Number(event.target.value))}/><div>{rolls.map((roll, point) => <i className={point === rollIndex ? 'active' : ''} key={roll.value}>{roll.value}</i>)}</div></div></div> })}<button type="button" className="secondary add-substat" disabled={candidate.fields.subStats.length >= maxSubStats} onClick={() => updateFields({ subStats: [...candidate.fields.subStats, { value: { key: 'critRate', value: tunableRolls.critRate?.[0].value ?? 6.3 }, confidence: 1 }] })}>+ Add substat</button></div>
       {candidate.duplicateOf && <div className="notice warning">Possible duplicate. Saving creates a separate inventory item.</div>}
       {errors.length > 0 && <div className="notice error">{errors.join(' ')}</div>}
+      {evidenceOpen && candidate.evidence && <div className="scan-evidence-drawer"><header><div><span className="eyebrow">Local diagnostics</span><h3>Field evidence</h3></div><div>{onCopyDiagnostic && <><button type="button" className="text-button" onClick={() => onCopyDiagnostic(false)}>Copy report</button><button type="button" className="text-button" onClick={() => onCopyDiagnostic(true)}>Copy with images</button></>}</div></header><div className="scan-evidence-grid">{Object.values(candidate.evidence).map((evidence) => <article className={evidence.validation.valid ? '' : 'invalid'} key={evidence.region.id}><header><b>{evidence.region.label}</b><span>{Math.round(evidence.confidence * 100)}%</span></header><div><figure><img src={evidence.originalCrop} alt={`${evidence.region.label} original crop`}/><figcaption>Original</figcaption></figure><figure><img src={evidence.processedCrop} alt={`${evidence.region.label} processed crop`}/><figcaption>{evidence.preprocessing}</figcaption></figure></div><code>{evidence.rawOcr.trim() || 'Visual classifier'}</code><small>{evidence.workerId} · {Math.round(evidence.processingMs)} ms</small>{evidence.validation.messages.map((message) => <p key={message}>{message}</p>)}{onRerunField && <footer><button type="button" className="text-button" onClick={() => onRerunField(evidence.region.id)}>Re-run field</button></footer>}</article>)}</div></div>}
     </div>
-    <div className="review-actions"><button className="text-button" onClick={onDiscard}>Discard</button><button className="primary" disabled={errors.length > 0} onClick={onSave}>Approve & save</button></div>
+    <div className="review-actions">{onMarkDuplicate && <button className="text-button" onClick={onMarkDuplicate}>Mark duplicate</button>}<button className="text-button" onClick={onDiscard}>Discard</button><button className="primary" disabled={errors.length > 0} onClick={onSave}>Approve & save</button></div>
   </Panel>
 }

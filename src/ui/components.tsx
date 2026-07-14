@@ -1,5 +1,7 @@
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from 'react'
 import { echoCatalog, statLabels } from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { effectiveSubStats, fixedSecondaryMainStat } from '../game-data/echo-main-stats'
 import { substatTierPoints } from '../domain/echo-grade'
 import type { Echo, StatKey } from '../domain/types'
 
@@ -36,11 +38,13 @@ export function StatValue({ label, value, accent = false }: { label: string; val
 
 export function EchoMiniCard({ echo, selected, onClick, actions, equipment, grade, scoreLabel = 'ROLL QUALITY' }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; equipment?: ReactNode; grade?: string; scoreLabel?: string }) {
   const catalog = echoCatalog.find((item) => item.name === echo.name)
+  const secondary = fixedSecondaryMainStat(echo)
+  const gradeTone = grade?.trim().split(/\s+/).at(-1)?.toLowerCase()
   return <article className={`echo-card ${selected ? 'selected' : ''} ${echo.excluded ? 'excluded' : ''}`} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick() } } : undefined}>
-    <div className="echo-card-head"><div className="echo-portrait">{catalog?.iconSourceUrl ? <img src={catalog.iconSourceUrl} alt="" loading="lazy"/> : <span>◎</span>}<b className={`cost-orb cost-${echo.cost}`}>{echo.cost}</b></div><div className="echo-identity"><h3>{echo.name}</h3><span>{echo.sonata}</span><small>LV. {echo.level} · {'★'.repeat(echo.rarity)}</small></div>{echo.locked && <Icon name="lock" />}</div>
-    <div className="main-stat"><span><i>✦</i>{statLabels[echo.mainStat.key]}</span><strong>{formatStat(echo.mainStat.key, echo.mainStat.value)}</strong></div>
-    <div className="substats">{echo.subStats.map((stat, index) => { const tier = substatTierPoints(stat.key, stat.value); return <div key={`${stat.key}-${index}`}><span><i>{statGlyph(stat.key)}</i>{statLabels[stat.key]}</span><b className={`roll-tier-${tier}`} title={tier ? `Roll tier ${tier}/8` : 'Unknown roll tier'}>{formatStat(stat.key, stat.value)}</b></div> })}</div>
-    <footer>{grade && <><span>{scoreLabel}</span><strong className="echo-score">{grade}</strong></>}{actions}</footer>
+    <div className="echo-card-head"><div className="echo-portrait">{catalog?.iconSourceUrl ? <img src={catalog.iconSourceUrl} alt="" loading="lazy"/> : <span>◎</span>}<b className={`cost-orb cost-${echo.cost}`}>{echo.cost}</b></div><div className="echo-identity"><h3>{echo.name}</h3><span className="echo-sonata">{generatedSonataIconSources[echo.sonata] && <img src={generatedSonataIconSources[echo.sonata]} alt="" loading="lazy"/>}<b>{echo.sonata}</b></span><small>LV. {echo.level} · <b className="echo-stars">{'★'.repeat(echo.rarity)}</b></small></div>{echo.locked && <Icon name="lock" />}</div>
+    <div className="echo-main-stats"><div className="main-stat"><span><i>✦</i>{statLabels[echo.mainStat.key]}</span><strong>{formatStat(echo.mainStat.key, echo.mainStat.value)}</strong></div><div className="secondary-main-stat"><span><i>◆</i>{statLabels[secondary.key]}</span><strong>{formatStat(secondary.key, secondary.value)}</strong></div></div>
+    <div className="substats">{effectiveSubStats(echo).map((stat, index) => { const tier = substatTierPoints(stat.key, stat.value); return <div key={`${stat.key}-${index}`}><span><i>{statGlyph(stat.key)}</i>{statLabels[stat.key]}</span><b className={`roll-tier-${tier}`} title={tier ? `Roll tier ${tier}/8` : 'Unknown roll tier'}>{formatStat(stat.key, stat.value)}</b></div> })}</div>
+    <footer>{grade && <><span>{scoreLabel}</span><strong className={`echo-score ${gradeTone ? `grade-${gradeTone}` : ''}`}>{grade}</strong></>}{actions}</footer>
     {equipment && <div className="echo-equipment">{equipment}</div>}
   </article>
 }

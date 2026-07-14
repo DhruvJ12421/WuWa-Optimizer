@@ -16,14 +16,45 @@ export interface PanelProbe {
 // Compact Echo details column, relative to a calibrated 16:9 game frame.
 export const ECHO_CROP = { x: 0.77, y: 0.12, width: 0.22, height: 0.86 }
 
-function cropForSize(width: number, height: number) {
+function detectedRightPanelCrop(source: CanvasImageSource, width: number, height: number) {
+  const sample = document.createElement('canvas')
+  sample.width = 384
+  sample.height = 96
+  const context = sample.getContext('2d', { willReadFrequently: true })
+  if (!context) return ECHO_CROP
+  context.drawImage(source, 0, 0, width, height, 0, 0, sample.width, sample.height)
+  const pixels = context.getImageData(0, 0, sample.width, sample.height).data
+  const columnLightness = (x: number) => {
+    let total = 0, count = 0
+    for (let y = 12; y < 88; y += 1) {
+      const offset = (y * sample.width + x) * 4
+      total += pixels[offset] * .2126 + pixels[offset + 1] * .7152 + pixels[offset + 2] * .0722
+      count += 1
+    }
+    return total / count
+  }
+  let best = { x: 0, score: 0 }
+  for (let x = Math.round(sample.width * .56); x <= Math.round(sample.width * .84); x += 1) {
+    const center = (columnLightness(x - 1) + columnLightness(x) + columnLightness(x + 1)) / 3
+    const sides = (columnLightness(x - 5) + columnLightness(x + 5)) / 2
+    const score = sides - center
+    if (score > best.score) best = { x, score }
+  }
+  if (best.score < 6) return ECHO_CROP
+  const divider = best.x / sample.width
+  return divider < .7
+    ? { x: Math.max(.6, divider + .004), y: .08, width: Math.min(.39, .99 - divider), height: .86 }
+    : { x: divider + .004, y: .1, width: .986 - divider, height: .88 }
+}
+
+function cropForSource(source: CanvasImageSource, width: number, height: number) {
   const calibrated = Math.abs(width / height - 16 / 9) < 0.08
-  return { calibrated, crop: calibrated ? ECHO_CROP : { x: 0, y: 0, width: 1, height: 1 } }
+  return { calibrated, crop: calibrated ? detectedRightPanelCrop(source, width, height) : { x: 0, y: 0, width: 1, height: 1 } }
 }
 
 export function probeEchoPanel(video: HTMLVideoElement): PanelProbe | undefined {
   if (!video.videoWidth || !video.videoHeight) return
-  const { calibrated, crop } = cropForSize(video.videoWidth, video.videoHeight)
+  const { calibrated, crop } = cropForSource(video, video.videoWidth, video.videoHeight)
   const sample = document.createElement('canvas')
   sample.width = 32
   sample.height = 16
@@ -51,7 +82,7 @@ export function stopGameWindow(stream: MediaStream) {
 export function captureEchoPanel(video: HTMLVideoElement): CapturedPanel | undefined {
   const probe = probeEchoPanel(video)
   if (!probe) return
-  const { calibrated, crop } = cropForSize(probe.sourceWidth, probe.sourceHeight)
+  const { calibrated, crop } = cropForSource(video, probe.sourceWidth, probe.sourceHeight)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(video.videoWidth * crop.width)
   canvas.height = Math.round(video.videoHeight * crop.height)
@@ -82,7 +113,7 @@ export async function cropScreenshot(dataUrl: string): Promise<{ dataUrl: string
   const image = new Image()
   image.src = dataUrl
   await image.decode()
-  const { calibrated, crop } = cropForSize(image.naturalWidth, image.naturalHeight)
+  const { calibrated, crop } = cropForSource(image, image.naturalWidth, image.naturalHeight)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(image.naturalWidth * crop.width)
   canvas.height = Math.round(image.naturalHeight * crop.height)

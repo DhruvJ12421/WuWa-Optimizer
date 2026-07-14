@@ -1,12 +1,11 @@
 import type { Echo, StatKey } from './types'
 import { tunableRolls } from '../game-data/tunable-rolls'
+import { effectiveSubStats, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 
 export type EchoRollGrade = 'E' | 'D' | 'C' | 'B' | 'A' | 'S' | 'SS' | 'SSS'
 
 const FLAT_STAT_POINTS = 3
-const MAX_SUBSTATS = 5
 const MAX_TIER_POINTS = 8
-const MAX_ECHO_POINTS = MAX_SUBSTATS * MAX_TIER_POINTS
 
 export function substatTierPoints(key: StatKey, value: number) {
   if (key === 'hp' || key === 'atk' || key === 'def') return FLAT_STAT_POINTS
@@ -16,12 +15,13 @@ export function substatTierPoints(key: StatKey, value: number) {
   return tierIndex < 0 ? 0 : tierIndex + 1
 }
 
-export function echoRollPoints(echo: Pick<Echo, 'subStats'>) {
-  return echo.subStats.slice(0, MAX_SUBSTATS).reduce((sum, stat) => sum + substatTierPoints(stat.key, stat.value), 0)
+export function echoRollPoints(echo: Pick<Echo, 'level' | 'subStats'>) {
+  return effectiveSubStats(echo).reduce((sum, stat) => sum + substatTierPoints(stat.key, stat.value), 0)
 }
 
-export function echoRollQuality(echo: Pick<Echo, 'subStats'>) {
-  return echoRollPoints(echo) / MAX_ECHO_POINTS * 100
+export function echoRollQuality(echo: Pick<Echo, 'level' | 'subStats'>) {
+  const maximum = maxSubStatsForLevel(echo.level) * MAX_TIER_POINTS
+  return maximum ? echoRollPoints(echo) / maximum * 100 : 0
 }
 
 export function echoRollGrade(score: number): EchoRollGrade {

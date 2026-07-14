@@ -1,6 +1,6 @@
-import { echoCatalog, sonataNames, statAliases, type EchoCatalogEntry } from '../game-data'
+import { characterCatalog, echoCatalog, sonataNames, statAliases, type EchoCatalogEntry } from '../game-data'
 import { closestTunableRoll, exactTunableRoll, tunableRolls } from '../game-data/tunable-rolls'
-import { isMainStatAllowed, mainStatError, mainStatKeysByCost } from '../game-data/echo-main-stats'
+import { isMainStatAllowed, mainStatError, mainStatKeysByCost, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import type { Echo, ScanCandidate, StatKey, StatLine } from '../domain/types'
 
 export interface VisualRecognition {
@@ -106,10 +106,13 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const stats = detailLines.map(parseStatLine).filter((stat): stat is StatLine => Boolean(stat))
   const joined = lines.join(' ')
   const levelMatch = joined.match(/(?:Lv\.?|Level|\+)\s*(\d{1,2})/i)
+  const level = Number(levelMatch?.[1] ?? 0)
   const costMatch = joined.match(/Cost\s*([134])/i)
   const rarityMatch = joined.match(/([1-5])\s*(?:Star|★)/i)
   const equippedLine = [...lines].reverse().find((line) => /Equipp?e?d\s+by\s+/i.test(line))
   const equippedMatch = equippedLine?.match(/Equipp?e?d\s+by\s+([A-Za-z][A-Za-z .'-]{0,30})/i)
+  const equippedRaw = equippedMatch?.[1]?.trim() ?? ''
+  const equippedCatalog = equippedRaw ? closestName([equippedRaw], characterCatalog, (entry) => entry.name, 0.72) : undefined
   const catalog = catalogMatch(lines)
   const detectedName = lines.find((line) => !parseStatLine(line) && !/(level|cost|sonata|equipped|locked|echo skills)/i.test(line) && line.length > 2) ?? 'Unknown Echo'
   const name = catalog?.name ?? detectedName.replace(/\s*\+\s*\d{1,2}.*$/, '').trim()
@@ -120,7 +123,7 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const mainStatIndex = stats.findIndex((stat) => isMainStatAllowed(cost, stat.key))
   const mainStat = stats[mainStatIndex] ?? { key: mainStatKeysByCost[cost][0], value: 0 }
   const secondaryMainKey: StatKey = cost === 1 ? 'hp' : 'atk'
-  const subStats = stats.filter((stat, index) => index !== mainStatIndex && stat.key !== secondaryMainKey).slice(0, 5).map((stat) => {
+  const subStats = stats.filter((stat, index) => index !== mainStatIndex && stat.key !== secondaryMainKey).slice(0, maxSubStatsForLevel(level)).map((stat) => {
     const roll = closestTunableRoll(stat.key, stat.value)
     return { value: roll ? { ...stat, value: roll.value } : stat, confidence: roll ? (exactTunableRoll(stat.key, stat.value) ? 0.92 : 0.84) : 0.52, raw: String(stat.value) }
   })
@@ -131,11 +134,11 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
       name: { value: name, confidence: catalog ? 0.98 : confidence(name !== 'Unknown Echo', 0.72), raw: detectedName },
       cost: { value: cost, confidence: catalog ? 0.98 : confidence(Boolean(costMatch), 0.9), raw: costMatch?.[0] },
       rarity: { value: rarity, confidence: visual.rarity?.confidence ?? confidence(Boolean(rarityMatch), 0.85), raw: rarityMatch?.[0] },
-      level: { value: Number(levelMatch?.[1] ?? 0), confidence: confidence(Boolean(levelMatch), 0.92), raw: levelMatch?.[0] },
+      level: { value: level, confidence: confidence(Boolean(levelMatch), 0.92), raw: levelMatch?.[0] },
       sonata: { value: sonata, confidence: visualSonata?.confidence ?? (catalog?.sonatas.length === 1 ? 0.96 : confidence(sonata !== 'Unknown Sonata', 0.86)), raw: textSonata },
       mainStat: { value: mainStat, confidence: confidence(mainStatIndex >= 0, 0.9) },
       subStats,
-      equippedBy: { value: equippedMatch?.[1]?.trim() ?? '', confidence: confidence(Boolean(equippedMatch), 0.84), raw: equippedMatch?.[0] },
+      equippedBy: { value: equippedCatalog?.entry.name ?? equippedRaw, confidence: equippedCatalog ? Math.max(.84, equippedCatalog.score) : confidence(Boolean(equippedMatch), 0.72), raw: equippedMatch?.[0] },
       locked: { value: visual.excluded?.value ? false : (visual.locked?.value ?? false), confidence: visual.locked?.confidence ?? 0.25 },
       excluded: { value: visual.excluded?.value ?? false, confidence: visual.excluded?.confidence ?? 0.25 }
     }
@@ -147,9 +150,9 @@ export function candidateToEcho(candidate: ScanCandidate): Echo {
     id: uuid(), name: candidate.fields.name.value, cost: candidate.fields.cost.value,
     rarity: candidate.fields.rarity.value, level: candidate.fields.level.value,
     sonata: candidate.fields.sonata.value, mainStat: candidate.fields.mainStat.value,
-    subStats: candidate.fields.subStats.map((field) => field.value), locked: candidate.fields.locked.value, excluded: candidate.fields.excluded.value,
+    subStats: candidate.fields.subStats.slice(0, maxSubStatsForLevel(candidate.fields.level.value)).map((field) => field.value), locked: candidate.fields.locked.value, excluded: candidate.fields.excluded.value,
     equippedByName: candidate.fields.equippedBy.value.trim() || undefined,
-    createdAt: Date.now(), source: candidate.source === 'screen' ? 'scan' : candidate.source
+    createdAt: Date.now(), source: candidate.source === 'screen' || candidate.source === 'video' ? 'scan' : candidate.source
   }
 }
 
@@ -163,7 +166,8 @@ export function candidateErrors(candidate: ScanCandidate) {
   if (!Number.isFinite(candidate.fields.mainStat.value.value) || candidate.fields.mainStat.value.value < 0) errors.push('Main stat must be a non-negative number.')
   const invalidMainStat = mainStatError(candidate.fields.cost.value, candidate.fields.rarity.value, candidate.fields.level.value, candidate.fields.mainStat.value)
   if (invalidMainStat) errors.push(invalidMainStat)
-  if (candidate.fields.subStats.length > 5) errors.push('An Echo cannot have more than five substats.')
+  const maxSubStats = maxSubStatsForLevel(candidate.fields.level.value)
+  if (candidate.fields.subStats.length > maxSubStats) errors.push(`A level ${candidate.fields.level.value} Echo can only have ${maxSubStats} substat${maxSubStats === 1 ? '' : 's'}.`)
   if (candidate.fields.subStats.some((field) => !Number.isFinite(field.value.value) || field.value.value < 0)) errors.push('Substats must be non-negative numbers.')
   if (candidate.fields.subStats.some((field) => tunableRolls[field.value.key] && !exactTunableRoll(field.value.key, field.value.value))) errors.push('Each tunable substat must match an exact in-game roll value.')
   return errors

@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { characterCatalog, weaponCatalog } from '../game-data'
 import { db } from '../storage/database'
 import type { Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
@@ -68,10 +68,21 @@ function getWeaponStats(catalog: (typeof weaponCatalog)[number], level: number) 
   return catalog.levelStats.reduce((closest, stats) => Math.abs(stats.level - level) < Math.abs(closest.level - level) ? stats : closest)
 }
 
+function highlightRankValues(text: string) {
+  return text.split(/([+-]?\d+(?:\.\d+)?%?)/g).map((part, index) => /^[+-]?\d/.test(part) ? <mark className="rank-value" key={index}>{part}</mark> : part)
+}
+
 function CharacterEquipPicker({ value, options, onChange }: { value?: string; options: CompatibleCharacter[]; onChange: (characterId: string) => void }) {
   const [open, setOpen] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
   const selected = options.find(({ item }) => item.id === value)
-  return <div className="character-equip-picker" onClick={(event) => event.stopPropagation()}>
+  useEffect(() => {
+    if (!open) return
+    const closeOutside = (event: PointerEvent) => { if (!pickerRef.current?.contains(event.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [open])
+  return <div ref={pickerRef} className="character-equip-picker" onClick={(event) => event.stopPropagation()}>
     <button type="button" className="character-equip-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
       {selected ? <img src={selected.catalog.iconSourceUrl} alt=""/> : <span className="equip-empty">—</span>}<b>{selected?.catalog.name ?? 'Unequipped'}</b><i>⌄</i>
     </button>
@@ -106,7 +117,7 @@ function WeaponDetail({ weapon, characters, builds, refresh, onClose }: { weapon
     await refresh()
   }
   const update = async (patch: Partial<OwnedWeapon>) => { await db.weapons.update(weapon.id, patch); await refresh() }
-  return <div className="weapon-detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className={`weapon-detail rarity-${catalog.rarity}`} role="dialog" aria-modal="true" aria-label={`${catalog.name} details`}><header><div><span className="eyebrow">Weapon details</span><h2>{catalog.name}</h2></div><button className="close" onClick={onClose}>×</button></header><div className="weapon-detail-art"><img src={catalog.iconSourceUrl} alt=""/><span>{'★'.repeat(catalog.rarity)}</span><p>{catalog.description}</p></div><div className="weapon-detail-copy"><div className="weapon-edit-row"><label className="weapon-level-control">Level <strong>Lv. {weaponLevels[levelIndex]}</strong><input aria-label="Weapon level" type="range" min="0" max={weaponLevels.length - 1} step="1" value={levelIndex} onChange={(event) => void update({ level: weaponLevels[Number(event.target.value)] })}/><span><i>1</i><i>10</i><i>20</i><i>30</i><i>40</i><i>50</i><i>60</i><i>70</i><i>80</i><i>90</i></span></label><label className="weapon-rank-control">Rank<select value={weapon.rank} onChange={(event) => void update({ rank: Number(event.target.value) })}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>R{value}</option>)}</select></label><button className={weapon.locked ? 'weapon-lock-button locked' : 'weapon-lock-button'} onClick={() => void update({ locked: !weapon.locked })}><Icon name={weapon.locked ? 'lock' : 'unlock'}/>{weapon.locked ? 'Locked' : 'Unlocked'}</button></div><Panel className="weapon-main-stats"><span>Stats at level {weaponLevels[levelIndex]}</span><div><strong>ATK</strong><b>{stats.baseAtk}</b></div><div><strong>{catalog.secondaryStat}</strong><b>{stats.secondaryStatValue}</b></div></Panel><Panel className="weapon-passive"><span>Passive / effect</span><h3>{catalog.passiveName} · Rank {weapon.rank}</h3><p>{catalog.passiveEffects[weapon.rank - 1]}</p></Panel><div className="weapon-equip-select"><span>Equipped character</span><CharacterEquipPicker value={weapon.equippedBy} options={compatible} onChange={(characterId) => void equip(characterId)}/></div></div></section></div>
+  return <div className="weapon-detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className={`weapon-detail rarity-${catalog.rarity}`} role="dialog" aria-modal="true" aria-label={`${catalog.name} details`}><header><div><span className="eyebrow">Weapon details</span><h2>{catalog.name}</h2></div><button className="close" onClick={onClose}>×</button></header><div className="weapon-detail-art"><img src={catalog.iconSourceUrl} alt=""/><span>{'★'.repeat(catalog.rarity)}</span><p>{catalog.description}</p></div><div className="weapon-detail-copy"><div className="weapon-edit-row"><label className="weapon-level-control">Level <strong>Lv. {weaponLevels[levelIndex]}</strong><input aria-label="Weapon level" type="range" min="0" max={weaponLevels.length - 1} step="1" value={levelIndex} onChange={(event) => void update({ level: weaponLevels[Number(event.target.value)] })}/><span><i>1</i><i>10</i><i>20</i><i>30</i><i>40</i><i>50</i><i>60</i><i>70</i><i>80</i><i>90</i></span></label><label className="weapon-rank-control">Rank<select value={weapon.rank} onChange={(event) => void update({ rank: Number(event.target.value) })}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>R{value}</option>)}</select></label><button className={weapon.locked ? 'weapon-lock-button locked' : 'weapon-lock-button'} onClick={() => void update({ locked: !weapon.locked })}><Icon name={weapon.locked ? 'lock' : 'unlock'}/>{weapon.locked ? 'Locked' : 'Unlocked'}</button></div><Panel className="weapon-main-stats"><span>Stats at level {weaponLevels[levelIndex]}</span><div><strong>ATK</strong><b>{stats.baseAtk}</b></div><div><strong>{catalog.secondaryStat}</strong><b>{stats.secondaryStatValue}</b></div></Panel><Panel className="weapon-passive"><span>Passive / effect</span><h3>{catalog.passiveName} · Rank {weapon.rank}</h3><p>{highlightRankValues(catalog.passiveEffects[weapon.rank - 1])}</p></Panel><div className="weapon-equip-select"><span>Equipped character</span><CharacterEquipPicker value={weapon.equippedBy} options={compatible} onChange={(characterId) => void equip(characterId)}/></div></div></section></div>
 }
 
 export function WeaponInventory({ owned, characters = [], builds = [], refresh }: { owned: OwnedWeapon[]; characters?: OwnedCharacter[]; builds?: Build[]; refresh: () => Promise<void> }) {

@@ -2,12 +2,13 @@ import { useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import { aggregateStats, calculateDamage, formatDamage } from '../domain/damage'
 import { resonators, statLabels, weapons } from '../game-data'
+import { echoStatLines } from '../game-data/echo-main-stats'
 import { db, saveSettings } from '../storage/database'
 import type { AppSettings, Build, Echo, StatKey } from '../domain/types'
 import { EchoMiniCard, formatStat, Icon, PageHeader, Panel, StatValue } from './components'
 
 function scoreEcho(echo: Echo, weights: Partial<Record<StatKey, number>>) {
-  return [echo.mainStat, ...echo.subStats].reduce((sum, line) => sum + line.value * (weights[line.key] ?? 0), 0)
+  return echoStatLines(echo).reduce((sum, line) => sum + line.value * (weights[line.key] ?? 0), 0)
 }
 
 function relativeGrade(value: number, population: number[]) {
@@ -39,7 +40,7 @@ export function BuildsView({ echoes, builds, settings, refresh }: { echoes: Echo
   const inventoryScores = echoes.filter((echo) => !echo.excluded).map((echo) => scoreEcho(echo, weights))
   const buildGrade = relativeGrade(equipped.length ? score / equipped.length : 0, inventoryScores)
   const scoreBreakdown = Object.entries(weights).map(([key, weight]) => {
-    const raw = equipped.flatMap((echo) => [echo.mainStat, ...echo.subStats]).filter((line) => line.key === key).reduce((sum, line) => sum + line.value, 0)
+    const raw = equipped.flatMap(echoStatLines).filter((line) => line.key === key).reduce((sum, line) => sum + line.value, 0)
     return { key: key as StatKey, raw, weight: weight ?? 0, contribution: raw * (weight ?? 0) }
   }).filter((entry) => entry.contribution > 0)
   const cost = equipped.reduce((sum, echo) => sum + echo.cost, 0)

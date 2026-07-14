@@ -1,10 +1,18 @@
 import type { Echo } from '../domain/types'
 import type { VisualRecognition } from './parser'
+import type { ScanRect } from './types'
 import { generatedSonataIconSources } from '../game-data/catalog.generated'
 
-const SONATA_ICON_CROP = { x: 0.54, y: 0.035, width: 0.13, height: 0.085 }
-const DISCARD_ICON_CROP = { x: 0.60, y: 0.045, width: 0.10, height: 0.075 }
-const LOCK_ICON_CROP = { x: 0.79, y: 0.045, width: 0.10, height: 0.075 }
+const DETAIL_VISUAL_CROPS = {
+  sonata: { x: 0.54, y: 0.035, width: 0.13, height: 0.085 },
+  discard: { x: 0.60, y: 0.045, width: 0.10, height: 0.075 },
+  lock: { x: 0.79, y: 0.045, width: 0.10, height: 0.075 }
+}
+const INVENTORY_VISUAL_CROPS = {
+  sonata: { x: 0.21, y: 0.105, width: 0.11, height: 0.08 },
+  discard: { x: 0.11, y: 0.255, width: 0.15, height: 0.11 },
+  lock: { x: 0.29, y: 0.255, width: 0.15, height: 0.11 }
+}
 let sonataSignaturesPromise: Promise<Array<{ name: string; signature: number[] }>> | undefined
 
 function rgbToHsl(red: number, green: number, blue: number) {
@@ -35,7 +43,7 @@ export function classifyRarityPixels(pixels: Uint8ClampedArray): VisualRecogniti
 }
 
 export function classifyEchoState(discardPixels: Uint8ClampedArray, lockPixels: Uint8ClampedArray): Pick<VisualRecognition, 'excluded' | 'locked'> {
-  let red = 0, discardVisible = 0, lockBright = 0, lockVisible = 0
+  let red = 0, discardVisible = 0, lockActive = 0, lockVisible = 0
   for (let offset = 0; offset < discardPixels.length; offset += 4) {
     if (discardPixels[offset + 3] < 180) continue
     discardVisible += 1
@@ -44,13 +52,24 @@ export function classifyEchoState(discardPixels: Uint8ClampedArray, lockPixels: 
   for (let offset = 0; offset < lockPixels.length; offset += 4) {
     if (lockPixels[offset + 3] < 180) continue
     lockVisible += 1
-    if (lockPixels[offset] > 185 && lockPixels[offset + 1] > 185 && lockPixels[offset + 2] > 185) lockBright += 1
+    const red = lockPixels[offset], green = lockPixels[offset + 1], blue = lockPixels[offset + 2]
+    const { hue, saturation, lightness } = rgbToHsl(red, green, blue)
+    const brightNeutral = lightness > .64 && saturation < .22
+    const activeGold = lightness > .42 && saturation > .22 && hue >= 28 && hue <= 72 && red > blue * 1.18
+    if (brightNeutral || activeGold) lockActive += 1
   }
-  const excluded = discardVisible > 0 && red / discardVisible > .055
-  const locked = !excluded && lockVisible > 0 && lockBright / lockVisible > .11
+  const discardScore = discardVisible ? red / discardVisible : 0
+  const lockScore = lockVisible ? lockActive / lockVisible : 0
+  const discardThreshold = .055
+  const lockThreshold = .045
+  const excluded = discardScore > discardThreshold
+  const locked = !excluded && lockScore > lockThreshold
+  const evidenceConfidence = (score: number, threshold: number, active: boolean) => active
+    ? Math.min(.98, .7 + (score - threshold) / Math.max(threshold, .001) * .18)
+    : Math.min(.96, .55 + (threshold - score) / Math.max(threshold, .001) * .36)
   return {
-    excluded: { value: excluded, confidence: excluded ? .94 : .82 },
-    locked: { value: locked, confidence: excluded ? .94 : (locked ? .82 : .68) }
+    excluded: { value: excluded, confidence: evidenceConfidence(discardScore, discardThreshold, excluded) },
+    locked: { value: locked, confidence: excluded ? evidenceConfidence(discardScore, discardThreshold, true) : evidenceConfidence(lockScore, lockThreshold, locked) }
   }
 }
 
@@ -67,6 +86,35 @@ function pixelSignature(pixels: Uint8ClampedArray) {
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length
   const deviation = Math.sqrt(values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length) || 1
   return values.map((value) => Math.max(-2, Math.min(2, (value - mean) / deviation)))
+}
+
+function sonataSignaturesInBox(image: HTMLImageElement, crop: ScanRect) {
+  const boxX = image.naturalWidth * crop.x, boxY = image.naturalHeight * crop.y
+  const boxWidth = image.naturalWidth * crop.width, boxHeight = image.naturalHeight * crop.height
+  const shortestSide = Math.max(1, Math.min(boxWidth, boxHeight))
+  const canvas = document.createElement('canvas'); canvas.width = 24; canvas.height = 24
+  const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) return []
+  const signatures: number[][] = []
+  for (const scale of [.45, .6, .75, .9, 1]) {
+    const size = shortestSide * scale
+    const xTravel = Math.max(0, boxWidth - size), yTravel = Math.max(0, boxHeight - size)
+    for (const xStep of [0, .25, .5, .75, 1]) for (const yStep of [0, .5, 1]) {
+      context.clearRect(0, 0, 24, 24)
+      context.drawImage(image, boxX + xTravel * xStep, boxY + yTravel * yStep, size, size, 0, 0, 24, 24)
+      signatures.push(pixelSignature(context.getImageData(0, 0, 24, 24).data))
+    }
+  }
+  return signatures
+}
+
+function classifySonataCandidates(captured: number[][], templates: Array<{ name: string; signature: number[] }>): VisualRecognition['sonata'] {
+  const ranked = templates.map((template) => ({
+    name: template.name,
+    score: Math.max(...captured.map((signature) => 1 - template.signature.reduce((sum, value, index) => sum + Math.abs(value - signature[index]), 0) / (signature.length * 4)))
+  })).sort((left, right) => right.score - left.score)
+  const best = ranked[0], runnerUp = ranked[1]
+  if (!best || best.score < .63 || best.score - (runnerUp?.score ?? 0) < .015) return
+  return { value: best.name, confidence: Math.min(.96, .62 + best.score * .34) }
 }
 
 export function classifySonataSignatures(captured: number[], templates: Array<{ name: string; signature: number[] }>): VisualRecognition['sonata'] {
@@ -88,16 +136,16 @@ function loadSonataSignatures() {
   return sonataSignaturesPromise
 }
 
-export async function recognizeVisualFields(imageDataUrl: string): Promise<VisualRecognition> {
+export async function recognizeVisualFields(imageDataUrl: string, sonataRect?: ScanRect): Promise<VisualRecognition> {
   const image = new Image()
   image.src = imageDataUrl
   await image.decode()
   const canvas = document.createElement('canvas'); canvas.width = 24; canvas.height = 24
   const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) return {}
-  const state = classifyEchoState(cropPixels(image, DISCARD_ICON_CROP), cropPixels(image, LOCK_ICON_CROP))
-  context.drawImage(image, image.naturalWidth * SONATA_ICON_CROP.x, image.naturalHeight * SONATA_ICON_CROP.y, image.naturalWidth * SONATA_ICON_CROP.width, image.naturalHeight * SONATA_ICON_CROP.height, 0, 0, 24, 24)
-  const sonata = classifySonataSignatures(pixelSignature(context.getImageData(0, 0, 24, 24).data), await loadSonataSignatures())
+  const crops = image.naturalWidth / image.naturalHeight > .58 ? INVENTORY_VISUAL_CROPS : DETAIL_VISUAL_CROPS
+  const state = classifyEchoState(cropPixels(image, crops.discard), cropPixels(image, crops.lock))
+  const sonata = classifySonataCandidates(sonataSignaturesInBox(image, sonataRect ?? crops.sonata), await loadSonataSignatures())
   const rarityCanvas = document.createElement('canvas'); rarityCanvas.width = Math.max(1, Math.round(image.naturalWidth * .72)); rarityCanvas.height = Math.max(1, Math.round(image.naturalHeight * .075))
   const rarityContext = rarityCanvas.getContext('2d', { willReadFrequently: true }); if (!rarityContext) return { sonata, ...state }
   rarityContext.drawImage(image, 0, 0, rarityCanvas.width, rarityCanvas.height, 0, 0, rarityCanvas.width, rarityCanvas.height)

@@ -25,6 +25,12 @@ describe('English Echo OCR parser', () => {
     expect(candidate.fields.subStats[0].value.key).toBe('critRate')
   })
 
+  it('uses the parsed level when limiting recognized substats', async () => {
+    const candidate = await parseEchoText('Hooscamp\nCost 1\n5 Star\nLv. 5\nLingering Tunes\nATK % 6.4%\nCrit. Rate 6.3%\nATK 40', 'data:image/png;base64,level', 'screenshot')
+    expect(candidate.fields.level.value).toBe(5)
+    expect(candidate.fields.subStats.map((field) => field.value.key)).toEqual(['critRate'])
+  })
+
   it('uses catalog metadata and limits tuned stats to the detail block', async () => {
     const candidate = await parseEchoText('Cyan Feathered Heron +25\nCOST 3\nCelestial Light\nSpectro DMG Bonus 30.0%\nATK 100\nCrit. DMG 12.6%\nEcho Skills: Countermeasures\nAero DMG 236.80%\nEquipped by Lucy', 'data:image/png;base64,cyan', 'screenshot', { rarity: { value: 5, confidence: 0.94 } })
     expect(candidate.fields.name.value).toBe('Cyan-Feathered Heron')
@@ -56,7 +62,7 @@ describe('English Echo OCR parser', () => {
   })
 
   it('snaps plausible OCR drift to exact tunable rolls and rejects impossible values', async () => {
-    const candidate = await parseEchoText('Hooscamp\nCost 1\nLingering Tunes\nATK % 18.0%\nCrit. Rate 6.2%\nATK 39', 'data:image/png;base64,rolls', 'screenshot')
+    const candidate = await parseEchoText('Hooscamp\nCost 1\nLv. 25\nLingering Tunes\nATK % 18.0%\nCrit. Rate 6.2%\nATK 39', 'data:image/png;base64,rolls', 'screenshot')
     expect(candidate.fields.subStats.map((field) => field.value.value)).toEqual([6.3, 40])
     expect(candidateErrors(candidate)).toEqual([])
     candidate.fields.subStats[0].value.value = 6.5

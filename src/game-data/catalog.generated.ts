@@ -96312,7 +96312,7 @@ export const generatedSonataIconSources:Record<string,string>={
   "Wishes of Quiet Snowfall": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriIceA1.webp",
   "Reel of Spliced Memories": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriSupport1.webp",
   "Shadow of Shattered Dreams": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriAdam.webp",
-  "Song of Feathered Trace": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriYangyang.webp",
-  "Heart of Evil's Purge": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriQingxiao.webp",
-  "Lamp of Nether Road": "https://static.nanoka.cc/assets/ww/UIResources/Common/Image/IconElementAttri/T_IconElementAttriJingran.webp"
+  "Song of Feathered Trace": "https://wuthering.gg/images/iconelement/T_IconElementAttriYangyang.png",
+  "Heart of Evil's Purge": "https://wuthering.gg/images/iconelement/T_IconElementAttriQingxiao.png",
+  "Lamp of Nether Road": "https://wuthering.gg/images/iconelement/T_IconElementAttriJingran.png"
 }

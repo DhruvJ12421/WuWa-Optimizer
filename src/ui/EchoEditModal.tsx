@@ -1,24 +1,62 @@
-import { useState } from 'react'
-import { sonataNames, statLabels } from '../game-data'
-import { mainStatError } from '../game-data/echo-main-stats'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { echoCatalog, sonataNames, statLabels } from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { effectiveSubStats, fixedSecondaryMainStat, mainStatError, mainStatKeysByCost, maxLevelByRarity, maxSubStatsForLevel, normalizeEchoMainStat } from '../game-data/echo-main-stats'
+import { tunableRolls } from '../game-data/tunable-rolls'
 import type { Echo, StatKey } from '../domain/types'
-import { EchoMiniCard, Panel } from './components'
+import { EchoMiniCard, formatStat, Panel } from './components'
 
-const statKeys = Object.keys(statLabels) as StatKey[]
+const subStatKeys = Object.keys(tunableRolls) as StatKey[]
 const levelStops = [0, 5, 10, 15, 20, 25]
 
+function SearchablePicker({ label, value, options, onChange }: { label: string; value: string; options: Array<{ value: string; icon?: string; detail?: string }>; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = options.find((option) => option.value === value)
+  const visible = options.filter((option) => `${option.value} ${option.detail ?? ''}`.toLowerCase().includes(query.toLowerCase()))
+  useEffect(() => {
+    if (!open) return
+    const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [open])
+  return <label>{label}<div className="echo-search-picker" ref={ref}>
+    <button type="button" className="echo-search-trigger" onClick={() => { setOpen((current) => !current); setQuery('') }}>{selected?.icon ? <img src={selected.icon} alt=""/> : <span>◇</span>}<b>{value}</b><i>⌄</i></button>
+    {open && <div className="echo-search-menu"><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Filter ${label.toLowerCase()}...`}/><div>{visible.map((option) => <button type="button" className={option.value === value ? 'active' : ''} key={option.value} onClick={() => { onChange(option.value); setOpen(false) }}>{option.icon ? <img src={option.icon} alt="" loading="lazy"/> : <span>◇</span>}<b>{option.value}</b>{option.detail && <small>{option.detail}</small>}</button>)}</div></div>}
+  </div></label>
+}
+
+function ReadOnlyStat({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="echo-fixed-stat"><span>{label}</span>{children}</div>
+}
+
 export function EchoEditModal({ echo, onClose, onSave }: { echo: Echo; onClose: () => void; onSave: (echo: Echo) => Promise<void> }) {
-  const [draft, setDraft] = useState<Echo>(() => structuredClone(echo))
+  const [draft, setDraft] = useState<Echo>(() => ({ ...structuredClone(echo), mainStat: normalizeEchoMainStat(echo), subStats: effectiveSubStats(echo) }))
   const [error, setError] = useState('')
-  const setSubStat = (index: number, patch: Partial<Echo['subStats'][number]>) => setDraft((current) => ({ ...current, subStats: current.subStats.map((stat, statIndex) => statIndex === index ? { ...stat, ...patch } : stat) }))
-  const setState = (key: 'locked' | 'excluded', value: boolean) => setDraft((current) => ({ ...current, [key]: value, ...(value ? { [key === 'locked' ? 'excluded' : 'locked']: false } : {}) }))
+  const selectedEcho = echoCatalog.find((item) => item.name === draft.name)
+  const echoOptions = useMemo(() => echoCatalog
+    .filter((item) => item.sonatas.includes(draft.sonata))
+    .map((item) => ({ value: item.name, icon: item.iconSourceUrl, detail: `${item.cost} cost` })), [draft.sonata])
+  const sonataOptions = sonataNames.map((name) => ({ value: name, icon: generatedSonataIconSources[name] }))
+  const secondary = fixedSecondaryMainStat(draft)
+  const maxSubStats = maxSubStatsForLevel(draft.level)
+  const updateCore = (patch: Partial<Pick<Echo, 'cost' | 'rarity' | 'level'>>, key = draft.mainStat.key) => setDraft((current) => {
+    const next = { ...current, ...patch }
+    return { ...next, mainStat: normalizeEchoMainStat({ ...next, mainStat: { ...next.mainStat, key } }), subStats: current.subStats.slice(0, maxSubStatsForLevel(next.level)) }
+  })
+  const setSubStat = (index: number, key: StatKey, rollIndex?: number) => setDraft((current) => ({ ...current, subStats: current.subStats.map((stat, statIndex) => {
+    if (statIndex !== index) return stat
+    const rolls = tunableRolls[key] ?? []
+    const currentIndex = rolls.findIndex((roll) => Math.abs(roll.value - stat.value) < 0.001)
+    return { key, value: rolls[Math.max(0, rollIndex ?? currentIndex)]?.value ?? 0 }
+  }) }))
   const submit = async () => {
     if (!draft.name.trim() || !draft.sonata.trim()) { setError('Name and Sonata are required.'); return }
-    if (draft.level < 0 || draft.level > 25) { setError('Level must be between 0 and 25.'); return }
-    if ([draft.mainStat, ...draft.subStats].some((stat) => !Number.isFinite(stat.value) || stat.value < 0)) { setError('Stat values must be positive numbers.'); return }
+    if (!selectedEcho?.sonatas.includes(draft.sonata)) { setError('Choose an Echo available for the selected Sonata.'); return }
     const invalidMainStat = mainStatError(draft.cost, draft.rarity, draft.level, draft.mainStat)
     if (invalidMainStat) { setError(invalidMainStat); return }
-    await onSave({ ...draft, name: draft.name.trim(), sonata: draft.sonata.trim() })
+    await onSave(draft)
   }
 
   return <div className="modal-backdrop echo-editor-backdrop" onMouseDown={onClose}>
@@ -27,15 +65,19 @@ export function EchoEditModal({ echo, onClose, onSave }: { echo: Echo; onClose: 
       <div className="echo-editor-layout">
         <section className="echo-editor-fields">
           <div className="echo-editor-identity">
-            <label>Name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })}/></label>
-            <label>Sonata<input list="echo-edit-sonatas" value={draft.sonata} onChange={(event) => setDraft({ ...draft, sonata: event.target.value })}/><datalist id="echo-edit-sonatas">{sonataNames.map((name) => <option key={name} value={name}/>)}</datalist></label>
-            <label>Cost<select value={draft.cost} onChange={(event) => setDraft({ ...draft, cost: Number(event.target.value) as Echo['cost'] })}>{[1, 3, 4].map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label>Rarity<select value={draft.rarity} onChange={(event) => setDraft({ ...draft, rarity: Number(event.target.value) as Echo['rarity'] })}>{[2, 3, 4, 5].map((value) => <option key={value}>{value} star</option>)}</select></label>
+            <SearchablePicker label="Name" value={draft.name} options={echoOptions} onChange={(name) => { const entry = echoCatalog.find((item) => item.name === name); if (!entry) return; setDraft((current) => { const next = { ...current, name, cost: entry.cost }; return { ...next, mainStat: normalizeEchoMainStat(next) } }) }}/>
+            <SearchablePicker label="Sonata" value={draft.sonata} options={sonataOptions} onChange={(sonata) => setDraft({ ...draft, sonata })}/>
+            <label>Cost<select value={draft.cost} onChange={(event) => updateCore({ cost: Number(event.target.value) as Echo['cost'] })}>{[1, 3, 4].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+            <label>Rarity<select value={draft.rarity} onChange={(event) => { const rarity = Number(event.target.value) as Echo['rarity']; updateCore({ rarity, level: Math.min(draft.level, maxLevelByRarity[rarity]) }) }}>{[2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} star</option>)}</select></label>
           </div>
-          <div className="echo-level-editor"><label>Level <strong>+{draft.level}</strong><input type="range" min="0" max="25" value={draft.level} onChange={(event) => setDraft({ ...draft, level: Number(event.target.value) })}/></label><div>{levelStops.map((level) => <button type="button" className={draft.level === level ? 'active' : ''} onClick={() => setDraft({ ...draft, level })} key={level}>+{level}</button>)}</div></div>
-          <div className="echo-stat-line main"><span>Main stat</span><select value={draft.mainStat.key} onChange={(event) => setDraft({ ...draft, mainStat: { ...draft.mainStat, key: event.target.value as StatKey } })}>{statKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><input aria-label="Main stat value" type="number" min="0" step="0.1" value={draft.mainStat.value} onChange={(event) => setDraft({ ...draft, mainStat: { ...draft.mainStat, value: Number(event.target.value) } })}/></div>
-          <div className="echo-editor-substats"><header><div><span className="eyebrow">Roll values</span><h3>Substats</h3></div><b>{draft.subStats.length}/5</b></header>{draft.subStats.map((stat, index) => <div className="echo-stat-line" key={index}><span>#{index + 1}</span><select value={stat.key} onChange={(event) => setSubStat(index, { key: event.target.value as StatKey })}>{statKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><input aria-label={`Substat ${index + 1} value`} type="number" min="0" step="0.1" value={stat.value} onChange={(event) => setSubStat(index, { value: Number(event.target.value) })}/><button type="button" className="text-button" onClick={() => setDraft({ ...draft, subStats: draft.subStats.filter((_, statIndex) => statIndex !== index) })}>Remove</button></div>)}<button type="button" className="secondary add-substat" disabled={draft.subStats.length >= 5} onClick={() => setDraft({ ...draft, subStats: [...draft.subStats, { key: 'critRate', value: 0 }] })}>+ Add substat</button></div>
-          <div className="echo-editor-states"><label><input type="checkbox" checked={draft.locked} onChange={(event) => setState('locked', event.target.checked)}/>Locked</label><label><input type="checkbox" checked={draft.excluded} onChange={(event) => setState('excluded', event.target.checked)}/>Discarded</label></div>
+          {selectedEcho && !selectedEcho.sonatas.includes(draft.sonata) && <div className="notice warning">Choose an Echo available for {draft.sonata}.</div>}
+          <div className="echo-level-editor"><label>Level <strong>+{draft.level}</strong><input type="range" min="0" max={maxLevelByRarity[draft.rarity]} value={draft.level} onChange={(event) => updateCore({ level: Number(event.target.value) })}/></label><div>{levelStops.filter((level) => level <= maxLevelByRarity[draft.rarity]).map((level) => <button type="button" className={draft.level === level ? 'active' : ''} onClick={() => updateCore({ level })} key={level}>+{level}</button>)}</div></div>
+          <div className="echo-main-stat-group">
+            <div className="echo-stat-line main"><span>Primary</span><select value={draft.mainStat.key} onChange={(event) => updateCore({}, event.target.value as StatKey)}>{mainStatKeysByCost[draft.cost].map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><ReadOnlyStat label="Level value"><strong>{formatStat(draft.mainStat.key, draft.mainStat.value)}</strong></ReadOnlyStat></div>
+            <div className="echo-stat-line secondary-main"><span>Secondary</span><div className="echo-readonly-name">{statLabels[secondary.key]}</div><ReadOnlyStat label="Fixed value"><strong>{formatStat(secondary.key, secondary.value)}</strong></ReadOnlyStat></div>
+          </div>
+          <div className="echo-editor-substats"><header><div><span className="eyebrow">Fixed roll values</span><h3>Substats</h3></div><b>{draft.subStats.length}/{maxSubStats}</b></header>{draft.subStats.map((stat, index) => { const rolls = tunableRolls[stat.key] ?? []; const rollIndex = Math.max(0, rolls.findIndex((roll) => Math.abs(roll.value - stat.value) < 0.001)); return <div className="echo-substat-row" key={index}><div className="echo-stat-line"><span>#{index + 1}</span><select value={stat.key} onChange={(event) => setSubStat(index, event.target.value as StatKey, 0)}>{subStatKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><strong>{formatStat(stat.key, rolls[rollIndex]?.value ?? stat.value)}</strong><button type="button" className="text-button" onClick={() => setDraft({ ...draft, subStats: draft.subStats.filter((_, statIndex) => statIndex !== index) })}>Remove</button></div><div className="echo-roll-slider"><input aria-label={`Substat ${index + 1} roll`} type="range" min="0" max={Math.max(0, rolls.length - 1)} step="1" value={rollIndex} onChange={(event) => setSubStat(index, stat.key, Number(event.target.value))}/><div>{rolls.map((roll, point) => <i className={point === rollIndex ? 'active' : ''} key={roll.value}>{roll.value}</i>)}</div></div></div> })}<button type="button" className="secondary add-substat" disabled={draft.subStats.length >= maxSubStats} onClick={() => setDraft({ ...draft, subStats: [...draft.subStats, { key: 'critRate', value: tunableRolls.critRate?.[0].value ?? 6.3 }] })}>+ Add substat</button></div>
+          <div className="echo-editor-states"><label><input type="checkbox" checked={draft.locked} onChange={(event) => setDraft({ ...draft, locked: event.target.checked, excluded: event.target.checked ? false : draft.excluded })}/>Locked</label><label><input type="checkbox" checked={draft.excluded} onChange={(event) => setDraft({ ...draft, excluded: event.target.checked, locked: event.target.checked ? false : draft.locked })}/>Discarded</label></div>
           {error && <div className="notice error">{error}</div>}
         </section>
         <aside className="echo-editor-previews"><div><span className="eyebrow">Before edit</span><EchoMiniCard echo={echo}/></div><div><span className="eyebrow">Live preview</span><EchoMiniCard echo={draft}/></div></aside>

@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { defaultSettings, GAME_DATA_VERSION, statLabels } from '../game-data'
+import { effectiveSubStats, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import type { AccountDocument, AppSettings, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 
 type SettingsRow = AppSettings & { id: 'settings' }
@@ -38,8 +39,9 @@ export async function requestPersistentStorage(): Promise<boolean | undefined> {
 }
 
 export async function ensureSeedData() {
-  await db.transaction('rw', db.settings, async () => {
+  await db.transaction('rw', [db.settings, db.echoes], async () => {
     if (!(await db.settings.get('settings'))) await db.settings.put({ id: 'settings', ...structuredClone(defaultSettings) })
+    await db.echoes.toCollection().modify((echo) => { echo.subStats = effectiveSubStats(echo) })
   })
 }
 
@@ -59,7 +61,7 @@ export async function exportAccount(): Promise<AccountDocument> {
     schemaVersion: 2,
     gameDataVersion: GAME_DATA_VERSION,
     exportedAt: new Date().toISOString(),
-    echoes: await db.echoes.toArray(),
+    echoes: (await db.echoes.toArray()).map((echo) => ({ ...echo, subStats: effectiveSubStats(echo) })),
     characters: await db.characters.toArray(),
     weapons: await db.weapons.toArray(),
     builds: await db.builds.toArray(),
@@ -133,7 +135,7 @@ function isEcho(value: unknown) {
     && [1, 3, 4].includes(Number(value.cost)) && [1, 2, 3, 4, 5].includes(Number(value.rarity))
     && isFiniteNumber(value.level) && value.level >= 0 && value.level <= 25
     && typeof value.sonata === 'string' && isStatLine(value.mainStat)
-    && Array.isArray(value.subStats) && value.subStats.length <= 5 && value.subStats.every(isStatLine)
+    && Array.isArray(value.subStats) && value.subStats.length <= maxSubStatsForLevel(value.level) && value.subStats.every(isStatLine)
     && typeof value.locked === 'boolean' && typeof value.excluded === 'boolean'
     && (value.equippedBy === undefined || typeof value.equippedBy === 'string')
     && (value.equippedByName === undefined || typeof value.equippedByName === 'string')

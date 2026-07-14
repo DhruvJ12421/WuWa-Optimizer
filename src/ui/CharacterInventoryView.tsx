@@ -1,5 +1,7 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
-import { characterCatalog, echoCatalog, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
+import { characterCatalog, echoCatalog, statLabels, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { echoStatLines } from '../game-data/echo-main-stats'
 import { db } from '../storage/database'
 import type { Build, Echo, OwnedCharacter, OwnedWeapon, StatKey, Team } from '../domain/types'
 import { EchoMiniCard, Icon, Panel } from './components'
@@ -31,7 +33,7 @@ function Picker({ title, query, setQuery, filters, children, onClose }: { title:
 
 function totalsFor(echoes: Echo[]) {
   const totals: Partial<Record<StatKey, number>> = {}
-  for (const echo of echoes) for (const line of [echo.mainStat, ...echo.subStats]) totals[line.key] = (totals[line.key] || 0) + line.value
+  for (const echo of echoes) for (const line of echoStatLines(echo)) totals[line.key] = (totals[line.key] || 0) + line.value
   return totals
 }
 function statPair(flat?: number, percent?: number) {
@@ -41,6 +43,92 @@ function statPair(flat?: number, percent?: number) {
 
 function LoadoutSquare({ label, image, meta, className = '' }: { label: string; image?: string; meta?: string; className?: string }) {
   return <div className={'character-loadout-square ' + className}>{image ? <img src={image} alt=""/> : <span>+</span>}<small>{label}</small>{meta && <b>{meta}</b>}</div>
+}
+
+function SignalWave({ tone = 0 }: { tone?: number }) {
+  return <svg className={`signal-wave signal-tone-${tone % 6}`} viewBox="0 0 600 24" preserveAspectRatio="none" aria-hidden="true">
+    <path className="signal-wave-fill" d="M0 13C56 4 84 20 139 13S231 3 286 12s94 10 146 1 109-7 168 0v11H0Z"/>
+    <path className="signal-wave-dim" d="M0 12c44-7 86 8 130 2s78-12 124-4 85 13 137 4 93-12 132-5 49 8 77 4"/>
+    <path className="signal-wave-mid" d="M0 17c62 2 82-13 143-7s89 13 145 5 95-13 151-5 95 12 161 1"/>
+    <path className="signal-wave-bright" d="M0 10c51 8 92-9 142-3s83 16 139 7 91-15 151-6 97 9 168-2"/>
+  </svg>
+}
+
+function StatGlyph({ stat }: { stat: StatKey }) {
+  const shape = stat === 'hp' ? <path d="M12 20S4 15.6 4 9.4C4 5.5 8.7 3.7 12 7c3.3-3.3 8-1.5 8 2.4C20 15.6 12 20 12 20Z"/>
+    : stat === 'atk' ? <><path d="m5 19 14-14M14 5h5v5M5 14v5h5"/><path d="m8 8 8 8"/></>
+      : stat === 'def' ? <path d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3Z"/>
+        : stat.includes('crit') ? <><path d="m12 3 2.2 5.1L20 9l-4.2 3.8 1.1 5.7L12 15.7l-4.9 2.8 1.1-5.7L4 9l5.8-.9L12 3Z"/></>
+          : stat === 'energyRegen' ? <path d="M13.4 2 6 13h5l-.5 9L18 10h-5l.4-8Z"/>
+            : <><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></>
+  return <svg className="showcase-stat-icon" viewBox="0 0 24 24" aria-hidden="true">{shape}</svg>
+}
+
+function SkillGlyph({ index }: { index: number }) {
+  const paths = [
+    <><path d="M5 18 17 6M13 5h5v5M4 19l4-1-3-3-1 4Z"/><path d="m8 8 8 8"/></>,
+    <><circle cx="12" cy="12" r="7"/><path d="M12 5v14M5 12h14M8 8l8 8M16 8l-8 8"/></>,
+    <><path d="M12 3 6 10l6 11 6-11-6-7Z"/><path d="m9 11 3-4 3 4-3 5-3-5Z"/></>,
+    <><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3 3M15.4 15.4l3 3M18.4 5.6l-3 3M8.6 15.4l-3 3"/></>,
+    <><path d="M4 17c4.8 0 7-2.4 8-7 1 4.6 3.2 7 8 7"/><path d="M7 10c2.2 0 4-1.8 5-6 1 4.2 2.8 6 5 6"/></>
+  ]
+  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[index]}</svg>
+}
+
+function SequenceGlyph({ index }: { index: number }) {
+  const turns = index % 2 ? 45 : 0
+  return <svg viewBox="0 0 32 32" aria-hidden="true" style={{ transform: `rotate(${turns}deg)` }}><path d="M16 3 27 9v14l-11 6L5 23V9l11-6Z"/><path d={index % 3 === 0 ? 'M9 17c5-8 9-8 14 0-5 8-9 8-14 0Z' : index % 3 === 1 ? 'm10 22 6-14 6 14-6-4-6 4Z' : 'M9 12h14l-7 11-7-11Z'}/></svg>
+}
+
+function parseWeaponSecondary(entry: WeaponCatalogEntry, levelValue: string) {
+  const value = Number.parseFloat(levelValue) || 0
+  const percent = levelValue.includes('%')
+  const label = entry.secondaryStat.toLowerCase()
+  if (label === 'hp') return { key: percent ? 'hpPercent' : 'hp', value } as const
+  if (label === 'atk') return { key: percent ? 'atkPercent' : 'atk', value } as const
+  if (label === 'def') return { key: percent ? 'defPercent' : 'def', value } as const
+  if (label.includes('crit') && label.includes('rate')) return { key: 'critRate', value } as const
+  if (label.includes('crit')) return { key: 'critDamage', value } as const
+  if (label.includes('energy')) return { key: 'energyRegen', value } as const
+  return undefined
+}
+
+function showcaseStats(catalog: CharacterCatalogEntry, weaponEntry: WeaponCatalogEntry | undefined, weapon: OwnedWeapon | undefined, echoes: Echo[]) {
+  const totals = totalsFor(echoes)
+  const levelStats = weaponEntry?.levelStats.find((entry) => entry.level === weapon?.level) || weaponEntry?.levelStats[0]
+  const weaponSecondary = weaponEntry && levelStats ? parseWeaponSecondary(weaponEntry, levelStats.secondaryStatValue) : undefined
+  if (weaponSecondary) totals[weaponSecondary.key] = (totals[weaponSecondary.key] || 0) + weaponSecondary.value
+  const baseAtk = catalog.baseStats.atk + (levelStats?.baseAtk || 0)
+  const hp = catalog.baseStats.hp * (1 + (totals.hpPercent || 0) / 100) + (totals.hp || 0)
+  const atk = baseAtk * (1 + (totals.atkPercent || 0) / 100) + (totals.atk || 0)
+  const def = catalog.baseStats.def * (1 + (totals.defPercent || 0) / 100) + (totals.def || 0)
+  const elementKey = (catalog.element.toLowerCase() + 'Damage') as StatKey
+  return [
+    { key: 'hp' as const, label: 'HP', value: Math.round(hp).toLocaleString('en-US') },
+    { key: 'atk' as const, label: 'ATK', value: Math.round(atk).toLocaleString('en-US') },
+    { key: 'def' as const, label: 'DEF', value: Math.round(def).toLocaleString('en-US') },
+    { key: 'critRate' as const, label: 'Crit. Rate', value: `${(catalog.baseStats.critRate + (totals.critRate || 0)).toFixed(1)}%` },
+    { key: 'critDamage' as const, label: 'Crit. DMG', value: `${(catalog.baseStats.critDamage + (totals.critDamage || 0)).toFixed(1)}%` },
+    { key: 'energyRegen' as const, label: 'Energy Regen', value: `${(100 + (totals.energyRegen || 0)).toFixed(1)}%` },
+    { key: elementKey, label: `${catalog.element} DMG`, value: `${(totals[elementKey] || 0).toFixed(1)}%` },
+    { key: 'basicDamage' as const, label: 'Basic Attack', value: `${(totals.basicDamage || 0).toFixed(1)}%` },
+    { key: 'heavyDamage' as const, label: 'Heavy Attack', value: `${(totals.heavyDamage || 0).toFixed(1)}%` },
+    { key: 'skillDamage' as const, label: 'Res. Skill', value: `${(totals.skillDamage || 0).toFixed(1)}%` },
+    { key: 'liberationDamage' as const, label: 'Res. Liberation', value: `${(totals.liberationDamage || 0).toFixed(1)}%` },
+    { key: 'healingBonus' as const, label: 'Healing Bonus', value: `${(totals.healingBonus || 0).toFixed(1)}%` }
+  ]
+}
+
+function ShowcaseEchoCard({ echo, index, onClick }: { echo?: Echo; index: number; onClick: () => void }) {
+  if (!echo) return <button className="showcase-echo-card empty" onClick={onClick}><span>+</span><strong>Equip Echo {index + 1}</strong><small>Open local inventory</small><SignalWave tone={index}/></button>
+  const catalog = echoCatalog.find((entry) => entry.name === echo.name)
+  const lines = echoStatLines(echo)
+  return <button className={`showcase-echo-card signal-tone-${index}`} onClick={onClick}>
+    <header><div className="showcase-echo-art">{catalog?.iconSourceUrl && <img src={catalog.iconSourceUrl} alt=""/>}<b>{echo.cost}</b></div><div><strong>{echo.name}</strong><span>{echo.sonata}</span><small>Lv. {echo.level} · <Stars rarity={echo.rarity}/></small></div></header>
+    <div className="showcase-echo-main"><span>{statLabels[lines[0].key]}</span><b>{lines[0].key === 'hp' || lines[0].key === 'atk' || lines[0].key === 'def' ? Math.round(lines[0].value).toLocaleString('en-US') : `${lines[0].value.toFixed(1)}%`}</b></div>
+    <div className="showcase-echo-lines">{lines.slice(1, 6).map((line, lineIndex) => <div key={`${line.key}-${lineIndex}`}><span>{statLabels[line.key]}</span><b>{line.key === 'hp' || line.key === 'atk' || line.key === 'def' ? Math.round(line.value).toLocaleString('en-US') : `${line.value.toFixed(1)}%`}</b></div>)}</div>
+    <SignalWave tone={index}/>
+  </button>
 }
 
 function WeaponPicker({ character, catalog, weapons, builds, refresh, onClose }: { character: OwnedCharacter; catalog: CharacterCatalogEntry; weapons: OwnedWeapon[]; builds: Build[]; refresh: () => Promise<void>; onClose: () => void }) {
@@ -106,14 +194,10 @@ function CharacterDetail({ character, catalog, weapons, echoes, builds, teams, r
   const equipped = build?.echoIds.map((id) => echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)) || []
   const weapon = weapons.find((item) => item.id === build?.weaponId)
   const weaponEntry = weaponCatalog.find((entry) => entry.id === weapon?.catalogId)
-  const totals = totalsFor(equipped)
-  const elementKey = (catalog.element.toLowerCase() + 'Damage') as StatKey
-  const stats = [
-    ['HP', statPair(totals.hp, totals.hpPercent)], ['ATK', statPair(totals.atk, totals.atkPercent)], ['DEF', statPair(totals.def, totals.defPercent)],
-    ['Energy Regen', (100 + (totals.energyRegen || 0)).toFixed(1) + '%'], ['Crit. Rate', (5 + (totals.critRate || 0)).toFixed(1) + '%'], ['Crit. DMG', (150 + (totals.critDamage || 0)).toFixed(1) + '%'],
-    [catalog.element + ' DMG', (totals[elementKey] || 0).toFixed(1) + '%'], ['Basic DMG', (totals.basicDamage || 0).toFixed(1) + '%'], ['Heavy DMG', (totals.heavyDamage || 0).toFixed(1) + '%'],
-    ['Skill DMG', (totals.skillDamage || 0).toFixed(1) + '%'], ['Liberation DMG', (totals.liberationDamage || 0).toFixed(1) + '%'], ['Healing Bonus', (totals.healingBonus || 0).toFixed(1) + '%']
-  ]
+  const stats = showcaseStats(catalog, weaponEntry, weapon, equipped)
+  const weaponLevelStats = weaponEntry?.levelStats.find((entry) => entry.level === weapon?.level) || weaponEntry?.levelStats[0]
+  const sonatas = Object.entries(equipped.reduce<Record<string, number>>((sets, echo) => { sets[echo.sonata] = (sets[echo.sonata] || 0) + 1; return sets }, {})).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  const linkedTeams = build ? teams.filter((team) => team.buildIds.includes(build.id)) : []
   const skills = skillsFor(character)
   const update = async (patch: Partial<OwnedCharacter>) => { await db.characters.update(character.id, patch); if (build && patch.level) await db.builds.update(build.id, { level: patch.level }); await refresh() }
   const remove = async () => {
@@ -134,16 +218,40 @@ function CharacterDetail({ character, catalog, weapons, echoes, builds, teams, r
     await refresh()
     setEchoSlot(slot)
   }
-  return <div className="character-detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className={'character-detail redesigned rarity-' + catalog.rarity} role="dialog" aria-modal="true" aria-label={catalog.name + ' build'}>
-    <header><div><span className="eyebrow">Character loadout</span><h2>{catalog.name}</h2></div><div className="detail-header-actions"><button className="danger" onClick={() => void remove()}><Icon name="trash"/>Delete character</button><button className="close" onClick={onClose}>×</button></div></header>
-    <aside className="character-detail-left"><div className="detail-portrait"><img src={catalog.iconSourceUrl} alt=""/><button className={character.favorite ? 'favorite active' : 'favorite'} aria-label="Favorite character" onClick={() => void update({ favorite: !character.favorite })}>♥</button><div><h1>{catalog.name}</h1><span>{catalog.element} · {catalog.weaponType}</span><Stars rarity={catalog.rarity}/></div></div>
-      <div className="detail-controls"><span className="control-title">Level</span><div className="level-buttons">{LEVELS.map((level) => <button className={character.level === level ? 'active' : ''} key={level} onClick={() => void update({ level })}>{level}</button>)}</div><span className="control-title">Sequence</span><div className="sequence-buttons">{[0, 1, 2, 3, 4, 5, 6].map((sequence) => <button className={character.sequence === sequence ? 'active' : ''} key={sequence} onClick={() => void update({ sequence })}><i>{sequence}</i><small>S{sequence}</small></button>)}</div></div>
-      <div className="character-stat-list"><div><strong>Complete stats</strong><small>Echo contribution; base character values are not yet verified.</small></div>{stats.map(([label, value]) => <p key={label}><span>{label}</span><b>{value}</b></p>)}</div>
-    </aside>
-    <main className="character-detail-workspace redesigned-workspace"><Panel className="detail-skills"><div className="section-heading"><div><span className="eyebrow">Forte</span><h3>Skill levels</h3></div></div><div className="skill-editor">{SKILLS.map((name, index) => <div key={name}><span>{name}</span><button disabled={skills[index] <= 1} onClick={() => { const next = [...skills]; next[index] -= 1; void update({ skillLevels: next }) }}>−</button><b>{skills[index]}</b><button disabled={skills[index] >= 10} onClick={() => { const next = [...skills]; next[index] += 1; void update({ skillLevels: next }) }}>+</button></div>)}</div></Panel>
-      <Panel className="detail-weapon equip-subcard" onClick={() => setWeaponOpen(true)}><div className="section-heading"><div><span className="eyebrow">Weapon</span><h3>{weaponEntry?.name || 'Equip Weapon'}</h3></div><b>Change</b></div>{weaponEntry ? <div className="detail-weapon-body"><img src={weaponEntry.iconSourceUrl} alt=""/><div><strong>Lv. {weapon?.level} · R{weapon?.rank}</strong><span>{weaponEntry.type}</span><Stars rarity={weaponEntry.rarity}/></div></div> : <div className="empty-equip-callout"><span>+</span><strong>Equip Weapon</strong><small>Choose an eligible owned weapon or add one.</small></div>}</Panel>
-      <Panel className="detail-echoes"><div className="section-heading"><div><span className="eyebrow">Echo loadout</span><h3>{equipped.length}/5 equipped</h3></div><b>{equipped.reduce((sum, echo) => sum + echo.cost, 0)}/12 cost</b></div><div className="echo-loadout-layout">{Array.from({ length: 5 }, (_, index) => { const echo = equipped[index]; return <button className={'echo-slot echo-slot-' + (index + 1)} key={index} onClick={() => void openEcho(index)}>{echo ? <EchoMiniCard echo={echo}/> : <div className="detail-empty"><span>+</span><small>Echo {index + 1}</small></div>}</button> })}</div></Panel>
-      <Panel className="detail-teams"><div className="section-heading"><div><span className="eyebrow">Teams</span><h3>Team connections</h3></div></div>{build && teams.filter((team) => team.buildIds.includes(build.id)).length ? teams.filter((team) => team.buildIds.includes(build.id)).map((team) => <article key={team.id}><strong>{team.name}</strong><span>{team.buildIds.length}/3 members</span></article>) : <div className="detail-empty-team"><strong>Not assigned to a team</strong><span>Use the Teams tab to add this build.</span></div>}</Panel>
+  return <div className="character-detail-backdrop showcase-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className={'character-showcase rarity-' + catalog.rarity} role="dialog" aria-modal="true" aria-label={catalog.name + ' showcase'}>
+    <header className="showcase-header"><div><span className="eyebrow">Character showcase</span><h2>{catalog.name}</h2><p>{catalog.title} · {catalog.element} · {catalog.weaponType}</p></div><div className="detail-header-actions"><button className="danger" onClick={() => void remove()}><Icon name="trash"/>Delete character</button><button className="close" aria-label="Close showcase" onClick={onClose}>×</button></div></header>
+    <main className="showcase-grid">
+      <section className="showcase-portrait-card">
+        <div className="showcase-art-backdrop"/>
+        <img className="showcase-character-art" src={catalog.portraitSourceUrl || catalog.iconSourceUrl} alt=""/>
+        <button className={character.favorite ? 'showcase-favorite active' : 'showcase-favorite'} aria-label="Favorite character" onClick={() => void update({ favorite: !character.favorite })}>♥</button>
+        <div className="showcase-sequence-rail" aria-label={`Sequence ${character.sequence}`}>{[1, 2, 3, 4, 5, 6].map((sequence) => <button className={character.sequence >= sequence ? 'active' : ''} key={sequence} title={`Set Sequence ${sequence}`} onClick={() => void update({ sequence: character.sequence === sequence ? sequence - 1 : sequence })}><SequenceGlyph index={sequence}/><small>S{sequence}</small></button>)}</div>
+        <div className="showcase-character-title"><span>{catalog.role}</span><h1>{catalog.name}</h1><div><b>Lv. {character.level}</b><Stars rarity={catalog.rarity}/></div></div>
+        <div className="showcase-sonatas">{sonatas.length ? sonatas.map(([name, count]) => <span key={name}>{generatedSonataIconSources[name] && <img src={generatedSonataIconSources[name]} alt=""/>}<b>{name}</b><small>{count}</small></span>) : <span className="empty"><b>No Sonata set</b><small>0</small></span>}</div>
+        <SignalWave tone={0}/>
+      </section>
+
+      <section className="showcase-stat-card showcase-panel">
+        <header><div><span className="eyebrow">Resonator stats</span><h3>{catalog.name}</h3></div><Stars rarity={catalog.rarity}/></header>
+        <div className="showcase-stat-list">{stats.map((stat) => <div key={stat.label}><StatGlyph stat={stat.key}/><span>{stat.label}</span><i/><b>{stat.value}</b></div>)}</div>
+        <div className="showcase-level-editor"><span>Character level</span><div>{LEVELS.map((level) => <button className={character.level === level ? 'active' : ''} key={level} onClick={() => void update({ level })}>{level}</button>)}</div><small>Game values are catalog-backed but still pending authoritative in-game verification.</small></div>
+        <SignalWave tone={1}/>
+      </section>
+
+      <button className="showcase-weapon-card showcase-panel" onClick={() => setWeaponOpen(true)}>
+        {weaponEntry ? <><div className="showcase-weapon-copy"><span className="eyebrow">Equipped weapon · Change</span><h3>{weaponEntry.name}</h3><Stars rarity={weaponEntry.rarity}/><div><span><StatGlyph stat="atk"/>ATK</span><b>{weaponLevelStats?.baseAtk || weaponEntry.baseAtk}</b></div><div><span><StatGlyph stat={parseWeaponSecondary(weaponEntry, weaponLevelStats?.secondaryStatValue || weaponEntry.secondaryStatValue)?.key || 'atk'}/>{weaponEntry.secondaryStat}</span><b>{weaponLevelStats?.secondaryStatValue || weaponEntry.secondaryStatValue}</b></div><small>Lv. {weapon?.level} · Rank {weapon?.rank}</small></div><img src={weaponEntry.iconSourceUrl} alt=""/></> : <div className="showcase-empty-weapon"><span>+</span><strong>Equip {catalog.weaponType}</strong><small>Choose an eligible weapon from local inventory.</small></div>}
+        <SignalWave tone={2}/>
+      </button>
+
+      <section className="showcase-skills-card showcase-panel">
+        <header><div><span className="eyebrow">Forte circuit</span><h3>Skill levels</h3></div><small>Use − / + to edit</small></header>
+        <div className="showcase-skill-tree">{SKILLS.map((name, index) => <div className={`showcase-skill-node skill-${index}`} key={name}><div className="skill-orb"><SkillGlyph index={index}/></div><strong>{name}</strong><span><button disabled={skills[index] <= 1} onClick={() => { const next = [...skills]; next[index] -= 1; void update({ skillLevels: next }) }}>−</button><b>Lv. {skills[index]}</b><button disabled={skills[index] >= 10} onClick={() => { const next = [...skills]; next[index] += 1; void update({ skillLevels: next }) }}>+</button></span></div>)}</div>
+        <SignalWave tone={3}/>
+      </section>
+
+      <section className="showcase-echo-strip showcase-panel"><header><div><span className="eyebrow">Equipped Echoes</span><h3>{equipped.length}/5 · {equipped.reduce((sum, echo) => sum + echo.cost, 0)}/12 cost</h3></div><small>Select a card to change it</small></header><div className="showcase-echo-grid">{Array.from({ length: 5 }, (_, index) => <ShowcaseEchoCard key={index} echo={equipped[index]} index={index} onClick={() => void openEcho(index)}/>)}</div></section>
+
+      <section className="showcase-team-strip showcase-panel"><span className="eyebrow">Team links</span>{linkedTeams.length ? linkedTeams.map((team) => <span key={team.id}><strong>{team.name}</strong><small>{team.buildIds.length}/3 members</small></span>) : <span><strong>Not assigned</strong><small>Add this build from Teams</small></span>}</section>
     </main>
     {weaponOpen && <WeaponPicker character={character} catalog={catalog} weapons={weapons} builds={builds} refresh={refresh} onClose={() => setWeaponOpen(false)}/>}
     {echoSlot !== null && build && <EchoPicker slot={echoSlot} build={build} echoes={echoes} refresh={refresh} onClose={() => setEchoSlot(null)}/>}

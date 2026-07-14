@@ -1,10 +1,11 @@
 import { aggregateStats, calculateDamage } from './damage'
+import { echoStatLines } from '../game-data/echo-main-stats'
 import type { Echo, OptimizerRequest, OptimizerResult, StatKey } from './types'
 
 const PERCENT_STATS = new Set<StatKey>(['critRate', 'critDamage', 'atkPercent', 'hpPercent', 'defPercent', 'energyRegen', 'basicDamage', 'heavyDamage', 'skillDamage', 'liberationDamage', 'spectroDamage', 'fusionDamage', 'glacioDamage', 'electroDamage', 'aeroDamage', 'havocDamage', 'healingBonus'])
 
 function lineScore(echo: Echo, objective: OptimizerRequest['objective']) {
-  const lines = [echo.mainStat, ...echo.subStats]
+  const lines = echoStatLines(echo)
   if (objective !== 'expected' && objective !== 'normal' && objective !== 'critical') {
     const related: Partial<Record<OptimizerRequest['objective'], StatKey[]>> = {
       hp: ['hp', 'hpPercent'], atk: ['atk', 'atkPercent'], def: ['def', 'defPercent']
