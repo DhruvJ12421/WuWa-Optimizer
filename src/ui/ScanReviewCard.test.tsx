@@ -30,7 +30,8 @@ describe('scan review checkpoint', () => {
   it('allows corrected identity fields to pass review', () => {
     const onSave = vi.fn()
     render(<Harness initial={candidate(false)} onSave={onSave}/>)
-    fireEvent.change(screen.getByLabelText(/Name/), { target: { value: 'Hooscamp' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Name Unknown Echo' }))
+    fireEvent.click(screen.getByRole('button', { name: /Hooscamp/ }))
     fireEvent.click(screen.getByRole('button', { name: /Sonata/ }))
     fireEvent.click(screen.getByText('Lingering Tunes'))
     fireEvent.click(screen.getByRole('button', { name: 'Approve & save' }))
