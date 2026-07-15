@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import type { ScanRect } from './types'
 
-type Strategy = 'text' | 'substat' | 'visual' | 'plain'
+type Strategy = 'name' | 'text' | 'substat' | 'visual' | 'plain'
 interface Request { id: string; bitmap: ImageBitmap; rect: ScanRect; strategy: Strategy }
 
 function percentile(values: Uint8Array, ratio: number) {
@@ -134,6 +134,52 @@ function removeSubstatHighlight(values: Uint8Array, width: number, height: numbe
   return output
 }
 
+function trimSubstatFooter(values: Uint8Array, width: number, height: number) {
+  const output = new Uint8Array(values)
+  const valueStart = Math.floor(width * .7)
+  const minimumInk = Math.max(3, Math.round((width - valueStart) * .02))
+  const gapAllowance = Math.max(1, Math.round(height * .012))
+  let bands = 0, lastInkRow = -1, previousInkRow = -gapAllowance - 1
+  for (let y = 0; y < height; y += 1) {
+    let ink = 0
+    for (let x = valueStart; x < width; x += 1) if (values[y * width + x] === 0) ink += 1
+    if (ink < minimumInk) continue
+    if (y - previousInkRow > gapAllowance) bands += 1
+    previousInkRow = y; lastInkRow = y
+  }
+  if (bands < 3 || lastInkRow < 0) return output
+  const cutoff = Math.min(height, lastInkRow + Math.max(3, Math.round(height * .035)))
+  output.fill(255, cutoff * width)
+  return output
+}
+
+function removeLargeNameArtwork(values: Uint8Array, width: number, height: number) {
+  const output = new Uint8Array(values), visited = new Uint8Array(values.length)
+  const maximumTextArea = values.length * .025
+  for (let start = 0; start < values.length; start += 1) {
+    if (values[start] !== 0 || visited[start]) continue
+    const stack = [start], component: number[] = []
+    visited[start] = 1
+    let minX = width, maxX = 0, minY = height, maxY = 0
+    while (stack.length) {
+      const index = stack.pop()!, x = index % width, y = Math.floor(index / width)
+      component.push(index); minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y)
+      const neighbors = [index - 1, index + 1, index - width, index + width]
+      for (const next of neighbors) {
+        if (next < 0 || next >= values.length || visited[next] || values[next] !== 0) continue
+        const nextX = next % width
+        if (Math.abs(nextX - x) > 1) continue
+        visited[next] = 1; stack.push(next)
+      }
+    }
+    const componentWidth = maxX - minX + 1, componentHeight = maxY - minY + 1
+    const artwork = component.length > maximumTextArea
+      && (componentWidth > width * .1 || componentHeight > height * .45)
+    if (artwork) for (const index of component) output[index] = 255
+  }
+  return output
+}
+
 function renderBinary(context: OffscreenCanvasRenderingContext2D, values: Uint8Array, width: number, height: number) {
   const image = context.createImageData(width, height)
   for (let index = 0, offset = 0; index < values.length; index += 1, offset += 4) {
@@ -158,7 +204,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     const sourceX = Math.max(0, Math.round(expanded.x * bitmap.width)), sourceY = Math.max(0, Math.round(expanded.y * bitmap.height))
     const sourceWidth = Math.max(1, Math.min(bitmap.width - sourceX, Math.round(expanded.width * bitmap.width)))
     const sourceHeight = Math.max(1, Math.min(bitmap.height - sourceY, Math.round(expanded.height * bitmap.height)))
-    const scale = strategy === 'text' || strategy === 'substat' ? 3 : 1
+    const scale = strategy === 'name' || strategy === 'text' || strategy === 'substat' ? 3 : 1
     const canvas = new OffscreenCanvas(Math.max(1, Math.round(sourceWidth * scale)), Math.max(1, Math.round(sourceHeight * scale)))
     const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) throw new Error('Offscreen preprocessing canvas is unavailable.')
@@ -168,7 +214,11 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       const source = context.getImageData(0, 0, canvas.width, canvas.height)
       const normalized = ensureLightBackground(normalize(grayscale(source.data)), canvas.width, canvas.height)
       let binary = globalThreshold(normalized)
-      if (strategy === 'substat') binary = removeSubstatHighlight(binary, canvas.width, canvas.height)
+      if (strategy === 'name') binary = removeLargeNameArtwork(binary, canvas.width, canvas.height)
+      if (strategy === 'substat') {
+        binary = removeSubstatHighlight(binary, canvas.width, canvas.height)
+        binary = trimSubstatFooter(binary, canvas.width, canvas.height)
+      }
       renderBinary(context, binary, canvas.width, canvas.height)
     }
     const blob = await canvas.convertToBlob({ type: 'image/png' }), bytes = await blob.arrayBuffer()

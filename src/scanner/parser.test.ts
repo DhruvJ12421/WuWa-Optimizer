@@ -48,6 +48,13 @@ describe('English Echo OCR parser', () => {
     expect(candidate.fields.equippedBy.value).toBe('Lucy')
   })
 
+  it('preserves punctuation in equipped character names and accepts punctuation separators', async () => {
+    const colonName = await parseEchoText('Hooscamp\nCost 1\nLv. 25\nLingering Tunes\nATK % 18.0%\nEquipped by Yangyang: Xuanling', 'data:image/png;base64,equipped-colon', 'screenshot')
+    const separator = await parseEchoText('Hooscamp\nCost 1\nLv. 25\nLingering Tunes\nATK % 18.0%\nEquipped by; Yangyang: Xuanling', 'data:image/png;base64,equipped-separator', 'screenshot')
+    expect(colonName.fields.equippedBy.value).toBe('Yangyang: Xuanling')
+    expect(separator.fields.equippedBy.value).toBe('Yangyang: Xuanling')
+  })
+
   it('fuzzy-matches Nanoka identity and Sonata names after OCR drift', async () => {
     const candidate = await parseEchoText('Cyan Feathered Her0n +25\nCOST 3\nCelestiaI Light\nSpectro DMG Bonus 30.0%\nCrit. Rate 6.3%', 'data:image/png;base64,fuzzy', 'screenshot')
     expect(candidate.fields.name.value).toBe('Cyan-Feathered Heron')

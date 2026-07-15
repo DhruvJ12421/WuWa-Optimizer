@@ -1,4 +1,4 @@
-import { defaultPanelRectForLayout, regionsForLayout } from './regions'
+import { defaultPanelRectForLayout, normalizeSubstatRegions, regionsForLayout } from './regions'
 import type { CalibrationProfile, ScanLayout, ScanRect } from './types'
 
 // v2 uses the source image's true rendered aspect ratio. Profiles created by
@@ -47,7 +47,7 @@ export function profileKey(width: number, height: number, layout: ScanLayout, ui
 export function loadCalibrationProfiles(): CalibrationProfile[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')
-    return Array.isArray(parsed) ? parsed : []
+    return Array.isArray(parsed) ? parsed.map((profile) => ({ ...profile, regions: normalizeSubstatRegions(profile.regions ?? []) })) : []
   } catch { return [] }
 }
 
@@ -56,10 +56,69 @@ export function loadLatestCalibrationProfile() {
 }
 
 export function saveCalibrationProfile(profile: CalibrationProfile) {
-  const persisted = { ...profile, id: profileKey(profile.sourceWidth, profile.sourceHeight, profile.layout, profile.uiScale), updatedAt: Date.now() }
+  const persisted = { ...profile, regions: normalizeSubstatRegions(profile.regions), id: profileKey(profile.sourceWidth, profile.sourceHeight, profile.layout, profile.uiScale), updatedAt: Date.now() }
   const profiles = loadCalibrationProfiles().filter((entry) => entry.id !== persisted.id)
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...profiles, persisted]))
   return persisted
+}
+
+export function deleteCalibrationProfile(profile: CalibrationProfile) {
+  const id = profileKey(profile.sourceWidth, profile.sourceHeight, profile.layout, profile.uiScale)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(loadCalibrationProfiles().filter((entry) => entry.id !== id)))
+}
+
+const isRect = (value: unknown): value is ScanRect => {
+  if (!value || typeof value !== 'object') return false
+  const rect = value as Record<string, unknown>
+  return ['x', 'y', 'width', 'height'].every((key) => typeof rect[key] === 'number' && Number.isFinite(rect[key]))
+}
+
+function normalizeImportedProfile(input: unknown): CalibrationProfile {
+  const value = input as Partial<CalibrationProfile>
+  if (!value || typeof value !== 'object'
+    || (value.layout !== 'echo-detail' && value.layout !== 'echo-management')
+    || typeof value.sourceWidth !== 'number' || !Number.isFinite(value.sourceWidth)
+    || typeof value.sourceHeight !== 'number' || !Number.isFinite(value.sourceHeight)
+    || typeof value.uiScale !== 'number' || !Number.isFinite(value.uiScale)
+    || !isRect(value.panelRect) || !Array.isArray(value.regions)
+    || value.regions.some((region) => !region || typeof region.id !== 'string' || typeof region.kind !== 'string'
+      || typeof region.label !== 'string' || !isRect(region.rect)
+      || !['text', 'number', 'visual'].includes(region.recognition))) {
+    throw new Error('This file is not a valid Tacet Lab calibration profile.')
+  }
+  const now = Date.now()
+  return {
+    ...value,
+    id: profileKey(value.sourceWidth, value.sourceHeight, value.layout, value.uiScale),
+    name: typeof value.name === 'string' ? value.name : `${value.sourceWidth}x${value.sourceHeight} - ${value.layout === 'echo-detail' ? 'Character Menu' : 'Backpack'}`,
+    regions: normalizeSubstatRegions(value.regions),
+    createdAt: typeof value.createdAt === 'number' ? value.createdAt : now,
+    updatedAt: now
+  } as CalibrationProfile
+}
+
+export function parseCalibrationProfiles(json: string): CalibrationProfile[] {
+  const parsed = JSON.parse(json) as { profiles?: unknown[] }
+  const inputs = parsed && typeof parsed === 'object' && Array.isArray(parsed.profiles) ? parsed.profiles : [parsed]
+  if (!inputs.length) throw new Error('This calibration bundle does not contain any profiles.')
+  return inputs.map(normalizeImportedProfile)
+}
+
+export function parseCalibrationProfile(json: string): CalibrationProfile {
+  return parseCalibrationProfiles(json)[0]
+}
+
+export function calibrationExportProfiles(current: CalibrationProfile) {
+  const stored = loadCalibrationProfiles()
+  return (['echo-detail', 'echo-management'] as const).map((layout) => {
+    if (current.layout === layout) return current
+    return stored.filter((profile) => profile.layout === layout
+      && Math.abs(profile.sourceWidth - current.sourceWidth) <= 2
+      && Math.abs(profile.sourceHeight - current.sourceHeight) <= 2
+      && Math.abs(profile.uiScale - current.uiScale) <= .02)
+      .sort((left, right) => right.updatedAt - left.updatedAt)[0]
+      ?? createCalibrationProfile(current.sourceWidth, current.sourceHeight, defaultPanelRectForLayout(layout), layout, current.uiScale)
+  })
 }
 
 export function findCompatibleProfile(width: number, height: number, layout: ScanLayout, uiScale?: number) {

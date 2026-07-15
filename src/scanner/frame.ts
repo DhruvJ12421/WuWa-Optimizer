@@ -23,13 +23,14 @@ export async function prepareScanFrame(
   source: ScanSource,
   sessionId: string,
   sequence: number,
-  preferredProfile?: CalibrationProfile
+  preferredProfile?: CalibrationProfile,
+  preferredLayout?: Exclude<ScanLayout, 'unknown'>
 ): Promise<PreparedFrame> {
   const image = await loadImage(sourceDataUrl)
   const width = image.naturalWidth, height = image.naturalHeight
   const detected = detectRightPanel(image, width, height)
   const compatiblePreferred = preferredProfile && Math.abs(preferredProfile.sourceWidth - width) <= 2 && Math.abs(preferredProfile.sourceHeight - height) <= 2 ? preferredProfile : undefined
-  const layout: Exclude<ScanLayout, 'unknown'> = compatiblePreferred?.layout ?? (detected.layout === 'unknown' ? 'echo-detail' : detected.layout)
+  const layout: Exclude<ScanLayout, 'unknown'> = compatiblePreferred?.layout ?? preferredLayout ?? (detected.layout === 'unknown' ? 'echo-detail' : detected.layout)
   const saved = findCompatibleProfile(width, height, layout, compatiblePreferred?.uiScale)
   const defaultPanel = defaultPanelRectForLayout(layout)
   const profile = compatiblePreferred ?? saved ?? createCalibrationProfile(width, height, defaultPanel, layout)

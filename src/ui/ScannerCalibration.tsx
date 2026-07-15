@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { saveCalibrationProfile } from '../scanner/calibration'
+import { calibrationExportProfiles, createCalibrationProfile, deleteCalibrationProfile, parseCalibrationProfiles, saveCalibrationProfile } from '../scanner/calibration'
 import type { CalibrationProfile, ScanRect } from '../scanner/types'
 import { defaultPanelRectForLayout, regionColor, regionsForLayout } from '../scanner/regions'
 
@@ -16,8 +16,9 @@ const clampFieldRect = (rect: ScanRect): ScanRect => {
 export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }: {
   imageDataUrl: string; profile: CalibrationProfile; onChange: (profile: CalibrationProfile) => void; onSaved?: (profile: CalibrationProfile) => void
 }) {
-  const stageRef = useRef<HTMLDivElement>(null), panelRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null), panelRef = useRef<HTMLDivElement>(null), importRef = useRef<HTMLInputElement>(null)
   const [selectedRegionId, setSelectedRegionId] = useState(profile.regions[0]?.id ?? '')
+  const [profileMessage, setProfileMessage] = useState('')
   const selectedRegion = profile.regions.find((region) => region.id === selectedRegionId) ?? profile.regions[0]
 
   const updateRegion = (regionId: string, rect: ScanRect) => onChange({
@@ -56,8 +57,33 @@ export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }:
     updateRegion(selectedRegion.id, { ...selectedRegion.rect, [key]: value })
   }
 
+  const exportProfile = () => {
+    const bundle = { version: 1, exportedAt: Date.now(), profiles: calibrationExportProfiles(profile) }
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob), link = document.createElement('a')
+    link.href = url; link.download = `tacet-lab-calibrations-${profile.sourceWidth}x${profile.sourceHeight}.json`; link.click()
+    URL.revokeObjectURL(url); setProfileMessage('Character Menu and Backpack profiles exported')
+  }
+
+  const importProfile = async (file?: File) => {
+    if (!file) return
+    try {
+      const imported = parseCalibrationProfiles(await file.text()).map(saveCalibrationProfile)
+      const active = imported.find((entry) => entry.layout === profile.layout) ?? imported[0]
+      setSelectedRegionId(active.regions[0]?.id ?? ''); onChange(active); setProfileMessage(`${imported.length} calibration profile${imported.length === 1 ? '' : 's'} imported and saved`)
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : 'Calibration import failed.')
+    }
+  }
+
+  const deleteProfile = () => {
+    deleteCalibrationProfile(profile)
+    const reset = createCalibrationProfile(profile.sourceWidth, profile.sourceHeight, defaultPanelRectForLayout(profile.layout), profile.layout, profile.uiScale)
+    setSelectedRegionId(reset.regions[0]?.id ?? ''); onChange(reset); setProfileMessage('Saved profile deleted; defaults restored')
+  }
+
   return <div className="scanner-calibration">
-    <div className="calibration-toolbar"><div><strong>Calibration</strong><span>{profile.name}</span></div><label>Layout<select value={profile.layout} onChange={(event) => { const layout = event.target.value as CalibrationProfile['layout'], regions = regionsForLayout(layout); setSelectedRegionId(regions[0]?.id ?? ''); onChange({ ...profile, layout, panelRect: defaultPanelRectForLayout(layout), regions, updatedAt: Date.now() }) }}><option value="echo-detail">Character Menu</option><option value="echo-management">Backpack</option></select></label><label>UI scale<input type="number" min=".5" max="2" step=".05" value={profile.uiScale} onChange={(event) => onChange({ ...profile, uiScale: Number(event.target.value), updatedAt: Date.now() })}/></label><button type="button" className="secondary" onClick={() => { const saved = saveCalibrationProfile(profile); onChange(saved); onSaved?.(saved) }}>Save profile</button></div>
+    <div className="calibration-toolbar"><div><strong>Calibration</strong><span>{profile.name}</span>{profileMessage && <small>{profileMessage}</small>}</div><label>UI scale<input type="number" min=".5" max="2" step=".05" value={profile.uiScale} onChange={(event) => onChange({ ...profile, uiScale: Number(event.target.value), updatedAt: Date.now() })}/></label><button type="button" className="secondary" onClick={() => { const saved = saveCalibrationProfile(profile); onChange(saved); onSaved?.(saved) }}>Save profile</button><button type="button" className="text-button" onClick={exportProfile}>Export</button><button type="button" className="text-button" onClick={() => importRef.current?.click()}>Import</button><button type="button" className="text-button danger" onClick={deleteProfile}>Delete</button><input ref={importRef} hidden type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void importProfile(file) }}/></div>
     <div className="calibration-workspace">
       <div className="calibration-stage" ref={stageRef}>
         <img src={imageDataUrl} alt="Calibration source"/>

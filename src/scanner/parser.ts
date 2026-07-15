@@ -101,7 +101,7 @@ export async function imageFingerprint(dataUrl: string) {
 
 export async function parseEchoText(text: string, imageDataUrl: string, source: ScanCandidate['source'], visual: VisualRecognition = {}): Promise<ScanCandidate> {
   const lines = normalizeOcrText(text)
-  const detailsEnd = lines.findIndex((line) => /Echo Skills|Sonata Effect/i.test(line))
+  const detailsEnd = lines.findIndex((line) => /(?:Echo|ho|no)\s+Skills?|Sonata Effect/i.test(line))
   const detailLines = detailsEnd < 0 ? lines : lines.slice(0, detailsEnd)
   const stats = detailLines.map(parseStatLine).filter((stat): stat is StatLine => Boolean(stat))
   const joined = lines.join(' ')
@@ -109,10 +109,11 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const level = Number(levelMatch?.[1] ?? 0)
   const costMatch = joined.match(/Cost\s*([134])/i)
   const rarityMatch = joined.match(/([1-5])\s*(?:Star|★)/i)
-  const equippedLine = [...lines].reverse().find((line) => /Equipp?e?d\s+by\s+/i.test(line))
-  const equippedMatch = equippedLine?.match(/Equipp?e?d\s+by\s+([A-Za-z][A-Za-z .'-]{0,30})/i)
+  const equippedLine = [...lines].reverse().find((line) => /Equipp?e?d\s+by\b/i.test(line))
+  const equippedMatch = equippedLine?.match(/Equipp?e?d\s+by\b\s*(?:[:;,=-]\s*)?(.+?)\s*$/i)
   const equippedRaw = equippedMatch?.[1]?.trim() ?? ''
-  const equippedCatalog = equippedRaw ? closestName([equippedRaw], characterCatalog, (entry) => entry.name, 0.72) : undefined
+  const exactEquipped = equippedRaw ? characterCatalog.find((entry) => normalizedIdentity(entry.name) === normalizedIdentity(equippedRaw)) : undefined
+  const equippedCatalog = exactEquipped ? { entry: exactEquipped, score: 1 } : equippedRaw ? closestName([equippedRaw], characterCatalog, (entry) => entry.name, 0.72) : undefined
   const catalog = catalogMatch(lines)
   const detectedName = lines.find((line) => !parseStatLine(line) && !/(level|cost|sonata|equipped|locked|echo skills)/i.test(line) && line.length > 2) ?? 'Unknown Echo'
   const name = catalog?.name ?? detectedName.replace(/\s*\+\s*\d{1,2}.*$/, '').trim()

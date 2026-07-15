@@ -4,7 +4,7 @@ export type ScanSource = 'screen' | 'screenshot' | 'video' | 'manual'
 export type ScanLayout = 'echo-detail' | 'echo-management' | 'unknown'
 export type ScanRegionKind =
   | 'name' | 'level' | 'cost' | 'rarity' | 'sonata'
-  | 'main-stat-label' | 'main-stat-value' | 'substat-row'
+  | 'main-stat-label' | 'main-stat-value' | 'substats-block' | 'substat-row'
   | 'equipped-character' | 'locked' | 'discarded'
 
 export interface ScanRect { x: number; y: number; width: number; height: number }
@@ -129,4 +129,3 @@ export interface RecognizedFields {
 }
 
 export type OcrWorkerPreference = 'auto' | 1 | 2 | 4
-

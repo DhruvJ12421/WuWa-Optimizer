@@ -1,0 +1,313 @@
+import { calculateRotation } from '../domain/damage'
+import type {
+  AttackDefinition, BuffEffect, Build, DamageType, Echo, Element, OwnedCharacter,
+  OwnedWeapon, Resonator, RotationAction, StatKey, StatLine, Team, Weapon
+} from '../domain/types'
+import {
+  characterCatalog, echoCatalog, sonataCatalog, statLabels, weaponCatalog,
+  type CharacterCatalogEntry
+} from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import {
+  resolveCharacterShowcaseModel, weaponSecondaryStat,
+  type CharacterShowcaseModel
+} from './character-showcase-model'
+
+const ELEMENTS: Record<string, Element> = {
+  aero: 'aero', electro: 'electro', fusion: 'fusion', glacio: 'glacio', havoc: 'havoc', spectro: 'spectro'
+}
+
+const SKILL_KEYS = ['normalAttack', 'resonanceSkill', 'forteCircuit', 'resonanceLiberation', 'introSkill'] as const
+
+export interface TeamWorkspaceInput {
+  team: Team
+  builds: Build[]
+  characters: OwnedCharacter[]
+  weapons: OwnedWeapon[]
+  echoes: Echo[]
+}
+
+export interface TeamAttackModel {
+  id: string
+  name: string
+  type: DamageType
+  multiplier: number
+  multiplierLabel: string
+  scalesWith: 'atk' | 'hp'
+  skillLevel: number
+  skillName: string
+  iconSourceUrl: string
+}
+
+export interface TeamMemberModel {
+  slot: number
+  build?: Build
+  character?: OwnedCharacter
+  catalog?: CharacterCatalogEntry
+  showcase?: CharacterShowcaseModel
+  attacks: TeamAttackModel[]
+  contribution: number
+  contributionPercent: number
+  byType: Partial<Record<DamageType, number>>
+  appliedBuffs: BuffEffect[]
+  receivedBuffs: BuffEffect[]
+  roles: string[]
+  warnings: string[]
+}
+
+export interface TeamActionModel {
+  action: RotationAction
+  member?: TeamMemberModel
+  attack?: TeamAttackModel
+  normal: number
+  critical: number
+  expected: number
+  activeBuffs: BuffEffect[]
+  activates: BuffEffect[]
+  warnings: string[]
+}
+
+export interface SonataCoverageModel {
+  name: string
+  pieces: number
+  activeThresholds: number[]
+  description: string
+  iconSourceUrl: string
+}
+
+export interface TeamWorkspaceModel {
+  team: Team
+  members: [TeamMemberModel, TeamMemberModel, TeamMemberModel]
+  total: number
+  dps: number
+  actions: TeamActionModel[]
+  byType: Partial<Record<DamageType, number>>
+  sonatas: SonataCoverageModel[]
+  roles: string[]
+  introCount: number
+  outroCount: number
+  warnings: string[]
+}
+
+function elementFor(catalog: CharacterCatalogEntry): Element {
+  return ELEMENTS[catalog.element.toLowerCase()] ?? 'spectro'
+}
+
+function runtimeAttack(catalog: CharacterCatalogEntry, character: OwnedCharacter, index: number): AttackDefinition {
+  const attack = catalog.attacks[index]
+  const skillLevel = Math.max(1, Math.min(attack.multipliers.length, character.skillLevels?.[attack.skillLevelIndex] ?? 1))
+  return {
+    id: attack.id,
+    name: attack.name,
+    type: attack.type,
+    element: elementFor(catalog),
+    multiplier: attack.multipliers[skillLevel - 1] ?? 0,
+    hits: 1,
+    scalesWith: attack.scalesWith
+  }
+}
+
+function attackModels(catalog: CharacterCatalogEntry, character: OwnedCharacter): TeamAttackModel[] {
+  return catalog.attacks.map((attack, index) => {
+    const level = Math.max(1, Math.min(attack.multipliers.length, character.skillLevels?.[attack.skillLevelIndex] ?? 1))
+    const skill = catalog.skillIcons[SKILL_KEYS[attack.skillLevelIndex] ?? 'forteCircuit']
+    return {
+      id: attack.id,
+      name: attack.name,
+      type: attack.type,
+      multiplier: attack.multipliers[level - 1] ?? 0,
+      multiplierLabel: `${((attack.multipliers[level - 1] ?? 0) * 100).toFixed(2)}%`,
+      scalesWith: attack.scalesWith,
+      skillLevel: level,
+      skillName: skill.name,
+      iconSourceUrl: skill.iconSourceUrl
+    }
+  })
+}
+
+function runtimeWeapon(build: Build, weapons: OwnedWeapon[]): Weapon | undefined {
+  const owned = weapons.find((weapon) => weapon.id === build.weaponId)
+  const catalog = weaponCatalog.find((weapon) => weapon.id === owned?.catalogId)
+  if (!owned || !catalog || !catalog.levelStats.length) return undefined
+  const levelStats = catalog.levelStats.reduce((nearest, row) =>
+    Math.abs(row.level - owned.level) < Math.abs(nearest.level - owned.level) ? row : nearest
+  )
+  return {
+    id: owned.id,
+    name: catalog.name,
+    type: catalog.type.toLowerCase() as Weapon['type'],
+    baseAtk: levelStats.baseAtk,
+    stat: weaponSecondaryStat(catalog, levelStats.secondaryStatValue)
+  }
+}
+
+function runtimeResonator(catalog: CharacterCatalogEntry, character: OwnedCharacter): Resonator {
+  const levelStats = catalog.levelStats.reduce((nearest, row) =>
+    Math.abs(row.level - character.level) < Math.abs(nearest.level - character.level) ? row : nearest
+  )
+  return {
+    id: catalog.id,
+    name: catalog.name,
+    element: elementFor(catalog),
+    role: catalog.role,
+    accent: '',
+    baseStats: {
+      hp: levelStats.hp,
+      atk: levelStats.atk,
+      def: levelStats.def,
+      critRate: catalog.baseStats.critRate,
+      critDamage: catalog.baseStats.critDamage
+    },
+    attacks: catalog.attacks.map((_, index) => runtimeAttack(catalog, character, index))
+  }
+}
+
+function inferRoles(catalog: CharacterCatalogEntry | undefined, attacks: TeamAttackModel[]) {
+  if (!catalog) return []
+  const source = `${catalog.role} ${catalog.description}`.toLowerCase()
+  const roles = new Set<string>()
+  if (attacks.some((attack) => attack.type !== 'healing')) roles.add('Field DPS')
+  if (source.includes('coordinated')) roles.add('Coordinated damage')
+  if (attacks.some((attack) => attack.type === 'healing') || source.includes('heal')) roles.add('Healing')
+  if (source.includes('support') || source.includes('concerto') || source.includes('amplif')) roles.add('Support')
+  return [...roles]
+}
+
+function buffAppliesTo(effect: BuffEffect, member: TeamMemberModel) {
+  if (!member.build) return false
+  return effect.target === 'team'
+    || (effect.target === 'self' && effect.sourceBuildId === member.build.id)
+    || (effect.target === 'next' && effect.sourceBuildId !== member.build.id)
+}
+
+function activeBuffsAt(team: Team, sortedActions: RotationAction[], currentIndex: number) {
+  const active: Array<{ effect: BuffEffect; activatedAt: number }> = []
+  for (let index = 0; index < currentIndex; index += 1) {
+    const action = sortedActions[index]
+    for (let activeIndex = active.length - 1; activeIndex >= 0; activeIndex -= 1) {
+      if (action.timestamp > active[activeIndex].activatedAt + active[activeIndex].effect.duration) active.splice(activeIndex, 1)
+    }
+    for (const effect of team.buffs ?? []) {
+      if (effect.sourceBuildId === action.buildId && effect.triggerAttackId === action.attackId) active.push({ effect, activatedAt: action.timestamp })
+    }
+    for (let activeIndex = active.length - 1; activeIndex >= 0; activeIndex -= 1) {
+      if (active[activeIndex].effect.target === 'next' && active[activeIndex].effect.sourceBuildId !== action.buildId) active.splice(activeIndex, 1)
+    }
+  }
+  const timestamp = sortedActions[currentIndex]?.timestamp ?? 0
+  return active.filter((entry) => timestamp <= entry.activatedAt + entry.effect.duration).map((entry) => entry.effect)
+}
+
+export function formatWorkspaceStat(key: StatKey, value: number) {
+  return key === 'hp' || key === 'atk' || key === 'def'
+    ? Math.round(value).toLocaleString('en-US')
+    : `${value.toFixed(1)}%`
+}
+
+export function teamBuffLabel(effect: BuffEffect) {
+  const stat = effect.stat === 'amplify' ? 'Amplification' : statLabels[effect.stat]
+  return `${effect.name} · ${effect.value.toFixed(1)}% ${stat}`
+}
+
+export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceModel {
+  const baseMembers = Array.from({ length: 3 }, (_, slot): TeamMemberModel => {
+    const build = input.builds.find((entry) => entry.id === input.team.buildIds[slot])
+    const catalog = characterCatalog.find((entry) => entry.id === build?.resonatorId)
+    const character = input.characters.find((entry) => entry.catalogId === build?.resonatorId)
+    const showcase = character && catalog
+      ? resolveCharacterShowcaseModel({ character, catalog, weapons: input.weapons, echoes: input.echoes, builds: build ? [build] : [] })
+      : undefined
+    const attacks = catalog && character ? attackModels(catalog, character) : []
+    const warnings: string[] = []
+    if (!build) warnings.push('No build assigned to this slot.')
+    else {
+      if (!catalog || !character) warnings.push('Owned character or Nanoka catalog data is missing.')
+      if (!showcase?.weapon) warnings.push('No compatible owned weapon is equipped; rotation actions cannot be calculated.')
+      if ((showcase?.equippedEchoes.length ?? 0) < 5) warnings.push(`${showcase?.equippedEchoes.length ?? 0}/5 Echoes equipped.`)
+      if ((showcase?.totalEchoCost ?? 0) > 12) warnings.push('Echo cost exceeds the 12-cost limit.')
+    }
+    return {
+      slot, build, character, catalog, showcase, attacks, contribution: 0, contributionPercent: 0,
+      byType: {}, appliedBuffs: [], receivedBuffs: [], roles: inferRoles(catalog, attacks), warnings
+    }
+  }) as [TeamMemberModel, TeamMemberModel, TeamMemberModel]
+
+  const resonators = baseMembers.flatMap((member) => member.catalog && member.character
+    ? [runtimeResonator(member.catalog, member.character)] : [])
+  const runtimeWeapons = baseMembers.flatMap((member) => member.build
+    ? [runtimeWeapon(member.build, input.weapons)].filter((entry): entry is Weapon => Boolean(entry)) : [])
+  const rotation = calculateRotation(input.team, input.builds, resonators, runtimeWeapons, input.echoes)
+
+  for (const member of baseMembers) {
+    if (!member.build) continue
+    member.contribution = rotation.byBuild[member.build.id] ?? 0
+    member.contributionPercent = rotation.total > 0 ? member.contribution / rotation.total * 100 : 0
+    member.appliedBuffs = (input.team.buffs ?? []).filter((effect) => effect.sourceBuildId === member.build?.id)
+    member.receivedBuffs = (input.team.buffs ?? []).filter((effect) => buffAppliesTo(effect, member))
+  }
+
+  const sortedActions = [...input.team.actions].sort((left, right) => left.timestamp - right.timestamp)
+  let resultIndex = 0
+  const actions = sortedActions.map((action, index): TeamActionModel => {
+    const member = baseMembers.find((entry) => entry.build?.id === action.buildId)
+    const attack = member?.attacks.find((entry) => entry.id === action.attackId)
+    const warnings: string[] = []
+    if (!member?.build) warnings.push('Character is not assigned to this team.')
+    if (!attack) warnings.push('Nanoka attack data is missing for this action.')
+    if (!member?.showcase?.weapon) warnings.push('Damage skipped because no weapon is equipped.')
+    if (action.timestamp < 0 || action.timestamp > input.team.rotationDuration) warnings.push('Timestamp is outside the rotation duration.')
+    const valid = Boolean(member?.build && member.showcase?.weapon && attack)
+    const result = valid ? rotation.actions[resultIndex++] : undefined
+    const activeBuffs = activeBuffsAt(input.team, sortedActions, index).filter((effect) => member ? buffAppliesTo(effect, member) : false)
+    const activates = (input.team.buffs ?? []).filter((effect) => effect.sourceBuildId === action.buildId && effect.triggerAttackId === action.attackId)
+    return {
+      action, member, attack, normal: result?.normal ?? 0, critical: result?.critical ?? 0,
+      expected: result?.expected ?? 0, activeBuffs, activates, warnings
+    }
+  })
+
+  for (const member of baseMembers) member.byType = {}
+  for (const row of actions) {
+    if (!row.member || !row.attack) continue
+    row.member.byType[row.attack.type] = (row.member.byType[row.attack.type] ?? 0) + row.expected
+  }
+
+  const sonataCounts = new Map<string, number>()
+  for (const member of baseMembers) for (const sonata of member.showcase?.sonatas ?? []) {
+    sonataCounts.set(sonata.name, (sonataCounts.get(sonata.name) ?? 0) + sonata.count)
+  }
+  const sonatas = [...sonataCounts].map(([name, pieces]) => {
+    const entry = sonataCatalog.find((sonata) => sonata.name === name)
+    const active = entry?.effects.filter((effect) => pieces >= effect.pieces) ?? []
+    return {
+      name, pieces, activeThresholds: active.map((effect) => effect.pieces),
+      description: active.map((effect) => effect.description).join(' '),
+      iconSourceUrl: generatedSonataIconSources[name] ?? ''
+    }
+  }).sort((left, right) => right.pieces - left.pieces || left.name.localeCompare(right.name))
+
+  const roles = [...new Set(baseMembers.flatMap((member) => member.roles))]
+  const allAttacks = baseMembers.flatMap((member) => member.attacks)
+  const warnings = [...new Set([
+    ...baseMembers.flatMap((member) => member.warnings),
+    ...actions.flatMap((action) => action.warnings),
+    'Weapon passives are reference-only. Only the limited Sonata bonuses already supported by the damage domain are applied; other generated Sonata descriptions are not simulated.'
+  ])]
+  return {
+    team: input.team,
+    members: baseMembers,
+    total: rotation.total,
+    dps: rotation.dps,
+    actions,
+    byType: rotation.byType,
+    sonatas,
+    roles,
+    introCount: allAttacks.filter((attack) => /intro/i.test(attack.name)).length,
+    outroCount: allAttacks.filter((attack) => /outro/i.test(attack.name)).length,
+    warnings
+  }
+}
+
+export function echoArtwork(echo: Echo | undefined) {
+  return echo ? echoCatalog.find((entry) => entry.name === echo.name)?.iconSourceUrl ?? '' : ''
+}

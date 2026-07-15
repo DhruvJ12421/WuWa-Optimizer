@@ -1,5 +1,5 @@
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from 'react'
-import { echoCatalog, statLabels } from '../game-data'
+import { characterCatalog, echoCatalog, statLabels } from '../game-data'
 import { generatedSonataIconSources } from '../game-data/catalog.generated'
 import { effectiveSubStats, fixedSecondaryMainStat } from '../game-data/echo-main-stats'
 import { substatTierPoints } from '../domain/echo-grade'
@@ -47,6 +47,12 @@ export function EchoMiniCard({ echo, selected, onClick, actions, equipment, grad
     <footer>{grade && <><span>{scoreLabel}</span><strong className={`echo-score ${gradeTone ? `grade-${gradeTone}` : ''}`}>{grade}</strong></>}{actions}</footer>
     {equipment && <div className="echo-equipment">{equipment}</div>}
   </article>
+}
+
+export function EquippedCharacterLabel({ name }: { name?: string }) {
+  const normalizedName = name?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? ''
+  const character = normalizedName ? characterCatalog.find((entry) => entry.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedName) : undefined
+  return <span>{character?.iconSourceUrl ? <img src={character.iconSourceUrl} alt=""/> : <i>—</i>}<b>{character?.name ?? name ?? 'Unequipped'}</b></span>
 }
 
 function statGlyph(key: StatKey) {

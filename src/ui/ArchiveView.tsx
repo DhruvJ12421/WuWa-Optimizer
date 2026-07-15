@@ -12,6 +12,7 @@ const tabs: Array<{ id: ArchiveTab; label: string; count: number }> = [
   { id: 'sonatas', label: 'Sonatas', count: sonataCatalog.length },
   { id: 'echoes', label: 'Echoes', count: echoCatalog.length }
 ]
+const weaponTypes = [...new Set(weaponCatalog.map((item) => item.type))]
 
 const elementSonatas: Record<string, string> = {
   Glacio: sonataCatalog[0].name,
@@ -41,6 +42,7 @@ export function ArchiveView() {
   const [query, setQuery] = useState('')
   const [rarity, setRarity] = useState('all')
   const [category, setCategory] = useState('all')
+  const [weaponType, setWeaponType] = useState('all')
   const [sonata, setSonata] = useState('all')
   const deferredQuery = useDeferredValue(query.trim().toLowerCase())
 
@@ -51,14 +53,14 @@ export function ArchiveView() {
     return []
   }, [tab])
 
-  const changeTab = (next: ArchiveTab) => { setTab(next); setQuery(''); setRarity('all'); setCategory('all'); setSonata('all') }
+  const changeTab = (next: ArchiveTab) => { setTab(next); setQuery(''); setRarity('all'); setCategory('all'); setWeaponType('all'); setSonata('all') }
   const matches = (text: string, itemRarity?: number, itemCategory?: string) =>
     (!deferredQuery || text.toLowerCase().includes(deferredQuery)) &&
     (rarity === 'all' || itemRarity === Number(rarity)) &&
     (category === 'all' || itemCategory === category)
 
   const characters = characterCatalog.filter((item) => matches(`${item.name} ${item.nickname} ${item.element} ${item.weaponType}`, item.rarity, item.element))
-  const weapons = weaponCatalog.filter((item) => matches(`${item.name} ${item.type} ${item.secondaryStat}`, item.rarity, item.secondaryStat))
+  const weapons = weaponCatalog.filter((item) => matches(`${item.name} ${item.type} ${item.secondaryStat}`, item.rarity, item.secondaryStat) && (weaponType === 'all' || item.type === weaponType))
   const sonatas = sonataCatalog.filter((item) => matches(item.name))
   const echoes = echoCatalog.filter((item) => matches(`${item.name} ${item.sonatas.join(' ')}`, undefined, `${item.cost}-cost`) && (sonata === 'all' || item.sonatas.includes(sonata)))
   const visibleCount = tab === 'characters' ? characters.length : tab === 'weapons' ? weapons.length : tab === 'sonatas' ? sonatas.length : echoes.length
@@ -66,7 +68,7 @@ export function ArchiveView() {
   return <section className="archive-view">
     <PageHeader eyebrow="Database / Nanoka 3.5" title="Wuthering Waves Archive" description="Browse the complete imported character, weapon, Sonata, and Echo catalogs." />
     <div className="archive-tabs" role="tablist">{tabs.map((item) => <button role="tab" aria-selected={tab === item.id} className={tab === item.id ? 'active' : ''} onClick={() => changeTab(item.id)} key={item.id}><span>{item.label}</span><b>{item.count}</b></button>)}</div>
-    <Panel className="archive-toolbar"><label className="search"><Icon name="scan"/><input aria-label="Search archive" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${tab}...`}/></label>{tab !== 'sonatas' && tab !== 'echoes' && <select aria-label="Rarity" value={rarity} onChange={(event) => setRarity(event.target.value)}><option value="all">All rarities</option>{[5,4,3,2,1].map((value) => <option value={value} key={value}>{value} star</option>)}</select>}{tab === 'characters' && <ElementFilter value={category} onChange={setCategory}/>} {tab === 'echoes' && <SonataPicker id="archive-sonata-filter" value={sonata} onChange={setSonata} allowAll/>}{categories.length > 0 && tab !== 'characters' && <select aria-label={tab === 'weapons' ? 'Weapon substat' : 'Echo cost'} value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">{tab === 'weapons' ? 'All substats' : 'All costs'}</option>{categories.map((value) => <option value={value} key={value}>{value}</option>)}</select>}<span className="archive-count">{visibleCount} shown</span></Panel>
+    <Panel className="archive-toolbar"><label className="search"><Icon name="scan"/><input aria-label="Search archive" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${tab}...`}/></label>{tab !== 'sonatas' && tab !== 'echoes' && <select aria-label="Rarity" value={rarity} onChange={(event) => setRarity(event.target.value)}><option value="all">All rarities</option>{[5,4,3,2,1].map((value) => <option value={value} key={value}>{value} star</option>)}</select>}{tab === 'characters' && <ElementFilter value={category} onChange={setCategory}/>} {tab === 'weapons' && <select aria-label="Weapon type" value={weaponType} onChange={(event) => setWeaponType(event.target.value)}><option value="all">All weapon types</option>{weaponTypes.map((value) => <option value={value} key={value}>{value}</option>)}</select>}{tab === 'echoes' && <SonataPicker id="archive-sonata-filter" value={sonata} onChange={setSonata} allowAll/>}{categories.length > 0 && tab !== 'characters' && <select aria-label={tab === 'weapons' ? 'Weapon substat' : 'Echo cost'} value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">{tab === 'weapons' ? 'All substats' : 'All costs'}</option>{categories.map((value) => <option value={value} key={value}>{value}</option>)}</select>}<span className="archive-count">{visibleCount} shown</span></Panel>
 
     {tab === 'characters' && <div className="catalog-grid characters">{characters.map((item) => <a className="catalog-card character" href={item.articleUrl} target="_blank" rel="noreferrer" key={item.id}><div className="catalog-art"><img src={item.iconSourceUrl} alt="" loading="lazy"/></div><div className="catalog-copy"><div className="character-name"><h2>{item.name}</h2><ElementIcon element={item.element}/></div><p>{item.title}</p><footer><span>{item.element}</span><span>{item.weaponType}</span><b>{'★'.repeat(item.rarity)}</b></footer></div></a>)}</div>}
     {tab === 'weapons' && <div className="catalog-grid weapons">{weapons.map((item) => <a className="catalog-card weapon" href={item.articleUrl} target="_blank" rel="noreferrer" key={item.id}><div className="catalog-art"><img src={item.iconSourceUrl} alt="" loading="lazy"/></div><div className="catalog-copy"><h2>{item.name}</h2><p>{item.type}</p><footer><span>ATK <strong>{item.baseAtk}</strong></span><span>{item.secondaryStat} <strong>{item.secondaryStatValue}</strong></span><b>{'★'.repeat(item.rarity)}</b></footer></div></a>)}</div>}

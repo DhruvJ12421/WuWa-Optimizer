@@ -8,6 +8,8 @@ export interface OcrPoolOptions { preference?: OcrWorkerPreference; onMetrics?: 
 interface Slot { id: string; worker: Worker; scheduler: Scheduler; pending: number; chain: Promise<void> }
 
 const isMobile = () => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)
+const textWhitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;!?'-–—&()/+%"
+const numberWhitelist = '0123456789+-.,:%'
 
 function autoWorkerCount(queuePressure = 0, averageJobMs = 0) {
   const cores = Math.max(1, navigator.hardwareConcurrency || 2)
@@ -18,9 +20,11 @@ function autoWorkerCount(queuePressure = 0, averageJobMs = 0) {
 
 const parametersFor = (region: ScanRegion) => {
   const normalizedInput = { preserve_interword_spaces: '1', user_defined_dpi: '300', tessedit_do_invert: '0' }
-  if (region.recognition === 'number') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: '0123456789+-.%' }
-  if (region.kind === 'name' || region.kind === 'main-stat-label' || region.kind === 'equipped-character') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE }
-  if (region.kind === 'substat-row') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz .+0123456789%' }
+  if (region.recognition === 'number') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: numberWhitelist }
+  if (region.kind === 'name') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_BLOCK, tessedit_char_whitelist: textWhitelist }
+  if (region.kind === 'main-stat-label' || region.kind === 'equipped-character') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: textWhitelist }
+  if (region.kind === 'substats-block' || region.id === 'substats-block') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_BLOCK, tessedit_char_whitelist: textWhitelist }
+  if (region.kind === 'substat-row') return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: textWhitelist }
   return { ...normalizedInput, tessedit_pageseg_mode: PSM.SINGLE_BLOCK }
 }
 

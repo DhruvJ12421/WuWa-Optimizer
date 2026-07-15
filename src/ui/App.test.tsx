@@ -26,8 +26,8 @@ describe('application shell', () => {
     render(<App/>)
     await screen.findByText('Wuthering Waves Archive')
     fireEvent.click(screen.getByRole('button', { name: /Scanner/ }))
-    fireEvent.click(await screen.findByRole('button', { name: /enter an Echo manually/i }))
-    expect(await screen.findByText(/Review queue/)).toHaveTextContent('1')
+    fireEvent.click(await screen.findByRole('button', { name: /add Echo manually/i }))
+    expect(await screen.findByRole('heading', { name: /^Scanned Echoes 1$/i })).toBeInTheDocument()
 
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     fireEvent.click(screen.getByRole('button', { name: /Echoes/ }))

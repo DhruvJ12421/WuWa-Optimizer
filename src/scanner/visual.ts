@@ -107,14 +107,18 @@ function sonataSignaturesInBox(image: HTMLImageElement, crop: ScanRect) {
   return signatures
 }
 
-function classifySonataCandidates(captured: number[][], templates: Array<{ name: string; signature: number[] }>): VisualRecognition['sonata'] {
-  const ranked = templates.map((template) => ({
+function classifySonataCandidates(captured: number[][], templates: Array<{ name: string; signature: number[] }>, allowedNames?: string[]): VisualRecognition['sonata'] {
+  const allowed = allowedNames?.length ? new Set(allowedNames) : undefined
+  const candidates = allowed ? templates.filter((template) => allowed.has(template.name)) : templates
+  const ranked = candidates.map((template) => ({
     name: template.name,
     score: Math.max(...captured.map((signature) => 1 - template.signature.reduce((sum, value, index) => sum + Math.abs(value - signature[index]), 0) / (signature.length * 4)))
   })).sort((left, right) => right.score - left.score)
   const best = ranked[0], runnerUp = ranked[1]
-  if (!best || best.score < .63 || best.score - (runnerUp?.score ?? 0) < .015) return
-  return { value: best.name, confidence: Math.min(.96, .62 + best.score * .34) }
+  const minimumScore = candidates.length === 1 ? .42 : .48
+  const minimumMargin = candidates.length === 1 ? 0 : .005
+  if (!best || best.score < minimumScore || best.score - (runnerUp?.score ?? 0) < minimumMargin) return
+  return { value: best.name, confidence: Math.min(.96, .55 + best.score * .4) }
 }
 
 export function classifySonataSignatures(captured: number[], templates: Array<{ name: string; signature: number[] }>): VisualRecognition['sonata'] {
@@ -127,16 +131,18 @@ export function classifySonataSignatures(captured: number[], templates: Array<{ 
 function loadSonataSignatures() {
   if (sonataSignaturesPromise) return sonataSignaturesPromise
   sonataSignaturesPromise = Promise.all(Object.entries(generatedSonataIconSources).filter((entry) => entry[1]).map(async ([name, url]) => {
-    const image = new Image(); image.crossOrigin = 'anonymous'; image.src = url; await image.decode()
-    const canvas = document.createElement('canvas'); canvas.width = 24; canvas.height = 24
-    const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) throw new Error('Sonata icon canvas unavailable.')
-    context.drawImage(image, 0, 0, 24, 24)
-    return { name, signature: pixelSignature(context.getImageData(0, 0, 24, 24).data) }
-  })).catch(() => [])
+    try {
+      const image = new Image(); image.crossOrigin = 'anonymous'; image.src = url; await image.decode()
+      const canvas = document.createElement('canvas'); canvas.width = 24; canvas.height = 24
+      const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) return
+      context.drawImage(image, 0, 0, 24, 24)
+      return { name, signature: pixelSignature(context.getImageData(0, 0, 24, 24).data) }
+    } catch { return undefined }
+  })).then((signatures) => signatures.filter((entry): entry is { name: string; signature: number[] } => Boolean(entry)))
   return sonataSignaturesPromise
 }
 
-export async function recognizeVisualFields(imageDataUrl: string, sonataRect?: ScanRect): Promise<VisualRecognition> {
+export async function recognizeVisualFields(imageDataUrl: string, sonataRect?: ScanRect, allowedSonatas?: string[]): Promise<VisualRecognition> {
   const image = new Image()
   image.src = imageDataUrl
   await image.decode()
@@ -145,7 +151,7 @@ export async function recognizeVisualFields(imageDataUrl: string, sonataRect?: S
   if (!context) return {}
   const crops = image.naturalWidth / image.naturalHeight > .58 ? INVENTORY_VISUAL_CROPS : DETAIL_VISUAL_CROPS
   const state = classifyEchoState(cropPixels(image, crops.discard), cropPixels(image, crops.lock))
-  const sonata = classifySonataCandidates(sonataSignaturesInBox(image, sonataRect ?? crops.sonata), await loadSonataSignatures())
+  const sonata = classifySonataCandidates(sonataSignaturesInBox(image, sonataRect ?? crops.sonata), await loadSonataSignatures(), allowedSonatas)
   const rarityCanvas = document.createElement('canvas'); rarityCanvas.width = Math.max(1, Math.round(image.naturalWidth * .72)); rarityCanvas.height = Math.max(1, Math.round(image.naturalHeight * .075))
   const rarityContext = rarityCanvas.getContext('2d', { willReadFrequently: true }); if (!rarityContext) return { sonata, ...state }
   rarityContext.drawImage(image, 0, 0, rarityCanvas.width, rarityCanvas.height, 0, 0, rarityCanvas.width, rarityCanvas.height)
