@@ -1,6 +1,8 @@
 import { createCalibrationProfile, detectRightPanel, findCompatibleProfile } from './calibration'
+import { createLocalId } from '../domain/id'
 import { defaultPanelRectForLayout } from './regions'
 import type { CalibrationProfile, ScanFrame, ScanLayout, ScanRect, ScanSource } from './types'
+import { looksLikeOfficialBuildCard } from './build-card'
 
 const loadImage = async (dataUrl: string) => { const image = new Image(); image.src = dataUrl; await image.decode(); return image }
 
@@ -29,8 +31,10 @@ export async function prepareScanFrame(
   const image = await loadImage(sourceDataUrl)
   const width = image.naturalWidth, height = image.naturalHeight
   const detected = detectRightPanel(image, width, height)
-  const compatiblePreferred = preferredProfile && Math.abs(preferredProfile.sourceWidth - width) <= 2 && Math.abs(preferredProfile.sourceHeight - height) <= 2 ? preferredProfile : undefined
-  const layout: Exclude<ScanLayout, 'unknown'> = compatiblePreferred?.layout ?? preferredLayout ?? (detected.layout === 'unknown' ? 'echo-detail' : detected.layout)
+  const dimensionCompatiblePreferred = preferredProfile && Math.abs(preferredProfile.sourceWidth - width) <= 2 && Math.abs(preferredProfile.sourceHeight - height) <= 2 ? preferredProfile : undefined
+  const buildCard = source === 'screenshot' && (preferredLayout === 'build-card' || await looksLikeOfficialBuildCard(sourceDataUrl))
+  const layout: Exclude<ScanLayout, 'unknown'> = buildCard ? 'build-card' : dimensionCompatiblePreferred?.layout ?? preferredLayout ?? (detected.layout === 'unknown' ? 'echo-detail' : detected.layout)
+  const compatiblePreferred = dimensionCompatiblePreferred?.layout === layout ? dimensionCompatiblePreferred : undefined
   const saved = findCompatibleProfile(width, height, layout, compatiblePreferred?.uiScale)
   const defaultPanel = defaultPanelRectForLayout(layout)
   const profile = compatiblePreferred ?? saved ?? createCalibrationProfile(width, height, defaultPanel, layout)
@@ -43,10 +47,10 @@ export async function prepareScanFrame(
   const panelImageDataUrl = canvas.toDataURL('image/jpeg', .92)
   return {
     frame: {
-      id: crypto.randomUUID(), sessionId, sequence, source, capturedAt: Date.now(), width, height,
+      id: createLocalId(), sessionId, sequence, source, capturedAt: Date.now(), width, height,
       panelRect: { ...rect }, panelImageDataUrl, fingerprint: panelFingerprint(context), layout: profile.layout, calibrationProfileId: saved?.id ?? compatiblePreferred?.id
     },
-    profile, detectionConfidence: detected.confidence, needsCalibration: !saved && !compatiblePreferred
+    profile, detectionConfidence: layout === 'build-card' ? 1 : detected.confidence, needsCalibration: !saved && !compatiblePreferred
   }
 }
 

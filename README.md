@@ -19,13 +19,16 @@ Use the top-bar controls to export or restore a JSON backup. Open **Settings & d
 ## Current features
 
 - Browse the Nanoka 3.5 character, weapon, Sonata, and Echo catalogs.
+- View Nanoka's animated Spine portrait on character loadout cards, with a static-art and reduced-motion fallback.
 - Track owned characters, weapon copies, levels, sequences, ranks, locks, and assignments.
 - Scan English Echo detail screens from a user-approved window share.
 - Import PNG, JPEG, or WebP screenshots, with manual entry as a fallback.
 - Review and correct identity, cost, rarity, level, Sonata, main stat, and substats before saving.
 - Search, filter, grade, lock, exclude, edit, equip, and delete locally stored Echoes.
 - Build five-Echo, 12-cost character loadouts and connect them to three-member teams.
-- Author timestamped actions and buffs for deterministic expected rotation damage.
+- Inspect Nanoka-derived normal, average, and critical results for every generated character attack, with saved team conditions and calculation traces.
+- Author timestamped actions and advanced custom buffs for deterministic formula-driven rotation damage.
+- Optimize one character's Echoes against a selected ability or stat without truncating cost groups; capped searches are labeled best found.
 - Export and restore versioned account backups as JSON.
 - Install the site as a PWA after opening it in a supported browser.
 
@@ -40,7 +43,7 @@ WuWa window -> browser MediaStream -> local crop -> local English OCR
 
 Window sharing starts only after the browser permission prompt. Stopping the share ends every media track. Screenshots and captured frames are processed locally and are not persisted unless the reviewed Echo is saved.
 
-The app downloads catalog artwork from Nanoka and may download the Tesseract worker, WebAssembly runtime, and English language model on the first OCR run. Previously requested OCR resources and built app assets are cached for later use. See [docs/privacy.md](docs/privacy.md) for the complete boundary.
+The app downloads catalog artwork and the selected character's animated portrait assets from Nanoka. It may also download the Tesseract worker, WebAssembly runtime, and English language model on the first OCR run. Previously requested OCR resources and built app assets are cached for later use. See [docs/privacy.md](docs/privacy.md) for the complete boundary.
 
 ## Important limitations
 
@@ -48,9 +51,9 @@ The app downloads catalog artwork from Nanoka and may download the Tesseract wor
 - Live scanning is designed for 1920x1080 and 2560x1440 16:9 layouts on desktop Chrome or Edge.
 - Mobile supports browsing and editing, but not live game-window capture.
 - Real 1080p and 1440p fixtures have not yet demonstrated the 95% OCR target. Every result must be reviewed.
-- The complete catalog is available for collection tracking, but authoritative combat calculations remain limited to the initial Spectro Rover, Chixia, and Baizhi data slice.
-- Formula inputs are marked `mvp-2026.07-unverified`. Damage output is illustrative until those values are verified against the current English in-game UI.
-- Catalog images require a network connection unless the browser already cached them. The first OCR run also requires network access.
+- Formula coverage is pinned to `nanoka-3.5-formula-v1`: 60 characters, 120 weapons, 34 Sonatas, and 180 Echoes are classified, and generated character attack parameters drive the result sheets.
+- “Nanoka-derived” means reproducible from that pinned dataset, not independently verified against the current English in-game UI. Complex weapon, Sonata, sequence, and Echo-active behaviors must retain visible reference/coverage warnings until their structured effects are audited.
+- Catalog images and animated character portraits require a network connection unless the browser already cached them. The first OCR run also requires network access.
 
 ## Local development
 

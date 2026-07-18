@@ -30,7 +30,10 @@ const secondaryRanges: Record<Echo['cost'], Ranges> = {
 }
 function scaledValue([start, end]: Range, level: number, maxLevel: number, flat = false) {
   const value = start + (end - start) * Math.max(0, Math.min(maxLevel, level)) / maxLevel
-  return flat ? Math.round(value) : Math.round(value * 10) / 10
+  // The game displays scaled Echo mains by truncating hidden precision rather
+  // than rounding to nearest. Keep a tiny epsilon so exact endpoints are not
+  // lost to floating-point representation (for example, 29.999999999).
+  return flat ? Math.floor(value + Number.EPSILON * 100) : Math.floor(value * 10 + Number.EPSILON * 100) / 10
 }
 export function isMainStatAllowed(cost: Echo['cost'], key: StatKey) { return mainStatKeysByCost[cost].includes(key) }
 export function primaryMainStatValue(cost: Echo['cost'], rarity: Echo['rarity'], level: number, key: StatKey) {

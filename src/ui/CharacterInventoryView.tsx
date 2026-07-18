@@ -1,6 +1,8 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { characterCatalog, echoCatalog, weaponCatalog, type CharacterCatalogEntry } from '../game-data'
+import { createLocalId } from '../domain/id'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
 import { db } from '../storage/database'
 import type { Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 import { Icon, Panel } from './components'
@@ -30,8 +32,8 @@ function Picker({ title, query, setQuery, filters, children, onClose }: { title:
   return createPortal(<div className="catalog-picker-backdrop character-catalog-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="catalog-picker" role="dialog" aria-modal="true" aria-label={title}><header><div><span className="eyebrow">Local inventory</span><h2>{title}</h2></div><button type="button" className="text-button" onClick={onClose}>Close</button></header><div className="catalog-picker-tools"><label className="search"><span>⌕</span><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${title.toLowerCase()}...`}/></label>{filters}</div><div className="catalog-picker-grid">{children}</div></section></div>, document.body)
 }
 
-function LoadoutSquare({ label, image, meta, className = '' }: { label: string; image?: string; meta?: string; className?: string }) {
-  return <div className={`character-loadout-square ${className}`}>{image ? <img src={image} alt=""/> : <span>+</span>}<small>{label}</small>{meta && <b>{meta}</b>}</div>
+function LoadoutSquare({ label, image, topLeft, bottomRight, className = '' }: { label: string; image?: string; topLeft?: string; bottomRight?: ReactNode; className?: string }) {
+  return <div className={`character-loadout-square ${className}`} title={label}>{image ? <img src={image} alt=""/> : <span>+</span>}{topLeft && <b className="loadout-corner loadout-top-left">{topLeft}</b>}{bottomRight && <b className="loadout-corner loadout-bottom-right">{bottomRight}</b>}</div>
 }
 
 export interface CharacterInventoryProps {
@@ -75,7 +77,7 @@ export function CharacterInventory({ owned, weapons = [], echoes = [], builds = 
     && (pickerRarity === 'all' || entry.rarity === pickerRarity)
     && `${entry.name} ${entry.element} ${entry.weaponType}`.toLowerCase().includes(pickerQuery.toLowerCase()))
   const add = async (catalogId: string) => {
-    await db.characters.add({ id: crypto.randomUUID(), catalogId, level: 1, sequence: 0, locked: false, favorite: false, skillLevels: [1, 1, 1, 1, 1], createdAt: Date.now() })
+    await db.characters.add({ id: createLocalId(), catalogId, level: 1, sequence: 0, locked: false, favorite: false, skillLevels: [1, 1, 1, 1, 1], createdAt: Date.now() })
     setPickerOpen(false)
     await refresh()
   }
@@ -94,8 +96,8 @@ export function CharacterInventory({ owned, weapons = [], echoes = [], builds = 
       return <article className={`character-candy-card rarity-${catalog.rarity}`} key={item.id} role="button" tabIndex={0} onClick={() => setSelectedId(item.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedId(item.id) }}>
         <button className={item.favorite ? 'favorite active' : 'favorite'} aria-label="Favorite character" onClick={async (event) => { event.stopPropagation(); await db.characters.update(item.id, { favorite: !item.favorite }); await refresh() }}>♥</button>
         <div className="candy-character-art"><img src={catalog.iconSourceUrl} alt=""/></div>
-        <div className="candy-character-copy"><header><h2>{catalog.name}</h2><p>{catalog.element} · {catalog.weaponType} · <Stars rarity={catalog.rarity}/></p></header><div className="candy-level"><strong>Lv. {item.level}/90</strong><b>S{item.sequence}</b></div><div className="candy-skills">{skillsFor(item).map((level, index) => <span key={SKILLS[index]} title={SKILLS[index]}><i>{SKILLS[index].slice(0, 1)}</i>{level}</span>)}</div></div>
-        <div className="candy-loadout"><LoadoutSquare className={weaponEntry ? `rarity-${weaponEntry.rarity}` : ''} label={weaponEntry?.name || 'Weapon'} image={weaponEntry?.iconSourceUrl} meta={weapon ? `Lv.${weapon.level}` : undefined}/>{Array.from({ length: 5 }, (_, index) => { const echo = equipped[index]; return <LoadoutSquare key={index} label={echo?.name || `Echo ${index + 1}`} image={echo ? echoCatalog.find((entry) => entry.name === echo.name)?.iconSourceUrl : undefined} meta={echo ? `+${echo.level}` : undefined}/> })}</div>
+        <div className="candy-character-copy"><header><div className={catalog.titleCardSourceUrl ? 'candy-title-card has-title-card' : 'candy-title-card'}>{catalog.titleCardSourceUrl && <img src={catalog.titleCardSourceUrl} alt="" onError={(event) => { event.currentTarget.hidden = true; event.currentTarget.parentElement?.classList.remove('has-title-card') }}/>}<h2>{catalog.name}</h2></div><p>{catalog.element} · {catalog.weaponType} · <Stars rarity={catalog.rarity}/></p></header><div className="candy-level"><strong>Lv. {item.level}/90</strong><b>S{item.sequence}</b></div><div className="candy-skills">{skillsFor(item).map((level, index) => <span key={SKILLS[index]} title={`${SKILLS[index]} Lv. ${level}`}><i>{level}</i></span>)}</div></div>
+        <div className="candy-loadout"><LoadoutSquare className={weaponEntry ? `rarity-${weaponEntry.rarity}` : ''} label={weaponEntry?.name || 'Weapon'} image={weaponEntry?.iconSourceUrl} topLeft={weapon ? `${weapon.level}/90` : undefined} bottomRight={weapon ? `R${weapon.rank}` : undefined}/>{Array.from({ length: 5 }, (_, index) => { const echo = equipped[index]; const sonataIcon = echo ? generatedSonataIconSources[echo.sonata] : undefined; return <LoadoutSquare key={index} label={echo?.name || `Echo ${index + 1}`} image={echo ? echoCatalog.find((entry) => entry.name === echo.name)?.iconSourceUrl : undefined} topLeft={echo ? `+${echo.level}` : undefined} bottomRight={sonataIcon ? <img className="loadout-sonata-icon" src={sonataIcon} alt={echo?.sonata || ''}/> : undefined}/> })}</div>
       </article>
     })}</div>
     {pickerOpen && <Picker title="Choose a character" query={pickerQuery} setQuery={setPickerQuery} filters={<div className="catalog-picker-filters"><Chips label="Element" values={[...new Set(addCatalog.map((item) => item.element))]} selected={pickerElement} onChange={setPickerElement}/><Chips label="Rarity" values={[5, 4]} selected={pickerRarity} onChange={setPickerRarity}/></div>} onClose={() => setPickerOpen(false)}>{available.map((entry) => <button className={`catalog-choice character-choice rarity-${entry.rarity}`} key={entry.id} onClick={() => void add(entry.id)}><img src={entry.iconSourceUrl} alt=""/><span><strong>{entry.name}</strong><small>{entry.element} · {entry.weaponType}</small><Stars rarity={entry.rarity}/></span></button>)}</Picker>}

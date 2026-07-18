@@ -1,4 +1,5 @@
 import { calculateRotation } from '../domain/damage'
+import { createBuildCalculationContext, FormulaCalculator, characterFormulaSheets, resolveFormulaTarget, type CalculationTrace, type FormulaTarget } from '../domain/calculation'
 import type {
   AttackDefinition, BuffEffect, Build, DamageType, Echo, Element, OwnedCharacter,
   OwnedWeapon, Resonator, RotationAction, StatKey, StatLine, Team, Weapon
@@ -53,6 +54,15 @@ export interface TeamMemberModel {
   receivedBuffs: BuffEffect[]
   roles: string[]
   warnings: string[]
+  formulaRows: TeamFormulaRow[]
+}
+
+export interface TeamFormulaRow {
+  target: FormulaTarget
+  normal: number
+  critical: number
+  expected: number
+  traces: Record<'normal' | 'critical' | 'expected', CalculationTrace>
 }
 
 export interface TeamActionModel {
@@ -65,6 +75,8 @@ export interface TeamActionModel {
   activeBuffs: BuffEffect[]
   activates: BuffEffect[]
   warnings: string[]
+  trace?: CalculationTrace
+  formulaTargetId?: string
 }
 
 export interface SonataCoverageModel {
@@ -228,7 +240,7 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
     }
     return {
       slot, build, character, catalog, showcase, attacks, contribution: 0, contributionPercent: 0,
-      byType: {}, appliedBuffs: [], receivedBuffs: [], roles: inferRoles(catalog, attacks), warnings
+      byType: {}, appliedBuffs: [], receivedBuffs: [], roles: inferRoles(catalog, attacks), warnings, formulaRows: []
     }
   }) as [TeamMemberModel, TeamMemberModel, TeamMemberModel]
 
@@ -244,6 +256,20 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
     member.contributionPercent = rotation.total > 0 ? member.contribution / rotation.total * 100 : 0
     member.appliedBuffs = (input.team.buffs ?? []).filter((effect) => effect.sourceBuildId === member.build?.id)
     member.receivedBuffs = (input.team.buffs ?? []).filter((effect) => buffAppliesTo(effect, member))
+    const ownedWeapon = member.showcase?.weapon?.owned
+    if (member.character && member.build && ownedWeapon) {
+      const context = createBuildCalculationContext({
+        build: member.build, character: member.character, weapon: ownedWeapon,
+        echoes: member.build.echoIds.map((id) => input.echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)),
+        enemy: input.team.enemy, scenario: input.team.scenario, buffs: member.receivedBuffs
+      })
+      const calculator = new FormulaCalculator(context)
+      const sheet = characterFormulaSheets.find((entry) => entry.id === member.character?.catalogId)
+      member.formulaRows = (sheet?.targets ?? []).map((target) => {
+        const normal = calculator.evaluate(target.normal), critical = calculator.evaluate(target.critical), expected = calculator.evaluate(target.expected)
+        return { target, normal: Number(normal.value), critical: Number(critical.value), expected: Number(expected.value), traces: { normal: normal.trace, critical: critical.trace, expected: expected.trace } }
+      })
+    }
   }
 
   const sortedActions = [...input.team.actions].sort((left, right) => left.timestamp - right.timestamp)
@@ -260,17 +286,37 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
     const result = valid ? rotation.actions[resultIndex++] : undefined
     const activeBuffs = activeBuffsAt(input.team, sortedActions, index).filter((effect) => member ? buffAppliesTo(effect, member) : false)
     const activates = (input.team.buffs ?? []).filter((effect) => effect.sourceBuildId === action.buildId && effect.triggerAttackId === action.attackId)
+    const formulaTargetId = action.formulaTargetId ?? (member?.catalog && attack ? `${member.catalog.id}:${attack.id}` : undefined)
+    const target = formulaTargetId && member?.catalog ? resolveFormulaTarget(member.catalog.id, formulaTargetId) : undefined
+    let formulaResult: { normal: number; critical: number; expected: number; trace?: CalculationTrace } | undefined
+    const ownedWeapon = member?.showcase?.weapon?.owned
+    if (target && member?.build && member.character && ownedWeapon) {
+      const calculator = new FormulaCalculator(createBuildCalculationContext({
+        build: member.build, character: member.character, weapon: ownedWeapon,
+        echoes: member.build.echoIds.map((id) => input.echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)),
+        enemy: input.team.enemy, scenario: input.team.scenario, buffs: activeBuffs, actionInputs: action.inputs
+      }))
+      const normal = calculator.evaluate(target.normal), critical = calculator.evaluate(target.critical), expected = calculator.evaluate(target.expected)
+      const mode = input.team.scenario?.resultMode ?? 'expected'
+      formulaResult = { normal: Number(normal.value), critical: Number(critical.value), expected: Number(expected.value), trace: { normal: normal.trace, critical: critical.trace, expected: expected.trace }[mode] }
+    }
     return {
-      action, member, attack, normal: result?.normal ?? 0, critical: result?.critical ?? 0,
-      expected: result?.expected ?? 0, activeBuffs, activates, warnings
+      action, member, attack, normal: formulaResult?.normal ?? result?.normal ?? 0, critical: formulaResult?.critical ?? result?.critical ?? 0,
+      expected: formulaResult?.expected ?? result?.expected ?? 0, activeBuffs, activates, warnings, trace: formulaResult?.trace, formulaTargetId
     }
   })
 
-  for (const member of baseMembers) member.byType = {}
+  const formulaByType: Partial<Record<DamageType, number>> = {}
+  let formulaTotal = 0
+  for (const member of baseMembers) { member.byType = {}; member.contribution = 0 }
   for (const row of actions) {
     if (!row.member || !row.attack) continue
     row.member.byType[row.attack.type] = (row.member.byType[row.attack.type] ?? 0) + row.expected
+    formulaByType[row.attack.type] = (formulaByType[row.attack.type] ?? 0) + row.expected
+    row.member.contribution += row.expected
+    formulaTotal += row.expected
   }
+  for (const member of baseMembers) member.contributionPercent = formulaTotal > 0 ? member.contribution / formulaTotal * 100 : 0
 
   const sonataCounts = new Map<string, number>()
   for (const member of baseMembers) for (const sonata of member.showcase?.sonatas ?? []) {
@@ -296,10 +342,10 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
   return {
     team: input.team,
     members: baseMembers,
-    total: rotation.total,
-    dps: rotation.dps,
+    total: formulaTotal,
+    dps: formulaTotal / Math.max(1, input.team.rotationDuration),
     actions,
-    byType: rotation.byType,
+    byType: formulaByType,
     sonatas,
     roles,
     introCount: allAttacks.filter((attack) => /intro/i.test(attack.name)).length,

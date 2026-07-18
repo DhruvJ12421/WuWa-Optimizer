@@ -173,8 +173,12 @@ function removeLargeNameArtwork(values: Uint8Array, width: number, height: numbe
       }
     }
     const componentWidth = maxX - minX + 1, componentHeight = maxY - minY + 1
-    const artwork = component.length > maximumTextArea
+    const largeArtwork = component.length > maximumTextArea
       && (componentWidth > width * .1 || componentHeight > height * .45)
+    const rightEdgeArtwork = minX > width * .5
+      && (minY === 0 || maxX === width - 1)
+      && componentHeight > height * .15
+    const artwork = largeArtwork || rightEdgeArtwork
     if (artwork) for (const index of component) output[index] = 255
   }
   return output

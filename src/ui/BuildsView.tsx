@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image'
 import { aggregateStats, calculateDamage, formatDamage } from '../domain/damage'
 import { resonators, statLabels, weapons } from '../game-data'
 import { echoStatLines } from '../game-data/echo-main-stats'
-import { db, saveSettings } from '../storage/database'
+import { db, saveSettings, setBuildEchoIds, setOwnedWeaponOwner } from '../storage/database'
 import type { AppSettings, Build, Echo, StatKey } from '../domain/types'
 import { EchoMiniCard, formatStat, Icon, PageHeader, Panel, StatValue } from './components'
 
@@ -57,10 +57,7 @@ export function BuildsView({ echoes, builds, settings, refresh }: { echoes: Echo
     if (!selected && build.echoIds.length >= 5) { setMessage('A build can equip five Echoes.'); return }
     if (!selected && cost + echo.cost > 12) { setMessage('This selection would exceed the 12-cost limit.'); return }
     const echoIds = selected ? build.echoIds.filter((id) => id !== echo.id) : [...build.echoIds, echo.id]
-    await db.transaction('rw', db.builds, db.echoes, async () => {
-      await db.builds.update(build.id, { echoIds })
-      await db.echoes.update(echo.id, { equippedBy: selected ? undefined : build.id })
-    })
+    await setBuildEchoIds(build.id, echoIds)
     await refresh()
   }
 
@@ -74,7 +71,14 @@ export function BuildsView({ echoes, builds, settings, refresh }: { echoes: Echo
     finally { setExporting(false) }
   }
 
-  const updateBuild = async (patch: Partial<Build>) => { await db.builds.update(build.id, patch); await refresh() }
+  const updateBuild = async (patch: Partial<Build>) => {
+    if (patch.weaponId !== undefined) {
+      const [ownedWeapon, character] = await Promise.all([db.weapons.get(patch.weaponId), db.characters.where('catalogId').equals(build.resonatorId).first()])
+      if (ownedWeapon && character) await setOwnedWeaponOwner(ownedWeapon.id, character.id)
+      else await db.builds.update(build.id, patch)
+    } else await db.builds.update(build.id, patch)
+    await refresh()
+  }
   const updateWeight = async (key: StatKey, value: number) => {
     await saveSettings({ ...settings, scoreWeights: { ...settings.scoreWeights, [resonator.id]: { ...weights, [key]: value } } })
     await refresh()

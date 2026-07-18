@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises'
 const version='3.5',base=`https://static.nanoka.cc/ww/${version}`
-const sources={characters:`${base}/character.json`,weapons:`${base}/weapon.json`,echoes:`${base}/echo.json`}
+const encoreBase='https://api-v2.encore.moe/api/en'
+const sources={characters:`${base}/character.json`,weapons:`${base}/weapon.json`,echoes:`${base}/echo.json`,titles:`${encoreBase}/title`}
 const names=['','Freezing Frost','Molten Rift','Void Thunder','Sierra Gale','Celestial Light','Havoc Eclipse','Rejuvenating Glow','Moonlit Clouds','Lingering Tunes','Frosty Resolve','Eternal Radiance','Midnight Veil','Empyrean Anthem','Tidebreaking Courage',,'Gusts of Welkin','Windward Pilgrimage','Flaming Clawprint','Dream of the Lost','Crown of Valor','Law of Harmony',"Flamewing's Shadow",'Thread of Severed Fate','Pact of Neonlight Leap','Halo of Starry Radiance','Rite of Gilded Revelation','Trailblazing Star','Chromatic Foam','Sound of True Name','Wishes of Quiet Snowfall','Reel of Spliced Memories','Shadow of Shattered Dreams','Song of Feathered Trace',"Heart of Evil's Purge",'Lamp of Nether Road']
 const load=async source=>{const response=await fetch(source);if(!response.ok)throw Error(`Nanoka ${response.status}: ${source}`);return response.json()}
 const mapLimit=async(items,limit,mapper)=>{
@@ -11,9 +12,13 @@ const mapLimit=async(items,limit,mapper)=>{
   }))
   return output
 }
-const [rawCharacters,rawWeapons,rawEchoes]=await Promise.all(Object.values(sources).map(load))
+const [rawCharacters,rawWeapons,rawEchoes,rawTitles]=await Promise.all([sources.characters,sources.weapons,sources.echoes,sources.titles].map(load))
 const formatEffect=(desc='',param=[])=>desc.replace(/\{(\d+)\}/g,(_,index)=>param[Number(index)]??`{${index}}`)
 const asset=p=>`https://static.nanoka.cc/assets/ww/${p.replace(/^\/Game\/Aki\/UI\//,'').split('.')[0]}.webp`
+const spineAsset=path=>{
+  const match=String(path??'').match(/\/Portraits\/([^/]+)\/([^/.]+)/i)
+  return match?`https://static.nanoka.cc/assets/ww/portraits/${match[1]}/${match[2]}`:''
+}
 const sonataIconFallbackBase='https://wuthering.gg/images/iconelement'
 const sonataAsset=async path=>{
   const primary=asset(path)
@@ -27,6 +32,18 @@ const elements=['','Glacio','Fusion','Electro','Aero','Spectro','Havoc']
 const weaponTypes=['','Broadblade','Sword','Pistols','Gauntlets','Rectifier']
 const characterDetails=await mapLimit(Object.keys(rawCharacters),8,async id=>[id,await load(`${base}/en/character/${id}.json`)])
 const characterDetailById=new Map(characterDetails)
+const titleDetails=await mapLimit(rawTitles.titleList??[],8,title=>load(`${encoreBase}/title/${title.Id}`))
+const rawTitleAssetBase='https://raw.githubusercontent.com/alt3ri/WW_Asset/Global/UIResources/Common/Image/Com/Image'
+const titleCardAsset=image=>{
+  if(!image)return ''
+  const filename=image.split('/').at(-1)?.replace(/\.webp$/i,'.png')??''
+  const roleNumber=Number(filename.match(/EpithetName_Role_(\d+)/i)?.[1]??0)
+  return roleNumber>0&&roleNumber<=46?`${rawTitleAssetBase}/${filename}`:image.replace(/\.png$/i,'.webp')
+}
+const titleCardByCharacter=new Map(titleDetails.flatMap(title=>{
+  const owner=title.HonorDescription?.match(/^Fully activate (.+?)(?:'s|’s) Resonance Chain$/i)?.[1]
+  return owner&&title.Image?[[owner,titleCardAsset(title.Image)]]:[]
+}))
 const combatType=skillType=>skillType==='Normal Attack'?'basic':skillType==='Resonance Liberation'?'liberation':'skill'
 const skillLevelIndex=skillType=>skillType==='Normal Attack'?0:skillType==='Resonance Skill'?1:skillType==='Forte Circuit'?2:skillType==='Resonance Liberation'?3:skillType==='Intro Skill'?4:1
 const characterLevels=Array.from({length:90},(_,index)=>index+1)
@@ -46,11 +63,30 @@ const characters=Object.entries(rawCharacters).map(([id,c])=>{
   const detail=characterDetailById.get(id)
   const levelStats=characterLevels.map(level=>characterStatsAtLevel(detail,level))
   const maxStats=levelStats.at(-1)??{hp:0,atk:0,def:0}
-  const skills=Object.values(detail?.skill_trees??{}).map(node=>node.skill??node)
+  const skillEntries=Object.entries(detail?.skill_trees??{})
+  const skills=skillEntries.map(([,node])=>node.skill??node)
+  const skillAsset=(skill,fallback='')=>({name:skill?.name??fallback,description:formatEffect(skill?.desc,skill?.param),iconSourceUrl:skill?.icon?asset(skill.icon):''})
   const skillIcons=Object.fromEntries(Object.entries(showcaseSkillTypes).map(([key,type])=>{
     const skill=skills.find(candidate=>candidate.type===type)
-    return [key,{name:skill?.name??type,iconSourceUrl:skill?.icon?asset(skill.icon):''}]
+    return [key,skillAsset(skill,type)]
   }))
+  const bonusStatBranches=Object.fromEntries(Object.entries(showcaseSkillTypes).map(([key,type])=>{
+    const mainEntry=skillEntries.find(([,node])=>(node.skill??node).type===type)
+    let parentId=mainEntry?.[0],branch=[]
+    for(let coordinate=1;coordinate<=2&&parentId;coordinate++){
+      const next=skillEntries.find(([,node])=>!(node.skill??node).type&&node.coordinate===coordinate&&(node.parent_nodes??[]).map(String).includes(String(parentId)))
+      if(!next)break
+      branch.push(skillAsset(next[1].skill??next[1]))
+      parentId=next[0]
+    }
+    return [key,branch]
+  }))
+  const skillTreeExtras={
+    outroSkill:skillAsset(skills.find(candidate=>candidate.type==='Outro Skill')),
+    inherentSkills:skills.filter(candidate=>candidate.type==='Inherent Skill').map(skillAsset),
+    bonusStatBranches,
+    tuneBreakSkill:skillAsset(skills.find(candidate=>candidate.type==='Tune Break'))
+  }
   const sequenceIcons=Object.entries(detail?.chains??{}).sort(([left],[right])=>Number(left)-Number(right)).map(([sequence,chain])=>({sequence:Number(sequence),name:chain.name??`Sequence ${sequence}`,description:formatEffect(chain.desc,chain.param),iconSourceUrl:chain.icon?asset(chain.icon):''}))
   const attacks=Object.entries(detail?.skill_trees??{}).flatMap(([nodeId,node])=>{
     const skill=node.skill??node
@@ -67,7 +103,9 @@ const characters=Object.entries(rawCharacters).map(([id,c])=>{
   })
   const rawGender=String(detail?.chara_info?.sex??'').toLowerCase()
   const gender=rawGender==='male'||rawGender==='female'?rawGender:null
-  return {id,name:c.en,title:detail?.chara_info?.talent_name??c.nickname??c.en,nickname:c.nickname,description:c.desc.replace(/<[^>]+>/g,''),rarity:c.rank,element:elements[c.element]??'Unknown',weaponType:weaponTypes[c.weapon]??'Unknown',role:Object.values(detail?.tag??{})[0]?.name??'Resonator',gender,baseStats:{hp:maxStats.hp,atk:maxStats.atk,def:maxStats.def,critRate:5,critDamage:150},levelStats,skillIcons,sequenceIcons,attacks,articleUrl:`https://ww.nanoka.cc/character/${id}`,iconSourceUrl:asset(c.icon),portraitSourceUrl:asset(detail?.background??detail?.background_stand??c.icon)}
+  const animatedSkin=Object.values(detail?.skin??{}).find(skin=>skin.formation_spine_skel&&skin.formation_spine_atlas)
+  const spineBaseUrl=spineAsset(animatedSkin?.formation_spine_skel)
+  return {id,name:c.en,title:detail?.chara_info?.talent_name??c.nickname??c.en,nickname:c.nickname,description:c.desc.replace(/<[^>]+>/g,''),rarity:c.rank,element:elements[c.element]??'Unknown',weaponType:weaponTypes[c.weapon]??'Unknown',role:Object.values(detail?.tag??{})[0]?.name??'Resonator',gender,baseStats:{hp:maxStats.hp,atk:maxStats.atk,def:maxStats.def,critRate:5,critDamage:150},levelStats,skillIcons,skillTreeExtras,sequenceIcons,attacks,articleUrl:`https://ww.nanoka.cc/character/${id}`,iconSourceUrl:asset(c.icon),portraitSourceUrl:asset(detail?.background??detail?.background_stand??c.icon),titleCardSourceUrl:titleCardByCharacter.get(c.en)??'',spineSkeletonSourceUrl:spineBaseUrl?`${spineBaseUrl}.skel`:'',spineAtlasSourceUrl:spineBaseUrl?`${spineBaseUrl}.atlas`:''}
 }).sort((a,b)=>a.name.localeCompare(b.name))
 const weaponEntries=Object.entries(rawWeapons).filter(([,weapon])=>!/^Projection(?:\s*[-:]|\b)/i.test(weapon.en))
 const weaponDetails=await mapLimit(weaponEntries.map(([id])=>id),8,async id=>[id,await load(`${base}/en/weapon/${id}.json`)])
@@ -101,7 +139,8 @@ const sonataIconSources=Object.fromEntries(await mapLimit(sonatas,8,async sonata
   return [sonata.name,icon?await sonataAsset(icon):'']
 }))
 if(characters.length<50||weapons.length<100||sonatas.length<30)throw Error('Incomplete Nanoka catalogs')
-const generatedAt=new Date().toISOString(),body=`// Generated by scripts/sync-nanoka-echoes.mjs. Do not edit.\nexport interface GeneratedCharacterAttackEntry {id:string;name:string;type:'basic'|'heavy'|'skill'|'liberation'|'healing';skillLevelIndex:number;scalesWith:'atk'|'hp';multipliers:number[]}\nexport interface GeneratedCharacterLevelStats {level:number;hp:number;atk:number;def:number}\nexport interface GeneratedCharacterSkillAsset {name:string;iconSourceUrl:string}\nexport interface GeneratedCharacterSequenceAsset {sequence:number;name:string;description:string;iconSourceUrl:string}\nexport interface GeneratedCharacterCatalogEntry {id:string;name:string;title:string;nickname:string;description:string;rarity:number;element:string;weaponType:string;role:string;gender:'male'|'female'|null;baseStats:{hp:number;atk:number;def:number;critRate:number;critDamage:number};levelStats:GeneratedCharacterLevelStats[];skillIcons:{normalAttack:GeneratedCharacterSkillAsset;resonanceSkill:GeneratedCharacterSkillAsset;forteCircuit:GeneratedCharacterSkillAsset;resonanceLiberation:GeneratedCharacterSkillAsset;introSkill:GeneratedCharacterSkillAsset};sequenceIcons:GeneratedCharacterSequenceAsset[];attacks:GeneratedCharacterAttackEntry[];articleUrl:string;iconSourceUrl:string;portraitSourceUrl:string}\nexport interface GeneratedWeaponLevelStats {level:number;baseAtk:number;secondaryStatValue:string}\nexport interface GeneratedWeaponCatalogEntry {id:string;name:string;description:string;rarity:number;type:string;baseAtk:number;secondaryStat:string;secondaryStatValue:string;levelStats:GeneratedWeaponLevelStats[];passiveName:string;passiveEffects:string[];articleUrl:string;iconSourceUrl:string}\nexport interface GeneratedSonataCatalogEntry {id:string;name:string;echoCount:number;effects:Array<{pieces:number;description:string}>}\nexport interface GeneratedEchoCatalogEntry {id:string;name:string;cost:1|3|4;sonatas:string[];rarities:number[];intensity:number;articleUrl:string;iconPath:string;iconSourceUrl:string}\nexport const generatedCharacterCatalog:GeneratedCharacterCatalogEntry[]=${JSON.stringify(characters,null,2)}\nexport const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=${JSON.stringify(weapons,null,2)}\nexport const generatedSonataCatalog:GeneratedSonataCatalogEntry[]=${JSON.stringify(sonatas,null,2)}\nexport const generatedEchoCatalog:GeneratedEchoCatalogEntry[]=${JSON.stringify(echoes,null,2)}\nexport const catalogProvenance=${JSON.stringify({sources,dataVersion:version,generatedAt})} as const\n`
-await writeFile('src/game-data/catalog.generated.ts',`${body}export const generatedSonataIconSources:Record<string,string>=${JSON.stringify(sonataIconSources,null,2)}\n`)
+const generatedAt=new Date().toISOString(),body=`// Generated by scripts/sync-nanoka-echoes.mjs. Do not edit.\nexport interface GeneratedCharacterAttackEntry {id:string;name:string;type:'basic'|'heavy'|'skill'|'liberation'|'healing';skillLevelIndex:number;scalesWith:'atk'|'hp';multipliers:number[]}\nexport interface GeneratedCharacterLevelStats {level:number;hp:number;atk:number;def:number}\nexport interface GeneratedCharacterSkillAsset {name:string;description:string;iconSourceUrl:string}\nexport interface GeneratedCharacterSequenceAsset {sequence:number;name:string;description:string;iconSourceUrl:string}\nexport interface GeneratedCharacterCatalogEntry {id:string;name:string;title:string;nickname:string;description:string;rarity:number;element:string;weaponType:string;role:string;gender:'male'|'female'|null;baseStats:{hp:number;atk:number;def:number;critRate:number;critDamage:number};levelStats:GeneratedCharacterLevelStats[];skillIcons:{normalAttack:GeneratedCharacterSkillAsset;resonanceSkill:GeneratedCharacterSkillAsset;forteCircuit:GeneratedCharacterSkillAsset;resonanceLiberation:GeneratedCharacterSkillAsset;introSkill:GeneratedCharacterSkillAsset};skillTreeExtras:{outroSkill:GeneratedCharacterSkillAsset;inherentSkills:GeneratedCharacterSkillAsset[];bonusStatBranches:{normalAttack:GeneratedCharacterSkillAsset[];resonanceSkill:GeneratedCharacterSkillAsset[];forteCircuit:GeneratedCharacterSkillAsset[];resonanceLiberation:GeneratedCharacterSkillAsset[];introSkill:GeneratedCharacterSkillAsset[]};tuneBreakSkill:GeneratedCharacterSkillAsset};sequenceIcons:GeneratedCharacterSequenceAsset[];attacks:GeneratedCharacterAttackEntry[];articleUrl:string;iconSourceUrl:string;portraitSourceUrl:string}\nexport interface GeneratedWeaponLevelStats {level:number;baseAtk:number;secondaryStatValue:string}\nexport interface GeneratedWeaponCatalogEntry {id:string;name:string;description:string;rarity:number;type:string;baseAtk:number;secondaryStat:string;secondaryStatValue:string;levelStats:GeneratedWeaponLevelStats[];passiveName:string;passiveEffects:string[];articleUrl:string;iconSourceUrl:string}\nexport interface GeneratedSonataCatalogEntry {id:string;name:string;echoCount:number;effects:Array<{pieces:number;description:string}>}\nexport interface GeneratedEchoCatalogEntry {id:string;name:string;cost:1|3|4;sonatas:string[];rarities:number[];intensity:number;articleUrl:string;iconPath:string;iconSourceUrl:string}\nexport const generatedCharacterCatalog:GeneratedCharacterCatalogEntry[]=${JSON.stringify(characters,null,2)}\nexport const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=${JSON.stringify(weapons,null,2)}\nexport const generatedSonataCatalog:GeneratedSonataCatalogEntry[]=${JSON.stringify(sonatas,null,2)}\nexport const generatedEchoCatalog:GeneratedEchoCatalogEntry[]=${JSON.stringify(echoes,null,2)}\nexport const catalogProvenance=${JSON.stringify({sources,dataVersion:version,generatedAt})} as const\n`
+const catalogBody=body.replace('portraitSourceUrl:string}', 'portraitSourceUrl:string;titleCardSourceUrl:string;spineSkeletonSourceUrl:string;spineAtlasSourceUrl:string}')
+await writeFile('src/game-data/catalog.generated.ts',`${catalogBody}export const generatedSonataIconSources:Record<string,string>=${JSON.stringify(sonataIconSources,null,2)}\n`)
 await writeFile('src/game-data/echoes.generated.ts',`// Compatibility export. Generated catalog lives in catalog.generated.ts.\nexport { generatedEchoCatalog, catalogProvenance as echoCatalogProvenance } from './catalog.generated'\nexport type { GeneratedEchoCatalogEntry } from './catalog.generated'\n`)
 console.log(`Wrote ${characters.length} characters, ${weapons.length} weapons, ${sonatas.length} Sonatas, and ${echoes.length} Echoes from Nanoka ${version}`)

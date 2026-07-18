@@ -19,6 +19,18 @@ describe('optimizer', () => {
     const echoes = [1, 2, 3, 4, 5, 6].map((value) => makeEcho(String(value), value))
     const results = optimizeBuilds(request(echoes))
     expect(results[0].echoIds.sort()).toEqual(['2', '3', '4', '5', '6'])
+    expect(results[0].complete).toBe(true)
+  })
+
+  it('evaluates declarative formula targets and labels capped searches', () => {
+    const echoes = [1, 2, 3, 4, 5, 6].map((value) => makeEcho(String(value), value))
+    const formulaRequest: OptimizerRequest = {
+      ...request(echoes), objective: 'expected', maxEvaluations: 10,
+      formula: { target: { id: 'atk-target', label: 'ATK target', kind: 'stat', mode: 'expected' }, node: { op: 'stat', key: 'critRate' }, inputs: {}, entries: [] }
+    }
+    const results = optimizeBuilds(formulaRequest)
+    expect(results[0].targetId).toBe('atk-target')
+    expect(results[0].complete).toBe(false)
   })
 
   it('honors locked, excluded, and minimum-stat constraints', () => {

@@ -16,7 +16,7 @@ Stopping capture calls `stop()` on every media track and disconnects the video e
 
 ## Network behavior
 
-The application has no API, account service, telemetry, analytics, or image-upload endpoint. Tesseract.js may fetch its worker, WASM runtime, and English language model from its configured public distribution hosts on the first OCR run. The PWA caches those resources after they are requested.
+The application has no API, account service, telemetry, analytics, or image-upload endpoint. Catalog artwork is loaded from Nanoka, and opening a character loadout downloads that character's Spine skeleton, atlas, and texture from Nanoka for local browser rendering. Tesseract.js may fetch its worker, WASM runtime, and English language model from its configured public distribution hosts on the first OCR run. The PWA caches OCR resources after they are requested; other remote assets rely on the browser's normal HTTP cache.
 
 ## User controls
 

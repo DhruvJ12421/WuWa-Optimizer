@@ -16,10 +16,7 @@ export function echoSignature(value: Echo | DiagnosticScanCandidate) {
     rarity: candidate ? fields!.rarity.value : value.rarity,
     level: candidate ? fields!.level.value : value.level,
     mainStat: stat(candidate ? fields!.mainStat.value : value.mainStat),
-    subStats: subStats.map(stat).sort(),
-    locked: candidate ? fields!.locked.value : value.locked,
-    excluded: candidate ? fields!.excluded.value : value.excluded,
-    equippedBy: text(candidate ? fields!.equippedBy.value : value.equippedByName)
+    subStats: subStats.map(stat).sort()
   })
 }
 
@@ -29,4 +26,3 @@ export function findDuplicate(candidate: DiagnosticScanCandidate, echoes: Echo[]
   if (stored) return stored.id
   return pending.find((entry) => entry.id !== candidate.id && echoSignature(entry) === signature)?.id
 }
-

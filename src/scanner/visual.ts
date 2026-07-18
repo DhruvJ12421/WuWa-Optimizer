@@ -142,6 +142,11 @@ function loadSonataSignatures() {
   return sonataSignaturesPromise
 }
 
+export async function recognizeSonataAt(imageDataUrl: string, rect: ScanRect, allowedNames?: string[]) {
+  const image = new Image(); image.src = imageDataUrl; await image.decode()
+  return classifySonataCandidates(sonataSignaturesInBox(image, rect), await loadSonataSignatures(), allowedNames)
+}
+
 export async function recognizeVisualFields(imageDataUrl: string, sonataRect?: ScanRect, allowedSonatas?: string[]): Promise<VisualRecognition> {
   const image = new Image()
   image.src = imageDataUrl

@@ -7,15 +7,19 @@ import { CharacterInventory } from './CharacterInventoryView'
 import { TeamsView } from './TeamsView'
 import { ScannerView } from './ScannerView'
 import { ArchiveView } from './ArchiveView'
+import { HomeView } from './HomeView'
+import { OptimizerView } from './OptimizerView'
 import { Icon, PageHeader, Panel } from './components'
 import { useAppData } from './useAppData'
 
 const nav: Array<{ view: AppView; label: string; icon: Parameters<typeof Icon>[0]['name'] }> = [
-  { view: 'dashboard', label: 'Archive', icon: 'home' },
+  { view: 'dashboard', label: 'Home', icon: 'home' },
+  { view: 'archive', label: 'Archive', icon: 'build' },
   { view: 'echoes', label: 'Echoes', icon: 'echo' },
   { view: 'weapons', label: 'Weapons', icon: 'build' },
   { view: 'characters', label: 'Characters', icon: 'team' },
   { view: 'teams', label: 'Teams', icon: 'optimize' },
+  { view: 'optimizer', label: 'Optimizer', icon: 'optimize' },
   { view: 'scanner', label: 'Scanner', icon: 'scan' }
 ]
 
@@ -84,12 +88,14 @@ export default function App() {
     <main>
       <div className="topbar"><div><span className="pulse"/>PRIVATE SESSION</div><div><button onClick={() => importRef.current?.click()}><Icon name="upload"/>Import</button><button onClick={backup}><Icon name="download"/>Backup</button><input ref={importRef} hidden type="file" accept="application/json" onChange={(event) => restore(event.target.files?.[0])}/><button className="user-button" onClick={() => setSettingsOpen(true)}>{data.settings.privacyMode ? 'P' : data.settings.displayName[0]?.toUpperCase()}</button></div></div>
       <div className="content">
-        {view === 'dashboard' && <ArchiveView/>}
+        {view === 'dashboard' && <HomeView echoes={data.echoes} characters={data.characters} weapons={data.weapons} builds={data.builds} teams={data.teams} navigate={setView}/>}
+        {view === 'archive' && <ArchiveView roverGender={data.settings.roverGender}/>}
         {view === 'scanner' && <ScannerView echoes={data.echoes} refresh={data.refresh} scanIntervalMs={data.settings.scanIntervalMs} onSessionRiskChange={setScannerSessionAtRisk}/>}
         {view === 'echoes' && <InventoryView echoes={data.echoes} builds={data.builds} refresh={data.refresh} openScanner={() => setView('scanner')}/>} 
         {view === 'weapons' && <><PageHeader eyebrow="Local collection" title="Weapons" description="Manage every weapon copy stored in this browser."/><WeaponInventory owned={data.weapons} characters={data.characters} builds={data.builds} refresh={data.refresh}/></>}
         {view === 'characters' && <><PageHeader eyebrow="Local roster" title="Characters" description="Open a character to inspect their loadout and team links."/><CharacterInventory owned={data.characters} weapons={data.weapons} echoes={data.echoes} builds={data.builds} teams={data.teams} roverGender={data.settings.roverGender} refresh={data.refresh}/></>}
         {view === 'teams' && <TeamsView echoes={data.echoes} builds={data.builds} teams={data.teams} characters={data.characters} weapons={data.weapons} refresh={data.refresh}/>}
+        {view === 'optimizer' && <OptimizerView echoes={data.echoes} builds={data.builds} characters={data.characters} ownedWeapons={data.weapons} refresh={data.refresh} openScanner={() => setView('scanner')}/>}
       </div>
       <footer className="site-footer"><span>Fan-made tool. Not affiliated with Kuro Games.</span><span>Catalog data: Nanoka 3.5</span></footer>
     </main>

@@ -2,9 +2,9 @@
 
 ## Current status
 
-The bundled data version is `mvp-2026.07-unverified`. Values are sufficient to exercise the complete pipeline but are not yet authoritative.
+The formula engine is pinned to `nanoka-3.5-formula-v1` and the generated Nanoka 3.5 catalog. All 60 characters, 120 weapons, 34 Sonatas, and 180 Echoes are classified by the coverage registry. Character attack targets are evaluated from the structured skill parameters in that dataset.
 
-The UI and documentation must retain this warning until each supported value has evidence from the current English in-game UI.
+The result sheet visibly labels its provenance as Nanoka-derived. That makes calculations reproducible from the pinned source, but does not mean they were independently verified against the current English in-game UI. Keep that distinction visible until the verification checklist is complete.
 
 ## Verification checklist
 

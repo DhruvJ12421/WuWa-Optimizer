@@ -1,10 +1,16 @@
-import { useState } from 'react'
-import type { CSSProperties } from 'react'
-import { characterCatalog, echoCatalog, statLabels, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
-import { effectiveSubStats, fixedSecondaryMainStat } from '../game-data/echo-main-stats'
-import { db } from '../storage/database'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { characterCatalog, sonataNames, statLabels, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
+import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { effectiveSubStats, maxSubStatsForLevel } from '../game-data/echo-main-stats'
+import { echoRollGrade, echoRollPoints, echoRollQuality } from '../domain/echo-grade'
+import { createLocalId } from '../domain/id'
+import { db, setBuildEchoIds, setOwnedWeaponOwner } from '../storage/database'
 import type { AggregatedStats, Build, Echo, OwnedCharacter, OwnedWeapon, StatKey, StatLine } from '../domain/types'
 import { EchoMiniCard, Icon } from './components'
+import { EchoWaveform } from './EchoWaveform'
+import { EchoEditModal } from './EchoEditModal'
+import { NanokaSpinePortrait } from './NanokaSpinePortrait'
 import { resolveCharacterShowcaseModel } from './character-showcase-model'
 import './character-showcase.css'
 
@@ -16,7 +22,8 @@ const SKILLS = [
   ['resonanceLiberation', 'Resonance Liberation'],
   ['introSkill', 'Intro Skill']
 ] as const
-const ECHO_ACCENTS = ['#67d8c6', '#55a8ef', '#ca7cff', '#e6b85f', '#ed776c', '#8fce65']
+const ELEMENT_ACCENTS: Record<string, string> = { Spectro: '#e8cc72', Fusion: '#ee715e', Glacio: '#76cef2', Electro: '#b581ef', Aero: '#62d7ae', Havoc: '#d36adf' }
+type ShowcaseStatKey = StatKey | 'tuneBreakBoost'
 
 interface CharacterShowcaseProps {
   character: OwnedCharacter
@@ -32,60 +39,79 @@ function Stars({ rarity }: { rarity: number }) {
   return <span className="cs-stars" aria-label={`${rarity} star rarity`}>{'★'.repeat(rarity)}</span>
 }
 
-export function ShowcaseWaveform() {
-  return <svg className="cs-waveform" viewBox="0 0 720 42" preserveAspectRatio="none" aria-hidden="true">
-    <path className="cs-wave-trace cs-wave-trace-a" d="M0 25 C42 9 72 36 116 20 S193 8 234 24 S310 35 354 17 S429 11 478 25 S555 36 603 18 S676 11 720 24"/>
-    <path className="cs-wave-trace cs-wave-trace-b" d="M0 30 C55 24 71 10 127 25 S213 33 257 17 S337 12 382 27 S459 34 506 19 S587 10 632 27 S688 31 720 19"/>
-    <path className="cs-wave-trace cs-wave-trace-c" d="M0 18 C46 29 83 7 132 21 S209 31 253 14 S332 28 379 20 S453 7 500 23 S579 32 626 15 S686 25 720 16"/>
-    <path className="cs-wave-main" d="M0 24 C38 22 56 12 91 18 S150 33 190 21 S252 11 293 23 S359 31 398 18 S462 13 503 24 S567 30 609 17 S674 15 720 22"/>
-  </svg>
+function StatIcon({ stat }: { stat: ShowcaseStatKey }) {
+  const iconNames: Partial<Record<ShowcaseStatKey, string>> = {
+    hp: 'Icon_Attribute_Health.webp', atk: 'Icon_Attribute_Attack.webp', def: 'Icon_Attribute_Defense.webp',
+    critRate: 'Icon_Attribute_Crit_Rate.webp', critDamage: 'Icon_Attribute_Crit_DMG.webp', energyRegen: 'Icon_Attribute_Energy_Regen.webp',
+    healingBonus: 'Icon_Attribute_Healing.webp', basicDamage: 'Icon_Basic_Attack_DMG_Amplification.webp',
+    heavyDamage: 'Icon_Heavy_Attack_DMG_Amplification.webp', skillDamage: 'Icon_Resonance_Skill_DMG_Amplification.webp',
+    liberationDamage: 'Icon_Resonance_Liberation_DMG_Amplification.webp', glacioDamage: 'Icon_Glacio_DMG_Bonus.webp',
+    fusionDamage: 'Icon_Fusion_DMG_Bonus.webp', electroDamage: 'Icon_Electro_DMG_Bonus.webp', aeroDamage: 'Icon_Aero_DMG_Bonus.webp',
+    spectroDamage: 'Icon_Spectro_DMG_Bonus.webp', havocDamage: 'Icon_Havoc_DMG_Bonus.webp',
+    tuneBreakBoost: 'Icon_Attribute_Tune_Break_Boost.webp'
+  }
+  return <img className="cs-stat-icon" src={`https://wuwa-optimizer.com/images/icons/${iconNames[stat] ?? 'Icon_Attribute_Attack.webp'}`} alt="" aria-hidden="true"/>
 }
 
-function StatIcon({ stat }: { stat: StatKey }) {
-  const content = stat === 'hp' ? <path d="M12 20S4.5 15.8 4.5 9.8C4.5 6 8.7 4.2 12 7.3 15.3 4.2 19.5 6 19.5 9.8 19.5 15.8 12 20 12 20Z"/>
-    : stat === 'atk' ? <><path d="M5 19 18 6M13 6h5v5"/><path d="m7 9 8 8"/></>
-      : stat === 'def' ? <path d="M12 3 19 6v5c0 4.7-2.6 8-7 10-4.4-2-7-5.3-7-10V6l7-3Z"/>
-        : stat.includes('crit') ? <path d="m12 3 2.2 5.2L20 9l-4.2 3.8 1.2 5.7-5-2.8-5 2.8 1.2-5.7L4 9l5.8-.8L12 3Z"/>
-          : stat === 'energyRegen' ? <path d="m13.5 2-7 11h5l-1 9 7-12h-5l1-8Z"/>
-            : stat === 'healingBonus' ? <><circle cx="12" cy="12" r="8"/><path d="M12 7v10M7 12h10"/></>
-              : <><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></>
-  return <svg className="cs-stat-icon" viewBox="0 0 24 24" aria-hidden="true">{content}</svg>
-}
-
-function formatStat(key: StatKey, value: number) {
+function formatStat(key: ShowcaseStatKey, value: number) {
   return key === 'hp' || key === 'atk' || key === 'def'
     ? Math.round(value).toLocaleString('en-US')
+    : key === 'tuneBreakBoost' ? value.toFixed(1)
     : `${value.toFixed(1)}%`
 }
 
-function displayedStatValue(stats: AggregatedStats, key: StatKey) {
+function displayedStatValue(stats: AggregatedStats, key: ShowcaseStatKey) {
+  if (key === 'tuneBreakBoost') return 10
   return key in stats ? stats[key as keyof typeof stats] : 0
 }
 
-function echoAccent(echo: Echo | undefined, index: number) {
-  if (!echo) return ECHO_ACCENTS[index % ECHO_ACCENTS.length]
-  const hash = [...echo.sonata].reduce((total, character) => total + character.charCodeAt(0), index)
-  return ECHO_ACCENTS[hash % ECHO_ACCENTS.length]
+function cleanSkillDescription(description: string) {
+  return description
+    .replace(/<[^>]*>/g, '')
+    .replace(/\{Cus:[^}]*\}/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
-function EchoShowcaseCard({ echo, index, editing, onOpen }: { echo?: Echo; index: number; editing: boolean; onOpen: () => void }) {
-  const style = { '--cs-accent': echoAccent(echo, index) } as CSSProperties
+function richSkillDescription(description: string) {
+  const nodes: ReactNode[] = []
+  const colors: string[] = []
+  const sizes: string[] = []
+  const tokens = description.replace(/\{Cus:[^}]*\}/g, '').split(/(<[^>]+>)/g)
+  tokens.forEach((token, index) => {
+    const colorOpen = token.match(/^<color=([^>]+)>$/i)
+    const sizeOpen = token.match(/^<size=([^>]+)>$/i)
+    if (colorOpen) { colors.push(colorOpen[1].toLowerCase()); return }
+    if (sizeOpen) { sizes.push(sizeOpen[1]); return }
+    if (/^<\/color>$/i.test(token)) { colors.pop(); return }
+    if (/^<\/size>$/i.test(token)) { sizes.pop(); return }
+    if (/^<[^>]+>$/.test(token) || !token) return
+    const color = colors.at(-1)?.replace(/[^a-z0-9_-]/g, '')
+    const isHeading = Number(sizes.at(-1) ?? 0) >= 30
+    nodes.push(<span className={`${color ? `cs-rich-${color}` : ''} ${isHeading ? 'cs-rich-heading' : ''}`.trim()} key={`${index}-${token.slice(0, 12)}`}>{token}</span>)
+  })
+  return nodes
+}
+
+function EchoShowcaseCard({ echo, index, element, editing, onOpen, onEdit }: { echo?: Echo; index: number; element: string; editing: boolean; onOpen: () => void; onEdit: (echo: Echo) => void }) {
+  const style = { '--cs-accent': ELEMENT_ACCENTS[element] ?? '#e4bb5e' } as CSSProperties
   if (!echo) return <article className={`cs-echo-card cs-echo-empty ${editing ? 'is-editable' : ''}`} style={style} onClick={editing ? onOpen : undefined} role={editing ? 'button' : undefined} tabIndex={editing ? 0 : undefined}>
-    <div className="cs-empty-mark">+</div><strong>Empty Echo slot</strong><small>{editing ? 'Select to equip' : `Slot ${index + 1}`}</small><ShowcaseWaveform/>
+    <div className="cs-empty-mark">+</div><strong>Empty Echo slot</strong><small>{editing ? 'Select to equip' : `Slot ${index + 1}`}</small><EchoWaveform element={element}/>
   </article>
-  const catalog = echoCatalog.find((entry) => entry.name === echo.name)
-  const secondary = fixedSecondaryMainStat(echo)
-  const subStats = effectiveSubStats(echo).slice(0, 5)
-  return <article className={`cs-echo-card ${editing ? 'is-editable' : ''}`} style={style} onClick={editing ? onOpen : undefined} role={editing ? 'button' : undefined} tabIndex={editing ? 0 : undefined}>
-    <header><div className="cs-echo-art">{catalog?.iconSourceUrl && <img src={catalog.iconSourceUrl} alt=""/>}<b>{echo.cost}</b></div><div><strong>{echo.name}</strong><span>{echo.sonata}</span><small>Lv. {echo.level} · <Stars rarity={echo.rarity}/></small></div></header>
-    <div className="cs-echo-primary"><span>{statLabels[echo.mainStat.key]}</span><b>{formatStat(echo.mainStat.key, echo.mainStat.value)}</b></div>
-    <div className="cs-echo-secondary"><span>{statLabels[secondary.key]}</span><b>{formatStat(secondary.key, secondary.value)}</b></div>
-    <div className="cs-echo-substats">{subStats.map((line, lineIndex) => <div key={`${line.key}-${lineIndex}`}><span>{statLabels[line.key]}</span><b>{formatStat(line.key, line.value)}</b></div>)}</div>
-    <ShowcaseWaveform/>
-  </article>
+  const score = echoRollQuality(echo)
+  return <div className={`cs-echo-tab-card ${editing ? 'is-editable' : ''}`} style={style}>
+    <EchoMiniCard echo={echo} grade={`${score.toFixed(1)} · ${echoRollGrade(score)}`} scoreLabel={`${echoRollPoints(echo)}/${maxSubStatsForLevel(echo.level) * 8} ROLL POINTS`} onClick={editing ? onOpen : undefined} actions={editing ? <div className="cs-echo-footer-actions"><button title="Edit Echo" aria-label={`Edit ${echo.name}`} onClick={(event) => { event.stopPropagation(); onEdit(echo) }}><Icon name="edit"/></button><button className="cs-switch-echo" title="Switch Echo" aria-label={`Switch ${echo.name}`} onClick={(event) => { event.stopPropagation(); onOpen() }}>↔</button></div> : undefined}/>
+  </div>
 }
 
-function WeaponPicker({ character, catalog, weapons, builds, refresh, onClose }: { character: OwnedCharacter; catalog: CharacterCatalogEntry; weapons: OwnedWeapon[]; builds: Build[]; refresh: () => Promise<void>; onClose: () => void }) {
+function EchoFilterSelect({ label, values, options, emptyLabel, onChange, icon }: { label: string; values: string[]; options: Array<{ value: string; label: string }>; emptyLabel: string; onChange: (values: string[]) => void; icon?: (value: string) => ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const toggle = (value: string) => onChange(values.includes(value) ? values.filter((item) => item !== value) : [...values, value])
+  return <label className="multi-filter">{label}<div className="multi-select"><button type="button" className="multi-select-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}><span className="multi-select-values">{values.length ? values.map((value) => <span className="multi-select-chip" key={value}>{icon?.(value)}<b>{options.find((option) => option.value === value)?.label ?? value}</b></span>) : <em>{emptyLabel}</em>}</span><strong>⌄</strong></button>{open && <div className="multi-select-menu"><div className="multi-select-options">{options.map((option) => <button type="button" className={values.includes(option.value) ? 'active' : ''} onClick={() => toggle(option.value)} key={option.value}>{icon?.(option.value)}<span>{option.label}</span><i>{values.includes(option.value) ? '✓' : ''}</i></button>)}</div><footer><button type="button" className="multi-select-clear" disabled={!values.length} onClick={() => onChange([])}>Clear selections</button></footer></div>}</div></label>
+}
+
+function WeaponPicker({ character, catalog, weapons, refresh, onClose }: { character: OwnedCharacter; catalog: CharacterCatalogEntry; weapons: OwnedWeapon[]; refresh: () => Promise<void>; onClose: () => void }) {
   const [adding, setAdding] = useState(false)
   const eligibleOwned = weapons.flatMap((owned) => {
     const entry = weaponCatalog.find((candidate) => candidate.id === owned.catalogId)
@@ -93,21 +119,12 @@ function WeaponPicker({ character, catalog, weapons, builds, refresh, onClose }:
   })
   const eligibleCatalog = weaponCatalog.filter((entry) => entry.type.toLowerCase() === catalog.weaponType.toLowerCase())
   const equip = async (weapon: OwnedWeapon) => {
-    const build = builds.find((entry) => entry.resonatorId === character.catalogId)
-    const previousCharacter = weapon.equippedBy ? await db.characters.get(weapon.equippedBy) : undefined
-    const previousBuild = previousCharacter ? builds.find((entry) => entry.resonatorId === previousCharacter.catalogId) : undefined
-    await db.transaction('rw', db.weapons, db.builds, async () => {
-      await db.weapons.where('equippedBy').equals(character.id).modify({ equippedBy: undefined })
-      await db.weapons.update(weapon.id, { equippedBy: character.id })
-      if (previousBuild && previousBuild.id !== build?.id && previousBuild.weaponId === weapon.id) await db.builds.update(previousBuild.id, { weaponId: '' })
-      if (build) await db.builds.update(build.id, { weaponId: weapon.id })
-      else await db.builds.add({ id: crypto.randomUUID(), name: `${catalog.name} build`, resonatorId: character.catalogId, weaponId: weapon.id, echoIds: [], level: character.level, skillLevel: character.skillLevels?.[1] ?? 1 })
-    })
+    await setOwnedWeaponOwner(weapon.id, character.id)
     await refresh()
     onClose()
   }
   const add = async (entry: WeaponCatalogEntry) => {
-    const weapon: OwnedWeapon = { id: crypto.randomUUID(), catalogId: entry.id, level: 1, rank: 1, locked: false, createdAt: Date.now() }
+    const weapon: OwnedWeapon = { id: createLocalId(), catalogId: entry.id, level: 1, rank: 1, locked: false, createdAt: Date.now() }
     await db.weapons.add(weapon)
     await equip(weapon)
   }
@@ -120,7 +137,31 @@ function WeaponPicker({ character, catalog, weapons, builds, refresh, onClose }:
 
 function EchoPicker({ slot, build, echoes, refresh, onClose }: { slot: number; build: Build; echoes: Echo[]; refresh: () => Promise<void>; onClose: () => void }) {
   const currentId = build.echoIds[slot]
-  const options = echoes.filter((echo) => !echo.excluded && (!echo.equippedBy || echo.equippedBy === build.id))
+  const [query, setQuery] = useState('')
+  const [costs, setCosts] = useState<number[]>([])
+  const [rarities, setRarities] = useState<number[]>([])
+  const [sonatas, setSonatas] = useState<string[]>([])
+  const [mainStats, setMainStats] = useState<string[]>([])
+  const [subStats, setSubStats] = useState<string[]>([])
+  const [lockState, setLockState] = useState<'all' | 'locked' | 'unlocked'>('all')
+  const [assignment, setAssignment] = useState<'all' | 'equipped' | 'unequipped'>('all')
+  const [showExcluded, setShowExcluded] = useState(false)
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase())
+  const statKeys = Object.keys(statLabels) as StatKey[]
+  const toggleNumber = (values: number[], value: number, change: (next: number[]) => void) => change(values.includes(value) ? values.filter((item) => item !== value) : [...values, value])
+  const resetFilters = () => { setQuery(''); setCosts([]); setRarities([]); setSonatas([]); setMainStats([]); setSubStats([]); setLockState('all'); setAssignment('all'); setShowExcluded(false) }
+  const options = useMemo(() => echoes.filter((echo) =>
+    (showExcluded || !echo.excluded) &&
+    (!echo.equippedBy || echo.equippedBy === build.id) &&
+    (!costs.length || costs.includes(echo.cost)) &&
+    (!rarities.length || rarities.includes(echo.rarity)) &&
+    (!sonatas.length || sonatas.includes(echo.sonata)) &&
+    (!mainStats.length || mainStats.includes(echo.mainStat.key)) &&
+    (!subStats.length || subStats.every((key) => effectiveSubStats(echo).some((stat) => stat.key === key))) &&
+    (lockState === 'all' || echo.locked === (lockState === 'locked')) &&
+    (assignment === 'all' || Boolean(echo.equippedBy) === (assignment === 'equipped')) &&
+    (!deferredQuery || `${echo.name} ${echo.sonata} ${statLabels[echo.mainStat.key]} ${effectiveSubStats(echo).map((stat) => statLabels[stat.key]).join(' ')}`.toLowerCase().includes(deferredQuery))
+  ).sort((left, right) => echoRollQuality(right) - echoRollQuality(left) || left.name.localeCompare(right.name)), [assignment, build.id, costs, deferredQuery, echoes, lockState, mainStats, rarities, showExcluded, sonatas, subStats])
   const choose = async (next?: Echo) => {
     const oldId = build.echoIds[slot]
     const echoIds = [...build.echoIds]
@@ -132,15 +173,11 @@ function EchoPicker({ slot, build, echoes, refresh, onClose }: { slot: number; b
     } else if (oldId) echoIds.splice(slot, 1)
     const cost = echoIds.reduce((total, id) => total + (echoes.find((echo) => echo.id === id)?.cost ?? 0), 0)
     if (echoIds.length > 5 || cost > 12) return
-    await db.transaction('rw', db.builds, db.echoes, async () => {
-      await db.builds.update(build.id, { echoIds })
-      if (oldId && oldId !== next?.id) await db.echoes.update(oldId, { equippedBy: undefined })
-      if (next) await db.echoes.update(next.id, { equippedBy: build.id })
-    })
+    await setBuildEchoIds(build.id, echoIds)
     await refresh()
     onClose()
   }
-  return <div className="catalog-picker-backdrop cs-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="catalog-picker cs-picker cs-echo-picker" role="dialog" aria-modal="true" aria-label={`Equip Echo slot ${slot + 1}`}><header><div><span className="eyebrow">Echo slot {slot + 1}</span><h2>Equip Echo</h2></div><button className="text-button" onClick={onClose}>Close</button></header><div className="echo-picker-list">{currentId && <button className="danger" onClick={() => void choose()}>Unequip current Echo</button>}{options.map((echo) => <EchoMiniCard key={echo.id} echo={echo} selected={echo.id === currentId} onClick={() => void choose(echo)}/>)}</div></section></div>
+  return <div className="catalog-picker-backdrop cs-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="catalog-picker cs-picker cs-echo-picker" role="dialog" aria-modal="true" aria-label={`Equip Echo slot ${slot + 1}`}><header><div><span className="eyebrow">Echo slot {slot + 1}</span><h2>Equip Echo</h2></div><button className="text-button" onClick={onClose}>Close</button></header><div className="cs-echo-picker-filters"><div className="filter-heading"><div><strong>Echo filters</strong><span>{options.length} / {echoes.length} shown</span></div><button className="text-button" onClick={resetFilters}>Reset</button></div><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Echo, Sonata, or stat..."/></label><div className="filter-body"><div className="filter-group"><span>Cost</span><div className="filter-chips">{[1,3,4].map((value) => <button className={costs.includes(value) ? 'active' : ''} onClick={() => toggleNumber(costs, value, setCosts)} key={value}>{value} cost</button>)}</div></div><div className="filter-group"><span>Rarity</span><div className="filter-chips">{[5,4,3,2,1].map((value) => <button className={rarities.includes(value) ? 'active' : ''} onClick={() => toggleNumber(rarities, value, setRarities)} key={value}>{value} ★</button>)}</div></div><EchoFilterSelect label="Sonata" values={sonatas} options={sonataNames.map((name) => ({ value: name, label: name }))} emptyLabel="All Sonatas" onChange={setSonatas} icon={(name) => <img src={generatedSonataIconSources[name]} alt=""/>}/><EchoFilterSelect label="Main stat" values={mainStats} options={statKeys.map((key) => ({ value: key, label: statLabels[key] }))} emptyLabel="Any main stat" onChange={setMainStats}/><EchoFilterSelect label="Substat" values={subStats} options={statKeys.map((key) => ({ value: key, label: statLabels[key] }))} emptyLabel="Any substat" onChange={setSubStats}/><label>Lock state<select value={lockState} onChange={(event) => setLockState(event.target.value as typeof lockState)}><option value="all">All</option><option value="locked">Locked</option><option value="unlocked">Unlocked</option></select></label><label>Equipped<select value={assignment} onChange={(event) => setAssignment(event.target.value as typeof assignment)}><option value="all">All</option><option value="equipped">Equipped here</option><option value="unequipped">Unequipped</option></select></label><label className="check"><input type="checkbox" checked={showExcluded} onChange={(event) => setShowExcluded(event.target.checked)}/>Include discarded</label></div></div><div className="echo-picker-list">{currentId && <button className="danger" onClick={() => void choose()}>Unequip current Echo</button>}{options.map((echo) => { const score = echoRollQuality(echo); return <EchoMiniCard key={echo.id} echo={echo} selected={echo.id === currentId} grade={`${score.toFixed(1)} · ${echoRollGrade(score)}`} scoreLabel={`${echoRollPoints(echo)}/${maxSubStatsForLevel(echo.level) * 8} ROLL POINTS`} onClick={() => void choose(echo)}/> })}</div></section></div>
 }
 
 export function CharacterShowcase({ character, catalog, weapons, echoes, builds, refresh, onBack }: CharacterShowcaseProps) {
@@ -149,13 +186,24 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
   const [echoSlot, setEchoSlot] = useState<number | null>(null)
   const [deleteArmed, setDeleteArmed] = useState(false)
   const [portraitFailed, setPortraitFailed] = useState(false)
+  const [animatedPortraitReady, setAnimatedPortraitReady] = useState(false)
+  const [openSkillTooltip, setOpenSkillTooltip] = useState<string | null>(null)
+  const [editingEcho, setEditingEcho] = useState<Echo | null>(null)
+  const showAnimatedPortrait = useCallback(() => setAnimatedPortraitReady(true), [])
+  const showStaticPortrait = useCallback(() => setAnimatedPortraitReady(false), [])
+
+  useEffect(() => {
+    setPortraitFailed(false)
+    setAnimatedPortraitReady(false)
+  }, [catalog.id])
+
   const model = resolveCharacterShowcaseModel({ character, catalog, weapons, echoes, builds })
   if (!model) return null
 
   const elementStat = `${catalog.element.toLowerCase()}Damage` as StatKey
-  const statRows: Array<[StatKey, string]> = [
+  const statRows: Array<[ShowcaseStatKey, string]> = [
     ['hp', 'HP'], ['atk', 'ATK'], ['def', 'DEF'], ['critRate', 'Crit. Rate'], ['critDamage', 'Crit. DMG'], ['energyRegen', 'Energy Regen'],
-    ['healingBonus', 'Healing Bonus'], [elementStat, `${catalog.element} DMG`], ['basicDamage', 'Basic Attack DMG'], ['heavyDamage', 'Heavy Attack DMG'],
+    ['healingBonus', 'Healing Bonus'], ['tuneBreakBoost', 'Tune Break Boost'], [elementStat, `${catalog.element} DMG`], ['basicDamage', 'Basic Attack DMG'], ['heavyDamage', 'Heavy Attack DMG'],
     ['skillDamage', 'Resonance Skill DMG'], ['liberationDamage', 'Resonance Liberation DMG']
   ]
   const updateCharacter = async (patch: Partial<OwnedCharacter>) => {
@@ -168,7 +216,7 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
   }
   const openEchoPicker = async (slot: number) => {
     if (!model.build) {
-      await db.builds.add({ id: crypto.randomUUID(), name: `${catalog.name} build`, resonatorId: character.catalogId, weaponId: '', echoIds: [], level: character.level, skillLevel: model.skillLevels[1] })
+      await db.builds.add({ id: createLocalId(), name: `${catalog.name} build`, resonatorId: character.catalogId, weaponId: '', echoIds: [], level: character.level, skillLevel: model.skillLevels[1] })
       await refresh()
     }
     setEchoSlot(slot)
@@ -188,6 +236,7 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
     onBack()
   }
   const currentBuild = builds.find((entry) => entry.resonatorId === character.catalogId)
+  const toggleSkillTooltip = (id: string) => setOpenSkillTooltip((current) => current === id ? null : id)
 
   return <section className={`cs-page cs-element-${catalog.element.toLowerCase()}`}>
     <header className="cs-toolbar"><button className="cs-back" onClick={onBack}>← Back to roster</button><div><span className="eyebrow">Character showcase</span><strong>{catalog.name}</strong></div><div className="cs-toolbar-actions">{editing && <><button className={character.favorite ? 'cs-favorite active' : 'cs-favorite'} onClick={() => void updateCharacter({ favorite: !character.favorite })}>{character.favorite ? '♥ Favorited' : '♡ Favorite'}</button><button className={`danger ${deleteArmed ? 'is-armed' : ''}`} onClick={() => void removeCharacter()}><Icon name="trash"/>{deleteArmed ? 'Confirm delete' : 'Delete'}</button></>}<button className={editing ? 'primary' : 'secondary'} onClick={() => { setEditing(!editing); setDeleteArmed(false) }}>{editing ? 'Done editing' : 'Edit loadout'}</button></div></header>
@@ -196,32 +245,53 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
       <section className="cs-character-panel cs-panel">
         <div className="cs-art-grid"/>
         <img
-          className={`cs-character-art ${portraitFailed ? 'is-fallback' : ''}`}
+          className={`cs-character-art ${portraitFailed ? 'is-fallback' : ''} ${animatedPortraitReady ? 'is-live-hidden' : ''}`}
           src={portraitFailed ? catalog.iconSourceUrl : (catalog.portraitSourceUrl || catalog.iconSourceUrl)}
           alt={catalog.name}
           onError={() => {
             if (!portraitFailed && catalog.portraitSourceUrl && catalog.portraitSourceUrl !== catalog.iconSourceUrl) setPortraitFailed(true)
           }}
         />
-        <div className="cs-sequence-rail" aria-label={`Sequence ${character.sequence}`}>{catalog.sequenceIcons.slice(0, 6).map((sequence) => <button key={sequence.sequence} className={character.sequence >= sequence.sequence ? 'is-unlocked' : 'is-locked'} disabled={!editing} onClick={() => void updateCharacter({ sequence: character.sequence === sequence.sequence ? sequence.sequence - 1 : sequence.sequence })} title={sequence.name}><img src={sequence.iconSourceUrl} alt=""/><span>S{sequence.sequence}</span></button>)}</div>
-        <div className="cs-character-copy"><div className="cs-character-kicker"><span>{catalog.element}</span><span>{catalog.weaponType}</span><span>{catalog.role}</span></div><h1>{catalog.name}</h1><p>{catalog.title}</p><div className="cs-level-rarity"><strong>Lv. {character.level}</strong><Stars rarity={catalog.rarity}/>{character.favorite && <span className="cs-favorite-mark">♥</span>}</div>{editing && <div className="cs-level-editor" aria-label="Character level">{LEVELS.map((level) => <button key={level} className={character.level === level ? 'active' : ''} onClick={() => void updateCharacter({ level })}>{level}</button>)}</div>}</div>
+        {catalog.spineSkeletonSourceUrl && catalog.spineAtlasSourceUrl && <NanokaSpinePortrait
+          skeletonSourceUrl={catalog.spineSkeletonSourceUrl}
+          atlasSourceUrl={catalog.spineAtlasSourceUrl}
+          onReady={showAnimatedPortrait}
+          onFallback={showStaticPortrait}
+        />}
+        <div className="cs-sequence-rail" aria-label={`Sequence ${character.sequence}`}>{catalog.sequenceIcons.slice(0, 6).map((sequence) => <button key={sequence.sequence} className={character.sequence >= sequence.sequence ? 'is-unlocked' : 'is-locked'} onClick={() => { if (editing) void updateCharacter({ sequence: character.sequence === sequence.sequence ? sequence.sequence - 1 : sequence.sequence }) }}><img src={sequence.iconSourceUrl} alt=""/><span>S{sequence.sequence}</span><span className="cs-skill-tooltip"><b>S{sequence.sequence} · {sequence.name}</b><small>{richSkillDescription(sequence.description)}</small></span></button>)}</div>
+        <div className="cs-character-copy"><h1>{catalog.name}</h1><p>{catalog.title}</p><div className="cs-level-rarity"><strong>Lv. {character.level}</strong><Stars rarity={catalog.rarity}/></div><div className="cs-character-kicker"><span>{catalog.element}</span><span>{catalog.weaponType}</span><span>{catalog.role}</span></div>{editing && <div className="cs-level-editor" aria-label="Character level">{LEVELS.map((level) => <button key={level} className={character.level === level ? 'active' : ''} onClick={() => void updateCharacter({ level })}>{level}</button>)}</div>}</div>
         <div className="cs-sonatas">{model.sonatas.length ? model.sonatas.map((sonata) => <span key={sonata.name}>{sonata.iconSourceUrl && <img src={sonata.iconSourceUrl} alt=""/>}<b>{sonata.name}</b><small>{sonata.count}</small></span>) : <span className="is-empty"><b>No active Sonata</b><small>0</small></span>}</div>
-        <ShowcaseWaveform/>
+        <EchoWaveform element={catalog.element}/>
       </section>
 
       <section className="cs-stats-panel cs-panel"><header><div><span className="eyebrow">Resonator statistics</span><h2>Current attributes</h2></div><span>Lv. {model.characterBaseStats.level}</span></header><div className="cs-stat-list">{statRows.map(([key, label]) => <div key={key}><StatIcon stat={key}/><span>{label}</span><i/><b>{formatStat(key, displayedStatValue(model.finalStats, key))}</b></div>)}</div><p className="cs-warning">{model.warning}</p></section>
 
       <section className={`cs-weapon-panel cs-panel ${editing ? 'is-editable' : ''}`} onClick={editing ? () => setWeaponPickerOpen(true) : undefined} role={editing ? 'button' : undefined} tabIndex={editing ? 0 : undefined}>
-        {model.weapon ? <><div className="cs-weapon-copy"><span className="eyebrow">Equipped weapon</span><h2>{model.weapon.catalog.name}</h2><Stars rarity={model.weapon.catalog.rarity}/><div><span>Level</span><b>{model.weapon.owned.level}</b></div><div><span>Rank</span><b>R{model.weapon.owned.rank}</b></div><div><span>Base ATK</span><b>{model.weapon.levelStats.baseAtk}</b></div><div><span>{model.weapon.catalog.secondaryStat}</span><b>{model.weapon.levelStats.secondaryStatValue}</b></div>{editing && <small>Select to replace</small>}</div><img src={model.weapon.catalog.iconSourceUrl} alt=""/></> : <div className="cs-empty-weapon"><span>+</span><strong>No weapon equipped</strong><small>{editing ? `Select a ${catalog.weaponType}` : catalog.weaponType}</small></div>}
-        <ShowcaseWaveform/>
+        {model.weapon ? <><div className="cs-weapon-copy"><span className="eyebrow">Equipped weapon</span><div className="cs-weapon-title"><h2>{model.weapon.catalog.name}</h2><b>LV. {model.weapon.owned.level} · R{model.weapon.owned.rank}</b></div><Stars rarity={model.weapon.catalog.rarity}/><div><span>Base ATK</span><b>{model.weapon.levelStats.baseAtk}</b></div><div><span>{model.weapon.catalog.secondaryStat}</span><b>{model.weapon.levelStats.secondaryStatValue}</b></div>{editing && <small>Select to replace</small>}</div><img src={model.weapon.catalog.iconSourceUrl} alt=""/></> : <div className="cs-empty-weapon"><span>+</span><strong>No weapon equipped</strong><small>{editing ? `Select a ${catalog.weaponType}` : catalog.weaponType}</small></div>}
+        <EchoWaveform element={catalog.element}/>
       </section>
 
-      <section className="cs-skills-panel cs-panel"><header><div><span className="eyebrow">Forte circuit</span><h2>Skill levels</h2></div>{editing && <small>Adjust levels</small>}</header><div className="cs-skill-tree">{SKILLS.map(([key, label], index) => { const skill = catalog.skillIcons[key]; return <div className={`cs-skill-node cs-skill-${index}`} key={key}><div className="cs-skill-orb"><img src={skill.iconSourceUrl} alt=""/></div><strong>{label}</strong><small>{skill.name}</small><div className="cs-skill-level">{editing && <button disabled={model.skillLevels[index] <= 1} onClick={() => { const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] -= 1; void updateCharacter({ skillLevels: levels }) }}>−</button>}<b>Lv. {model.skillLevels[index]}</b>{editing && <button disabled={model.skillLevels[index] >= 10} onClick={() => { const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] += 1; void updateCharacter({ skillLevels: levels }) }}>+</button>}</div></div> })}</div></section>
+      <section className="cs-skills-panel cs-panel"><header><div><span className="eyebrow">Forte circuit</span><h2>Skill levels</h2></div>{editing && <small>Adjust levels</small>}</header><div className="cs-source-skill-tree">
+        {SKILLS.map(([key, label], index) => {
+          const skill = catalog.skillIcons[key]
+          if (index === 2) return <div className="cs-skill-branch cs-skill-special" key={key}>
+            {[catalog.skillTreeExtras.inherentSkills[1], catalog.skillTreeExtras.inherentSkills[0]].map((extra, extraIndex) => { const tooltipId = `inherent-${extraIndex}`; return <div className="cs-special-step" key={`${extra?.name}-${extraIndex}`}>{extra?.iconSourceUrl && <div className={`cs-node-tooltip-anchor ${openSkillTooltip === tooltipId ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${extra.name}. ${cleanSkillDescription(extra.description)}`} aria-expanded={openSkillTooltip === tooltipId} onClick={() => toggleSkillTooltip(tooltipId)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(tooltipId) } }}><div className="cs-skill-small-diamond"><img src={extra.iconSourceUrl} alt=""/></div>{openSkillTooltip === tooltipId && <span className="cs-skill-tooltip"><b>{extra.name}</b><small>{richSkillDescription(extra.description)}</small></span>}</div>}<i/></div> })}
+            <div className={`cs-main-skill ${openSkillTooltip === `main-${key}` ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${skill.name}. ${cleanSkillDescription(skill.description)}`} aria-expanded={openSkillTooltip === `main-${key}`} onClick={() => toggleSkillTooltip(`main-${key}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(`main-${key}`) } }}><div className="cs-skill-diamond"><span><img src={skill.iconSourceUrl} alt=""/></span></div>{openSkillTooltip === `main-${key}` && <span className="cs-skill-tooltip"><b>{skill.name}</b><small>{richSkillDescription(skill.description)}</small></span>}<div className="cs-skill-level">{editing && <button disabled={model.skillLevels[index] <= 1} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] -= 1; void updateCharacter({ skillLevels: levels }) }}>−</button>}<b>Lv. {model.skillLevels[index]}</b>{editing && <button disabled={model.skillLevels[index] >= 10} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] += 1; void updateCharacter({ skillLevels: levels }) }}>+</button>}</div><strong>{label}</strong></div>
+            <div className="cs-special-tail">{[catalog.skillTreeExtras.outroSkill, catalog.skillTreeExtras.tuneBreakSkill].map((extra, extraIndex) => { const tooltipId = `bottom-${extraIndex}`; return extra?.iconSourceUrl && <div className={`cs-node-tooltip-anchor ${openSkillTooltip === tooltipId ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${extra.name}. ${cleanSkillDescription(extra.description)}`} aria-expanded={openSkillTooltip === tooltipId} onClick={() => toggleSkillTooltip(tooltipId)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(tooltipId) } }} key={`${extra.name}-${extraIndex}`}><div className="cs-skill-small-diamond"><img src={extra.iconSourceUrl} alt=""/></div>{openSkillTooltip === tooltipId && <span className="cs-skill-tooltip"><b>{extra.name}</b><small>{richSkillDescription(extra.description)}</small></span>}</div> })}</div>
+          </div>
+          const bonuses = [...catalog.skillTreeExtras.bonusStatBranches[key]].reverse()
+          return <div className={`cs-skill-branch cs-skill-side cs-skill-side-${index}`} key={key}>
+            {bonuses.map((bonus, bonusIndex) => <div className="cs-bonus-step" key={`${bonus.name}-${bonusIndex}`}><div className="cs-skill-bonus" tabIndex={0} aria-label={`${bonus.name}. ${cleanSkillDescription(bonus.description)}`}><img src={bonus.iconSourceUrl} alt=""/><span className="cs-skill-tooltip"><b>{bonus.name.replace(/\+$/, ' %')}</b><small>{richSkillDescription(bonus.description)}</small></span></div><i/></div>)}
+            <div className={`cs-main-skill ${openSkillTooltip === `main-${key}` ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${skill.name}. ${cleanSkillDescription(skill.description)}`} aria-expanded={openSkillTooltip === `main-${key}`} onClick={() => toggleSkillTooltip(`main-${key}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(`main-${key}`) } }}><div className="cs-skill-diamond"><span><img src={skill.iconSourceUrl} alt=""/></span></div>{openSkillTooltip === `main-${key}` && <span className="cs-skill-tooltip"><b>{skill.name}</b><small>{richSkillDescription(skill.description)}</small></span>}<div className="cs-skill-level">{editing && <button disabled={model.skillLevels[index] <= 1} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] -= 1; void updateCharacter({ skillLevels: levels }) }}>−</button>}<b>Lv. {model.skillLevels[index]}</b>{editing && <button disabled={model.skillLevels[index] >= 10} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] += 1; void updateCharacter({ skillLevels: levels }) }}>+</button>}</div><strong>{label}</strong></div>
+          </div>
+        })}
+      </div></section>
 
-      <section className="cs-echo-section"><header><div><span className="eyebrow">Equipped Echoes</span><h2>Echo loadout</h2></div><span>{model.equippedEchoes.length}/5 · {model.totalEchoCost}/12 cost</span></header><div className="cs-echo-row">{model.echoSlots.map((echo, index) => <EchoShowcaseCard key={echo?.id ?? `empty-${index}`} echo={echo} index={index} editing={editing} onOpen={() => void openEchoPicker(index)}/>)}</div></section>
+      <section className="cs-echo-section"><header><div><span className="eyebrow">Equipped Echoes</span><h2>Echo loadout</h2></div><span>{model.equippedEchoes.length}/5 · {model.totalEchoCost}/12 cost</span></header><div className="cs-echo-row">{model.echoSlots.map((echo, index) => <EchoShowcaseCard key={echo?.id ?? `empty-${index}`} echo={echo} index={index} element={catalog.element} editing={editing} onOpen={() => void openEchoPicker(index)} onEdit={setEditingEcho}/>)}</div></section>
     </div>
 
-    {weaponPickerOpen && <WeaponPicker character={character} catalog={catalog} weapons={weapons} builds={builds} refresh={refresh} onClose={() => setWeaponPickerOpen(false)}/>} 
+    {weaponPickerOpen && <WeaponPicker character={character} catalog={catalog} weapons={weapons} refresh={refresh} onClose={() => setWeaponPickerOpen(false)}/>}
     {echoSlot !== null && currentBuild && <EchoPicker slot={echoSlot} build={currentBuild} echoes={echoes} refresh={refresh} onClose={() => setEchoSlot(null)}/>} 
+    {editingEcho && <EchoEditModal echo={editingEcho} onClose={() => setEditingEcho(null)} onSave={async (updated) => { await db.echoes.put(updated); setEditingEcho(null); await refresh() }}/>}
   </section>
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { characterCatalog, echoCatalog, statLabels } from '../game-data'
+import { characterCatalog, echoCatalog, statLabels, weaponCatalog } from '../game-data'
 import { candidateErrors } from '../scanner/parser'
 import type { Echo, ScanCandidate, StatKey } from '../domain/types'
 import { tunableRolls } from '../game-data/tunable-rolls'
@@ -49,7 +49,7 @@ function CharacterPicker({ value, onChange }: { value: string; onChange: (value:
   </div>
 }
 
-export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selected, onSelect, onRerunField, onMarkDuplicate, onCopyDiagnostic }: {
+export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selected, onSelect, onRerunField, onCopyDiagnostic }: {
   candidate: DiagnosticScanCandidate
   onChange: (candidate: DiagnosticScanCandidate) => void
   onDiscard: () => void
@@ -57,7 +57,6 @@ export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selecte
   selected?: boolean
   onSelect?: (selected: boolean) => void
   onRerunField?: (regionId: string) => void
-  onMarkDuplicate?: () => void
   onCopyDiagnostic?: (includeImages: boolean) => void
 }) {
   const errors = candidateErrors(candidate)
@@ -67,6 +66,9 @@ export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selecte
   const maxSubStats = maxSubStatsForLevel(candidate.fields.level.value)
   const secondary = fixedSecondaryMainStat({ cost: candidate.fields.cost.value, rarity: candidate.fields.rarity.value, level: candidate.fields.level.value })
   const updateFields = (fields: Partial<ScanCandidate['fields']>) => onChange({ ...candidate, fields: { ...candidate.fields, ...fields } })
+  const updateBuildCard = (patch: Partial<NonNullable<ScanCandidate['buildCard']>>) => {
+    if (candidate.buildCard) onChange({ ...candidate, buildCard: { ...candidate.buildCard, ...patch } })
+  }
   const normalizedMain = (cost: Echo['cost'], rarity: Echo['rarity'], level: number, key = candidate.fields.mainStat.value.key) => normalizeEchoMainStat({ cost, rarity, level, mainStat: { key, value: candidate.fields.mainStat.value.value } })
   const selectEcho = (name: string) => {
     const entry = echoCatalog.find((item) => item.name === name)
@@ -101,9 +103,20 @@ export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selecte
   const lowConfidence = Object.values(candidate.evidence ?? {}).some((entry) => entry.confidence < .55 || !entry.validation.valid)
   const [evidenceOpen, setEvidenceOpen] = useState(() => errors.length > 0 || lowConfidence)
 
-  return <Panel className={`review-card ${errors.length === 0 && !lowConfidence && !evidenceOpen ? 'valid-compact' : ''}`}>
+  return <Panel className={`review-card ${candidate.buildCard ? 'build-card-review ' : ''}${errors.length === 0 && !lowConfidence && !evidenceOpen ? 'valid-compact' : ''}`}>
     <div className="review-preview">{onSelect && <label className="review-select"><input type="checkbox" checked={Boolean(candidate.selected)} onChange={(event) => onSelect(event.target.checked)}/>Select</label>}{candidate.imageDataUrl ? <img src={candidate.imageDataUrl} alt="Captured Echo detail region"/> : <div className="manual-preview">MANUAL</div>}<button className="text-button" type="button" onClick={() => setEvidenceOpen((open) => !open)}>{evidenceOpen ? 'Hide field evidence' : 'Show field evidence'}</button></div>
     <div className="review-fields">
+      {candidate.buildCard && <section className="scan-build-card-summary">
+        <header><div><span className="eyebrow">Official Discord build card</span><h3>Character loadout</h3></div><img src={candidate.buildCard.sourceImageDataUrl} alt="Scanned build card"/></header>
+        <div className="scan-build-card-fields">
+          <label>Character <Confidence value={candidate.buildCard.character.confidence}/><select value={candidate.buildCard.characterCatalogId ?? ''} onChange={(event) => { const entry = characterCatalog.find((item) => item.id === event.target.value); if (entry) updateBuildCard({ characterCatalogId: entry.id, character: { value: entry.name, confidence: 1 } }) }}><option value="">Choose character</option>{characterCatalog.map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+          <label>Character level <Confidence value={candidate.buildCard.characterLevel.confidence}/><input type="number" min="1" max="90" value={candidate.buildCard.characterLevel.value} onChange={(event) => updateBuildCard({ characterLevel: { value: Math.max(1, Math.min(90, Number(event.target.value))), confidence: 1 } })}/></label>
+          <label>Sequence <Confidence value={candidate.buildCard.sequence.confidence}/><select value={candidate.buildCard.sequence.value} onChange={(event) => updateBuildCard({ sequence: { value: Number(event.target.value), confidence: 1 } })}>{[0, 1, 2, 3, 4, 5, 6].map((value) => <option value={value} key={value}>S{value}</option>)}</select></label>
+          <label>Weapon <Confidence value={candidate.buildCard.weapon.confidence}/><select value={candidate.buildCard.weaponCatalogId ?? ''} onChange={(event) => { const entry = weaponCatalog.find((item) => item.id === event.target.value); if (entry) updateBuildCard({ weaponCatalogId: entry.id, weapon: { value: entry.name, confidence: 1 } }) }}><option value="">Choose weapon</option>{weaponCatalog.map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+          <label>Weapon level <Confidence value={candidate.buildCard.weaponLevel.confidence}/><input type="number" min="1" max="90" value={candidate.buildCard.weaponLevel.value} onChange={(event) => updateBuildCard({ weaponLevel: { value: Math.max(1, Math.min(90, Number(event.target.value))), confidence: 1 } })}/></label>
+        </div>
+        <div className="scan-build-card-skills"><span>Skills</span>{['Normal', 'Skill', 'Forte', 'Liberation', 'Intro'].map((label, index) => <label key={label}>{label}<Confidence value={candidate.buildCard!.skillLevels[index]?.confidence ?? 0}/><input type="number" min="1" max="10" value={candidate.buildCard!.skillLevels[index]?.value ?? 1} onChange={(event) => updateBuildCard({ skillLevels: candidate.buildCard!.skillLevels.map((field, fieldIndex) => fieldIndex === index ? { value: Math.max(1, Math.min(10, Number(event.target.value))), confidence: 1 } : field) })}/></label>)}</div>
+      </section>}
       <label className="scan-name-field">Name <Confidence value={candidate.fields.name.confidence}/><EchoPicker value={candidate.fields.name.value} onChange={selectEcho}/></label>
       <label>Sonata <Confidence value={candidate.fields.sonata.confidence}/><SonataPicker id={`sonata-options-${candidate.id}`} value={candidate.fields.sonata.value} allowedNames={selectedEcho?.sonatas} onChange={(value) => updateFields({ sonata: { value, confidence: 1 } })}/></label>
       <label>Rarity <Confidence value={candidate.fields.rarity.confidence}/><select value={candidate.fields.rarity.value} onChange={(event) => setRarity(Number(event.target.value) as Echo['rarity'])}>{rarityOptions.map((value) => <option key={value} value={value}>{value} star</option>)}</select></label>
@@ -118,8 +131,8 @@ export function ScanReviewCard({ candidate, onChange, onDiscard, onSave, selecte
       <div className="echo-editor-substats scan-substats"><header><div><span className="eyebrow">Fixed roll values</span><h3>Substats</h3></div><b>{candidate.fields.subStats.length}/{maxSubStats}</b></header>{candidate.fields.subStats.map((field, index) => { const rolls = tunableRolls[field.value.key] ?? []; const rollIndex = Math.max(0, rolls.findIndex((roll) => Math.abs(roll.value - field.value.value) < .001)); return <div className="echo-substat-row" key={`${candidate.id}-${index}`}><div className="echo-stat-line"><span>#{index + 1} <Confidence value={field.confidence}/></span><select value={field.value.key} onChange={(event) => setSubStat(index, event.target.value as StatKey, 0)}>{subStatKeys.map((key) => <option key={key} value={key}>{statLabels[key]}</option>)}</select><strong>{formatStat(field.value.key, rolls[rollIndex]?.value ?? field.value.value)}</strong><button type="button" className="text-button" onClick={() => updateFields({ subStats: candidate.fields.subStats.filter((_, fieldIndex) => fieldIndex !== index) })}>Remove</button></div><div className="echo-roll-slider"><input aria-label={`Substat ${index + 1} roll`} type="range" min="0" max={Math.max(0, rolls.length - 1)} step="1" value={rollIndex} onChange={(event) => setSubStat(index, field.value.key, Number(event.target.value))}/><div>{rolls.map((roll, point) => <i className={point === rollIndex ? 'active' : ''} key={roll.value}>{roll.value}</i>)}</div></div></div> })}<button type="button" className="secondary add-substat" disabled={candidate.fields.subStats.length >= maxSubStats} onClick={() => updateFields({ subStats: [...candidate.fields.subStats, { value: { key: 'critRate', value: tunableRolls.critRate?.[0].value ?? 6.3 }, confidence: 1 }] })}>+ Add substat</button></div>
       {candidate.duplicateOf && <div className="notice warning">Possible duplicate. Saving creates a separate inventory item.</div>}
       {errors.length > 0 && <div className="notice error">{errors.join(' ')}</div>}
-      {evidenceOpen && candidate.evidence && <div className="scan-evidence-drawer"><header><div><span className="eyebrow">Local diagnostics</span><h3>Field evidence</h3></div><div>{onCopyDiagnostic && <><button type="button" className="text-button" onClick={() => onCopyDiagnostic(false)}>Copy report</button><button type="button" className="text-button" onClick={() => onCopyDiagnostic(true)}>Copy with images</button></>}</div></header><div className="scan-evidence-grid">{Object.values(candidate.evidence).map((evidence) => <article className={evidence.validation.valid ? '' : 'invalid'} key={evidence.region.id}><header><b>{evidence.region.label}</b><span>{Math.round(evidence.confidence * 100)}%</span></header><div><figure><img src={evidence.originalCrop} alt={`${evidence.region.label} original crop`}/><figcaption>Original</figcaption></figure><figure><img src={evidence.processedCrop} alt={`${evidence.region.label} processed crop`}/><figcaption>{evidence.preprocessing}</figcaption></figure></div><code>{evidence.rawOcr.trim() || 'Visual classifier'}</code><small>{evidence.workerId} · {Math.round(evidence.processingMs)} ms</small>{evidence.validation.messages.map((message) => <p key={message}>{message}</p>)}{onRerunField && <footer><button type="button" className="text-button" onClick={() => onRerunField(evidence.region.id)}>Re-run field</button></footer>}</article>)}</div></div>}
+      {evidenceOpen && candidate.evidence && <div className="scan-evidence-drawer"><header><div><span className="eyebrow">Local diagnostics</span><h3>Field evidence</h3></div><div>{onCopyDiagnostic && <><button type="button" className="text-button" onClick={() => onCopyDiagnostic(false)}>Copy report</button><button type="button" className="text-button" onClick={() => onCopyDiagnostic(true)}>Copy with images</button></>}</div></header><div className="scan-evidence-grid">{Object.values(candidate.evidence).map((evidence) => <article className={evidence.validation.valid ? '' : 'invalid'} key={evidence.region.id}><header><b>{evidence.region.label}</b><span>{Math.round(evidence.confidence * 100)}%</span></header><div><figure><img src={evidence.originalCrop} alt={`${evidence.region.label} original crop`}/><figcaption>Original</figcaption></figure><figure><img src={evidence.processedCrop} alt={`${evidence.region.label} processed crop`}/><figcaption>{evidence.preprocessing}</figcaption></figure></div><code>{evidence.rawOcr.trim() || 'Visual classifier'}</code><small>{evidence.workerId} · {Math.round(evidence.processingMs)} ms</small>{evidence.validation.messages.map((message) => <p key={message}>{message}</p>)}{onRerunField && !candidate.buildCard && <footer><button type="button" className="text-button" onClick={() => onRerunField(evidence.region.id)}>Re-run field</button></footer>}</article>)}</div></div>}
     </div>
-    <div className="review-actions">{onMarkDuplicate && <button className="text-button" onClick={onMarkDuplicate}>Mark duplicate</button>}<button className="text-button" onClick={onDiscard}>Discard</button><button className="primary" disabled={errors.length > 0} onClick={onSave}>Approve & save</button></div>
+    <div className="review-actions"><button className="review-discard" onClick={onDiscard}>Discard</button><button className="primary" disabled={errors.length > 0} onClick={onSave}>Approve & save</button></div>
   </Panel>
 }

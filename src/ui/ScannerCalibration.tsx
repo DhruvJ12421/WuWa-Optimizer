@@ -8,10 +8,11 @@ const clampPanelRect = (rect: ScanRect): ScanRect => ({
   width: Math.max(.08, Math.min(1 - rect.x, rect.width)), height: Math.max(.10, Math.min(1 - rect.y, rect.height))
 })
 
-const clampFieldRect = (rect: ScanRect): ScanRect => {
+const clampFieldRect = (rect: ScanRect, minimumSize = .02): ScanRect => {
   const x = Math.max(0, Math.min(.98, rect.x)), y = Math.max(0, Math.min(.98, rect.y))
-  return { x, y, width: Math.max(.02, Math.min(1 - x, rect.width)), height: Math.max(.02, Math.min(1 - y, rect.height)) }
+  return { x, y, width: Math.max(minimumSize, Math.min(1 - x, rect.width)), height: Math.max(minimumSize, Math.min(1 - y, rect.height)) }
 }
+const minimumFieldSize = (regionId: string) => /^echo-\d+-cost$/.test(regionId) ? .004 : .02
 
 export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }: {
   imageDataUrl: string; profile: CalibrationProfile; onChange: (profile: CalibrationProfile) => void; onSaved?: (profile: CalibrationProfile) => void
@@ -22,7 +23,7 @@ export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }:
   const selectedRegion = profile.regions.find((region) => region.id === selectedRegionId) ?? profile.regions[0]
 
   const updateRegion = (regionId: string, rect: ScanRect) => onChange({
-    ...profile, regions: profile.regions.map((region) => region.id === regionId ? { ...region, rect: clampFieldRect(rect) } : region), updatedAt: Date.now()
+    ...profile, regions: profile.regions.map((region) => region.id === regionId ? { ...region, rect: clampFieldRect(rect, minimumFieldSize(region.id)) } : region), updatedAt: Date.now()
   })
 
   const beginPanelDrag = (event: React.PointerEvent, mode: 'move' | 'resize') => {
@@ -45,7 +46,8 @@ export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }:
     const startX = event.clientX, startY = event.clientY, initial = { ...region.rect }, initialRegions = profile.regions
     const move = (next: PointerEvent) => {
       const dx = (next.clientX - startX) / bounds.width, dy = (next.clientY - startY) / bounds.height
-      const rect = mode === 'move' ? clampFieldRect({ ...initial, x: initial.x + dx, y: initial.y + dy }) : clampFieldRect({ ...initial, width: initial.width + dx, height: initial.height + dy })
+      const minimumSize = minimumFieldSize(region.id)
+      const rect = mode === 'move' ? clampFieldRect({ ...initial, x: initial.x + dx, y: initial.y + dy }, minimumSize) : clampFieldRect({ ...initial, width: initial.width + dx, height: initial.height + dy }, minimumSize)
       onChange({ ...profile, regions: initialRegions.map((entry) => entry.id === regionId ? { ...entry, rect } : entry), updatedAt: Date.now() })
     }
     const end = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end) }
@@ -62,7 +64,7 @@ export function ScannerCalibration({ imageDataUrl, profile, onChange, onSaved }:
     const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob), link = document.createElement('a')
     link.href = url; link.download = `tacet-lab-calibrations-${profile.sourceWidth}x${profile.sourceHeight}.json`; link.click()
-    URL.revokeObjectURL(url); setProfileMessage('Character Menu and Backpack profiles exported')
+    URL.revokeObjectURL(url); setProfileMessage('Character Menu, Backpack, and build-card profiles exported')
   }
 
   const importProfile = async (file?: File) => {

@@ -1,7 +1,8 @@
-import { characterCatalog, echoCatalog, sonataNames, statAliases, type EchoCatalogEntry } from '../game-data'
+﻿import { characterCatalog, echoCatalog, sonataNames, statAliases, weaponCatalog, type EchoCatalogEntry } from '../game-data'
 import { closestTunableRoll, exactTunableRoll, tunableRolls } from '../game-data/tunable-rolls'
-import { isMainStatAllowed, mainStatError, mainStatKeysByCost, maxSubStatsForLevel } from '../game-data/echo-main-stats'
+import { fixedSecondaryMainStat, isMainStatAllowed, mainStatError, mainStatKeysByCost, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import type { Echo, ScanCandidate, StatKey, StatLine } from '../domain/types'
+import { createLocalId } from '../domain/id'
 
 export interface VisualRecognition {
   rarity?: { value: Echo['rarity']; confidence: number }
@@ -10,7 +11,7 @@ export interface VisualRecognition {
   excluded?: { value: boolean; confidence: number }
 }
 
-const uuid = () => crypto.randomUUID()
+const uuid = () => createLocalId()
 
 export function normalizeOcrText(text: string) {
   return text.replace(/[|]/g, 'I').replace(/\uFF05/g, '%').replace(/[\u2013\u2014]/g, '-').split(/\r?\n/).map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean)
@@ -108,7 +109,7 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const levelMatch = joined.match(/(?:Lv\.?|Level|\+)\s*(\d{1,2})/i)
   const level = Number(levelMatch?.[1] ?? 0)
   const costMatch = joined.match(/Cost\s*([134])/i)
-  const rarityMatch = joined.match(/([1-5])\s*(?:Star|★)/i)
+  const rarityMatch = joined.match(/([1-5])\s*(?:Star|\u2605)/i)
   const equippedLine = [...lines].reverse().find((line) => /Equipp?e?d\s+by\b/i.test(line))
   const equippedMatch = equippedLine?.match(/Equipp?e?d\s+by\b\s*(?:[:;,=-]\s*)?(.+?)\s*$/i)
   const equippedRaw = equippedMatch?.[1]?.trim() ?? ''
@@ -121,14 +122,17 @@ export async function parseEchoText(text: string, imageDataUrl: string, source: 
   const visualSonata = visual.sonata && (!catalog || catalog.sonatas.includes(visual.sonata.value)) ? visual.sonata : undefined
   const sonata = visualSonata?.value ?? (catalog?.sonatas.length === 1 ? catalog.sonatas[0] : textSonata)
   const cost = catalog?.cost ?? Number(costMatch?.[1] ?? 1) as 1 | 3 | 4
+  const rarity = visual.rarity?.value ?? Number(rarityMatch?.[1] ?? 5) as Echo['rarity']
   const mainStatIndex = stats.findIndex((stat) => isMainStatAllowed(cost, stat.key))
   const mainStat = stats[mainStatIndex] ?? { key: mainStatKeysByCost[cost][0], value: 0 }
-  const secondaryMainKey: StatKey = cost === 1 ? 'hp' : 'atk'
-  const subStats = stats.filter((stat, index) => index !== mainStatIndex && stat.key !== secondaryMainKey).slice(0, maxSubStatsForLevel(level)).map((stat) => {
+  const remainingStats = stats.filter((_, index) => index !== mainStatIndex)
+  const fixedSecondary = fixedSecondaryMainStat({ cost, rarity, level })
+  const secondaryMainIndex = remainingStats.findIndex((stat) => stat.key === fixedSecondary.key && Math.abs(stat.value - fixedSecondary.value) <= .51)
+  const subStats = remainingStats.filter((_, index) => index !== secondaryMainIndex).slice(0, maxSubStatsForLevel(level)).map((stat) => {
     const roll = closestTunableRoll(stat.key, stat.value)
     return { value: roll ? { ...stat, value: roll.value } : stat, confidence: roll ? (exactTunableRoll(stat.key, stat.value) ? 0.92 : 0.84) : 0.52, raw: String(stat.value) }
   })
-  const rarity = visual.rarity?.value ?? Number(rarityMatch?.[1] ?? 5) as Echo['rarity']
+
   return {
     id: uuid(), createdAt: Date.now(), imageDataUrl, fingerprint: await imageFingerprint(imageDataUrl), source,
     fields: {
@@ -171,5 +175,10 @@ export function candidateErrors(candidate: ScanCandidate) {
   if (candidate.fields.subStats.length > maxSubStats) errors.push(`A level ${candidate.fields.level.value} Echo can only have ${maxSubStats} substat${maxSubStats === 1 ? '' : 's'}.`)
   if (candidate.fields.subStats.some((field) => !Number.isFinite(field.value.value) || field.value.value < 0)) errors.push('Substats must be non-negative numbers.')
   if (candidate.fields.subStats.some((field) => tunableRolls[field.value.key] && !exactTunableRoll(field.value.key, field.value.value))) errors.push('Each tunable substat must match an exact in-game roll value.')
+  if (candidate.buildCard) {
+    if (!characterCatalog.some((entry) => entry.id === candidate.buildCard?.characterCatalogId || normalizedIdentity(entry.name) === normalizedIdentity(candidate.buildCard?.character.value ?? ''))) errors.push('Choose the build-card character from the catalog.')
+    if (!weaponCatalog.some((entry) => entry.id === candidate.buildCard?.weaponCatalogId || normalizedIdentity(entry.name) === normalizedIdentity(candidate.buildCard?.weapon.value ?? ''))) errors.push('Choose the build-card weapon from the catalog.')
+    if (candidate.buildCard.skillLevels.length !== 5 || candidate.buildCard.skillLevels.some((field) => field.value < 1 || field.value > 10)) errors.push('Build-card skill levels must be between 1 and 10.')
+  }
   return errors
 }

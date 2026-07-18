@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, ensureSeedData, getSettings, requestPersistentStorage } from '../storage/database'
+import { db, ensureSeedData, getSettings, repairEchoAssignmentConsistency, repairNamedEchoAssignments, repairWeaponAssignmentConsistency, requestPersistentStorage } from '../storage/database'
 import type { AppSettings, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 import { defaultSettings } from '../game-data'
 
@@ -14,6 +14,9 @@ export function useAppData() {
   const [error, setError] = useState('')
 
   const refresh = async () => {
+    await repairNamedEchoAssignments()
+    await repairEchoAssignmentConsistency()
+    await repairWeaponAssignmentConsistency()
     const [nextEchoes, nextCharacters, nextWeapons, nextBuilds, nextTeams, nextSettings] = await Promise.all([
       db.echoes.orderBy('createdAt').reverse().toArray(), db.characters.orderBy('createdAt').reverse().toArray(), db.weapons.orderBy('createdAt').reverse().toArray(), db.builds.toArray(), db.teams.toArray(), getSettings()
     ])

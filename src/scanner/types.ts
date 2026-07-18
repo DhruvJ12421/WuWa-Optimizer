@@ -1,7 +1,7 @@
 import type { ScanCandidate, ScanField, StatLine } from '../domain/types'
 
 export type ScanSource = 'screen' | 'screenshot' | 'video' | 'manual'
-export type ScanLayout = 'echo-detail' | 'echo-management' | 'unknown'
+export type ScanLayout = 'echo-detail' | 'echo-management' | 'build-card' | 'unknown'
 export type ScanRegionKind =
   | 'name' | 'level' | 'cost' | 'rarity' | 'sonata'
   | 'main-stat-label' | 'main-stat-value' | 'substats-block' | 'substat-row'

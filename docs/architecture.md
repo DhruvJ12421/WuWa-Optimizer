@@ -22,8 +22,8 @@ Screen share / screenshot / local video
 
 ## Modules
 
-- `src/domain/` owns serializable types, stat aggregation, damage, rotations, buffs, and optimization. Domain functions do not access the DOM or storage.
-- `src/game-data/` owns versioned display metadata and the initial character/weapon slice.
+- `src/domain/` owns serializable types, the tagged formula graph, calculation contexts and traces, stat aggregation, rotations, buffs, and optimization. Domain functions do not access the DOM or storage.
+- `src/game-data/` owns the pinned Nanoka 3.5 display and numeric source data. `src/domain/calculation/sheets.ts` classifies every generated character, weapon, Sonata, and Echo record for formula coverage.
 - `src/scanner/` owns local capture sources, calibration profiles, named field regions, worker preprocessing, the adaptive English OCR pool, session cancellation/backpressure, parsing, validation, duplicate detection, diagnostics, and fixture accuracy/performance accounting.
 - `src/storage/` owns IndexedDB tables, seed repair, schema validation, atomic import, export, and reset.
 - `src/workers/` isolates expensive optimization from the render thread. Scanner image preprocessing runs in `src/scanner/preprocess.worker.ts`; Tesseract workers are serialized through one-worker schedulers managed by `OcrPool`.
@@ -39,13 +39,17 @@ Every scan carries a session ID, frame sequence, frame ID, region ID, and job ID
 
 ## Persistence
 
-`AccountDocument` is the portable public format. Every export includes `schemaVersion`, `gameDataVersion`, and `exportedAt`. Imports are deeply validated before an atomic replacement transaction starts. Future schema changes must add a migration rather than silently accepting incompatible data.
+`AccountDocument` is the portable public format. Schema 3 adds saved team calculation scenarios, formula target IDs, and per-action inputs. Schema-1 and schema-2 backups remain importable. Every export includes `schemaVersion`, `gameDataVersion`, and `exportedAt`; imports are deeply validated before an atomic replacement transaction starts.
+
+## Formula engine
+
+`src/domain/calculation/` is a clean-room declarative engine. Formula nodes support constants, inputs, stats, arithmetic, lookups, comparisons, conditional branches, and tagged accumulation. Evaluation is deterministic, memoized, cycle checked, finite-number checked, and returns a nested trace suitable for UI explanation. The same generated character targets feed member result sheets, rotation actions, and optimizer objectives.
+
+Formula data is labeled `nanoka-3.5-formula-v1`. This is reproducible from the pinned dataset; it is not a claim of independent verification against the live game.
 
 ## Optimizer
 
-The optimizer filters excluded/assigned items, applies locked items first, ranks candidates per objective, limits each cost group, and explores combinations within a visited-node budget. It enforces five Echoes, 12 total cost, optional five-piece Sonata, minimum calculated stats, and deterministic result ordering.
-
-The bounded pool is a responsiveness trade-off. UI wording must not claim a mathematically global optimum.
+The optimizer filters excluded/assigned items, applies locked items first, and explores every legal candidate in deterministic order without truncating cost groups. It enforces five Echoes, 12 total cost, optional five-piece Sonata, min/max calculated stats, and formula targets. Completed searches are exact for the supplied inventory and constraints. A search that reaches its visited-node budget is labeled `best found`, never as a global optimum.
 
 ## Offline behavior
 

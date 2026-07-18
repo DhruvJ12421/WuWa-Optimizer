@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { candidateErrors, normalizeOcrText, parseEchoText, parseStatLine } from './parser'
 import { tunableRolls } from '../game-data/tunable-rolls'
 
 describe('English Echo OCR parser', () => {
   it('normalizes common OCR punctuation without translating text', () => {
-    expect(normalizeOcrText('  Crit.  Rate  6.3％\r\n— ATK 40 ')).toEqual(['Crit. Rate 6.3%', '- ATK 40'])
+    expect(normalizeOcrText('  Crit.  Rate  6.3\uFF05\r\n\u2014 ATK 40 ')).toEqual(['Crit. Rate 6.3%', '- ATK 40'])
   })
 
   it('parses percent and flat English stat labels', () => {
@@ -31,6 +31,16 @@ describe('English Echo OCR parser', () => {
     expect(candidate.fields.subStats.map((field) => field.value.key)).toEqual(['critRate'])
   })
 
+  it('removes only the fixed secondary main stat and preserves a matching flat ATK substat', async () => {
+    const candidate = await parseEchoText('Cyan-Feathered Heron\nCost 3\n5 Star\nLv. 25\nCelestial Light\nFusion DMG Bonus 30.0%\nATK 100\nATK 50\nCrit. Rate 6.3%', 'data:image/png;base64,flat-atk', 'screenshot')
+    expect(candidate.fields.mainStat.value).toEqual({ key: 'fusionDamage', value: 30 })
+    expect(candidate.fields.subStats.map((field) => field.value)).toEqual([{ key: 'atk', value: 50 }, { key: 'critRate', value: 6.3 }])
+  })
+
+  it('removes only the fixed secondary main stat and preserves a matching flat HP substat', async () => {
+    const candidate = await parseEchoText('Hooscamp\nCost 1\n5 Star\nLv. 25\nLingering Tunes\nATK % 18.0%\nHP 2280\nHP 470\nCrit. Rate 6.3%', 'data:image/png;base64,flat-hp', 'screenshot')
+    expect(candidate.fields.subStats.map((field) => field.value)).toEqual([{ key: 'hp', value: 470 }, { key: 'critRate', value: 6.3 }])
+  })
   it('uses catalog metadata and limits tuned stats to the detail block', async () => {
     const candidate = await parseEchoText('Cyan Feathered Heron +25\nCOST 3\nCelestial Light\nSpectro DMG Bonus 30.0%\nATK 100\nCrit. DMG 12.6%\nEcho Skills: Countermeasures\nAero DMG 236.80%\nEquipped by Lucy', 'data:image/png;base64,cyan', 'screenshot', { rarity: { value: 5, confidence: 0.94 } })
     expect(candidate.fields.name.value).toBe('Cyan-Feathered Heron')
@@ -40,7 +50,7 @@ describe('English Echo OCR parser', () => {
   })
 
   it('reads equipment only from the footer instead of skill prose', async () => {
-    const candidate = await parseEchoText('Reminiscence - Nightmare: Adam\nSmasher +25\nCOST 4\nCrit. Rate 220%\nATK 150\nCrit. DMG 186%\nCrit. Rate 63%\nDEF 50\nHeavy Attack DMG Bonus 7.9%\nEcho Skill\nWhen Lucy uses this skill, if equipped by Lucy press the Echo Skill button\n• Equipped by Lucy\nSwitch\nUpgrade', 'data:image/png;base64,adam', 'screenshot')
+    const candidate = await parseEchoText('Reminiscence - Nightmare: Adam\nSmasher +25\nCOST 4\nCrit. Rate 220%\nATK 150\nCrit. DMG 186%\nCrit. Rate 63%\nDEF 50\nHeavy Attack DMG Bonus 7.9%\nEcho Skill\nWhen Lucy uses this skill, if equipped by Lucy press the Echo Skill button\n窶｢ Equipped by Lucy\nSwitch\nUpgrade', 'data:image/png;base64,adam', 'screenshot')
     expect(candidate.fields.name.value).toBe('Reminiscence - Nightmare: Adam Smasher')
     expect(candidate.fields.sonata.value).toBe('Shadow of Shattered Dreams')
     expect(candidate.fields.mainStat.value.value).toBe(22)

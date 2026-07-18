@@ -1,10 +1,12 @@
 import type { Echo } from '../domain/types'
+import { createLocalId } from '../domain/id'
 import { fingerprintDistance } from './capture'
 import { findDuplicate } from './deduplication'
 import { prepareScanFrame, type PreparedFrame } from './frame'
 import { OcrPool, type OcrPoolMetrics } from './ocr-pool'
 import { PreprocessClient } from './preprocess'
 import { recognizeFrame, rerunRegion } from './recognize'
+import { recognizeBuildCard } from './build-card'
 import type { CalibrationProfile, DiagnosticScanCandidate, OcrWorkerPreference, ScanSession, ScanSource } from './types'
 
 interface QueuedFrame { prepared: PreparedFrame; resolve: (accepted: boolean) => void; reject: (error: Error) => void }
@@ -29,7 +31,7 @@ export class ScanSessionController {
   constructor(source: ScanSource, private callbacks: ScanControllerCallbacks, preference: OcrWorkerPreference = 'auto') {
     const now = Date.now()
     this.session = {
-      id: crypto.randomUUID(), source, status: 'running', createdAt: now, nextFrameSequence: 0,
+      id: createLocalId(), source, status: 'running', createdAt: now, nextFrameSequence: 0,
       metrics: { workerCount: 0, queueDepth: 0, activeJobs: 0, processedFrames: 0, skippedFrames: 0, failures: 0, duplicates: 0, newCandidates: 0, corrected: 0, rejected: 0, approved: 0, totalFrames: 0, startedAt: now }
     }
     this.pool = new OcrPool({ preference, onMetrics: (metrics) => this.applyPoolMetrics(metrics), onProgress: callbacks.onProgress })
@@ -81,13 +83,18 @@ export class ScanSessionController {
     while (!this.cancelled && this.queue.length) {
       const item = this.queue.shift()!; this.updateQueueDepth()
       try {
-        const candidate = await recognizeFrame(item.prepared.frame, item.prepared.profile, this.pool, this.preprocess, { onStage: this.callbacks.onProgress })
-        if (this.cancelled || candidate.sessionId !== this.session.id) { item.resolve(false); continue }
-        const duplicateOf = findDuplicate(candidate, this.callbacks.getEchoes?.() ?? [], this.callbacks.getPending?.() ?? [])
-        if (duplicateOf) { candidate.duplicateOf = duplicateOf; candidate.reviewState = 'duplicate'; this.session.metrics.duplicates += 1 }
-        else this.session.metrics.newCandidates += 1
+        const candidates = item.prepared.frame.layout === 'build-card'
+          ? await recognizeBuildCard(item.prepared.frame, item.prepared.profile, this.pool, this.preprocess, this.callbacks.onProgress)
+          : [await recognizeFrame(item.prepared.frame, item.prepared.profile, this.pool, this.preprocess, { onStage: this.callbacks.onProgress })]
+        if (this.cancelled || candidates.some((candidate) => candidate.sessionId !== this.session.id)) { item.resolve(false); continue }
+        for (const candidate of candidates) {
+          const duplicateOf = findDuplicate(candidate, this.callbacks.getEchoes?.() ?? [], [...(this.callbacks.getPending?.() ?? []), ...candidates.filter((entry) => entry.id !== candidate.id)])
+          if (duplicateOf) { candidate.duplicateOf = duplicateOf; candidate.reviewState = 'duplicate'; this.session.metrics.duplicates += 1 }
+          else this.session.metrics.newCandidates += 1
+          this.callbacks.onCandidate(candidate)
+        }
         this.session.metrics.processedFrames += 1
-        this.callbacks.onCandidate(candidate); item.resolve(true)
+        item.resolve(true)
       } catch (error) {
         this.session.metrics.failures += 1
         item.reject(error instanceof Error ? error : new Error('Frame recognition failed.'))

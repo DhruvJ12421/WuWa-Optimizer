@@ -1,4 +1,5 @@
 import { createScheduler, createWorker, PSM, type Scheduler, type Worker } from 'tesseract.js'
+import { createLocalId } from '../domain/id'
 import type { OcrWorkerPreference, ScanRegion } from './types'
 
 export interface OcrPoolMetrics { workerCount: number; queueDepth: number; activeJobs: number; averageJobMs: number; failures: number }
@@ -90,7 +91,7 @@ export class OcrPool {
     const slot = [...this.slots].sort((left, right) => left.pending - right.pending || left.id.localeCompare(right.id))[0]
     if (!slot) throw new Error('No OCR worker is available.')
     const generation = this.generation
-    const jobId = requestedJobId ?? crypto.randomUUID()
+    const jobId = requestedJobId ?? createLocalId()
     slot.pending += 1; this.emit()
     let resolveResult!: (value: OcrRecognition) => void
     let rejectResult!: (error: Error) => void

@@ -44,10 +44,17 @@ export function profileKey(width: number, height: number, layout: ScanLayout, ui
   return `${width}x${height}:${layout}:${uiScale.toFixed(2)}`
 }
 
+function normalizedProfileRegions(layout: ScanLayout, input: CalibrationProfile['regions']) {
+  const normalized = normalizeSubstatRegions(input).filter((region) => layout !== 'build-card' || (region.id !== 'sequence' && !/^echo-\d+-main-stat$/.test(region.id)))
+  if (layout !== 'build-card') return normalized
+  const defaults = regionsForLayout('build-card')
+  return [...normalized, ...defaults.filter((fallback) => !normalized.some((region) => region.id === fallback.id))]
+}
+
 export function loadCalibrationProfiles(): CalibrationProfile[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')
-    return Array.isArray(parsed) ? parsed.map((profile) => ({ ...profile, regions: normalizeSubstatRegions(profile.regions ?? []) })) : []
+    return Array.isArray(parsed) ? parsed.map((profile) => ({ ...profile, regions: normalizedProfileRegions(profile.layout, profile.regions ?? []) })) : []
   } catch { return [] }
 }
 
@@ -56,7 +63,7 @@ export function loadLatestCalibrationProfile() {
 }
 
 export function saveCalibrationProfile(profile: CalibrationProfile) {
-  const persisted = { ...profile, regions: normalizeSubstatRegions(profile.regions), id: profileKey(profile.sourceWidth, profile.sourceHeight, profile.layout, profile.uiScale), updatedAt: Date.now() }
+  const persisted = { ...profile, regions: normalizedProfileRegions(profile.layout, profile.regions), id: profileKey(profile.sourceWidth, profile.sourceHeight, profile.layout, profile.uiScale), updatedAt: Date.now() }
   const profiles = loadCalibrationProfiles().filter((entry) => entry.id !== persisted.id)
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...profiles, persisted]))
   return persisted
@@ -76,7 +83,7 @@ const isRect = (value: unknown): value is ScanRect => {
 function normalizeImportedProfile(input: unknown): CalibrationProfile {
   const value = input as Partial<CalibrationProfile>
   if (!value || typeof value !== 'object'
-    || (value.layout !== 'echo-detail' && value.layout !== 'echo-management')
+    || (value.layout !== 'echo-detail' && value.layout !== 'echo-management' && value.layout !== 'build-card')
     || typeof value.sourceWidth !== 'number' || !Number.isFinite(value.sourceWidth)
     || typeof value.sourceHeight !== 'number' || !Number.isFinite(value.sourceHeight)
     || typeof value.uiScale !== 'number' || !Number.isFinite(value.uiScale)
@@ -90,8 +97,8 @@ function normalizeImportedProfile(input: unknown): CalibrationProfile {
   return {
     ...value,
     id: profileKey(value.sourceWidth, value.sourceHeight, value.layout, value.uiScale),
-    name: typeof value.name === 'string' ? value.name : `${value.sourceWidth}x${value.sourceHeight} - ${value.layout === 'echo-detail' ? 'Character Menu' : 'Backpack'}`,
-    regions: normalizeSubstatRegions(value.regions),
+    name: typeof value.name === 'string' ? value.name : `${value.sourceWidth}x${value.sourceHeight} - ${value.layout === 'echo-detail' ? 'Character Menu' : value.layout === 'echo-management' ? 'Backpack' : 'Discord build card'}`,
+    regions: normalizedProfileRegions(value.layout, value.regions),
     createdAt: typeof value.createdAt === 'number' ? value.createdAt : now,
     updatedAt: now
   } as CalibrationProfile
@@ -110,7 +117,7 @@ export function parseCalibrationProfile(json: string): CalibrationProfile {
 
 export function calibrationExportProfiles(current: CalibrationProfile) {
   const stored = loadCalibrationProfiles()
-  return (['echo-detail', 'echo-management'] as const).map((layout) => {
+  return (['echo-detail', 'echo-management', 'build-card'] as const).map((layout) => {
     if (current.layout === layout) return current
     return stored.filter((profile) => profile.layout === layout
       && Math.abs(profile.sourceWidth - current.sourceWidth) <= 2
@@ -131,7 +138,7 @@ export function findCompatibleProfile(width: number, height: number, layout: Sca
 export function createCalibrationProfile(width: number, height: number, panelRect: ScanRect, layout: Exclude<ScanLayout, 'unknown'>, uiScale = 1): CalibrationProfile {
   const now = Date.now()
   return {
-    id: profileKey(width, height, layout, uiScale), name: `${width}x${height} - ${layout === 'echo-detail' ? 'Character Menu' : 'Backpack'}`,
+    id: profileKey(width, height, layout, uiScale), name: `${width}x${height} - ${layout === 'echo-detail' ? 'Character Menu' : layout === 'echo-management' ? 'Backpack' : 'Discord build card'}`,
     layout, sourceWidth: width, sourceHeight: height, uiScale, panelRect: { ...panelRect }, regions: regionsForLayout(layout), createdAt: now, updatedAt: now
   }
 }

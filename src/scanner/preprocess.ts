@@ -1,4 +1,5 @@
 import type { ScanRect, ScanRegion } from './types'
+import { createLocalId } from '../domain/id'
 
 type Strategy = 'name' | 'text' | 'substat' | 'visual' | 'plain'
 type Pending = { resolve: (value: PreprocessedImage) => void; reject: (reason: Error) => void }
@@ -40,7 +41,7 @@ export class PreprocessClient {
   async process(imageDataUrl: string, region: ScanRegion) {
     const response = await fetch(imageDataUrl)
     const bitmap = await createImageBitmap(await response.blob())
-    const id = crypto.randomUUID()
+    const id = createLocalId()
     const result = new Promise<PreprocessedImage>((resolve, reject) => this.pending.set(id, { resolve, reject }))
     this.ensureWorker().postMessage({ id, bitmap, rect: region.rect, strategy: strategyFor(region) }, [bitmap])
     return result

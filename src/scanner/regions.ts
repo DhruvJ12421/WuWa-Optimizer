@@ -6,7 +6,8 @@ const region = (id: string, kind: ScanRegion['kind'], label: string, rect: ScanR
 // panel-relative field boxes below.
 export const DEFAULT_PANEL_RECTS: Record<Exclude<ScanLayout, 'unknown'>, ScanRect> = {
   'echo-detail': { x: 0.7814648090309528, y: 0.12119504852729009, width: 0.18818307539319679, height: 0.7792011904489758 }, // Character Menu
-  'echo-management': { x: 0.6795682336434711, y: 0.11407459372205966, width: 0.29127383898363207, height: 0.7388013943499553 } // Backpack
+  'echo-management': { x: 0.6795682336434711, y: 0.11407459372205966, width: 0.29127383898363207, height: 0.7388013943499553 }, // Backpack
+  'build-card': { x: 0, y: 0, width: 1, height: 1 }
 }
 
 export function defaultPanelRectForLayout(layout: Exclude<ScanLayout, 'unknown'>) {
@@ -67,8 +68,35 @@ const BACKPACK_REGIONS: ScanRegion[] = [
   region('discarded', 'discarded', 'Discarded icon', { x: 0.04110884644062475, y: 0.27589935612468025, width: 0.09550411810297464, height: 0.06603924278680859 }, 'visual')
 ]
 
+const BUILD_CARD_REGIONS: ScanRegion[] = [
+  region('character', 'name', 'Character', { x: .032560351133869785, y: .01265024790701455, width: .2087726638224671, height: .06744876313195969 }, 'text'),
+  region('character-level', 'level', 'Character level', { x: .17620221934008093, y: .036168021455640895, width: .02, height: .02 }, 'number'),
+  region('weapon', 'name', 'Weapon', { x: .8337552185728329, y: .4128871921482565, width: .13774287259395573, height: .05200421454624888 }, 'text'),
+  region('weapon-level', 'level', 'Weapon level', { x: .871773088166377, y: .4705062961015607, width: .02, height: .026556475046736566 }, 'number'),
+  region('skill-0', 'level', 'Normal Attack', { x: .5566303671646398, y: .16723695821141182, width: .04375052971550384, height: .030867073198610095 }, 'number', 0),
+  region('skill-1', 'level', 'Resonance Skill', { x: .43564397438791597, y: .31331975686824354, width: .046225467349807974, height: .030378196628871007 }, 'number', 1),
+  region('skill-2', 'level', 'Forte Circuit', { x: .6155130535759191, y: .5395985379582215, width: .05200027718087052, height: .03282257947756645 }, 'number', 2),
+  region('skill-3', 'level', 'Resonance Liberation', { x: .6588841298235186, y: .31231090168556447, width: .05007528103854243, height: .03282257947756645 }, 'number', 3),
+  region('skill-4', 'level', 'Intro Skill', { x: .4785246669543252, y: .5413551572787125, width: .04897539805459034, height: .03184474696212306 }, 'number', 4),
+  ...[
+    { art: { x: .011, y: .605, width: .09828560970504527, height: .1686851628540803 }, cost: { x: .17303122249622804, y: .6238478007142566, width: .013050475493782004, height: .028270499319271725 }, sonata: { x: .13565887196672688, y: .615, width: .031, height: .045 }, stats: { x: .029851366758869787, y: .815454213403235, width: .16530836157530174, height: .16541490896529298 }, mainLabel: { x: .11328497426075575, y: .6612672595098756, width: .0843650375908696, height: .0347675605035357 }, mainValue: { x: .16177172039308246, y: .6963349259326994, width: .03658679484615032, height: .038084840841664615 } },
+    { art: { x: .207, y: .605, width: .09922571631252286, height: .16645676200672602 }, cost: { x: .36755642202359184, y: .6232078716827197, width: .012318946598390636, height: .02693182366597578 }, sonata: { x: .33103215655289864, y: .6155571002118385, width: .031, height: .045 }, stats: { x: .22853566346241766, y: .8160322291819069, width: .16399594944449522, height: .16925178437169794 }, mainLabel: { x: .30423903671074887, y: .6645844604720393, width: .09021538099510788, height: .031080546919450544 }, mainValue: { x: .35561766783730336, y: .6977564700936764, width: .03798020737129662, height: .03487170176989352 } },
+    { art: { x: .402, y: .605, width: .09985240940186083, height: .16812806264224173 }, cost: { x: .563470922440792, y: .6251482965282857, width: .012318946598390636, height: .02533960181205803 }, sonata: { x: .5260320672549379, y: .6166713006355157, width: .031, height: .045 }, stats: { x: .42240640144934166, y: .814361047610339, width: .16449842907027248, height: .17165870176481338 }, mainLabel: { x: .50157502671795, y: .6626888830468178, width: .08839439375971561, height: .037939344697431564 }, mainValue: { x: .5503430569620977, y: .6987042984942697, width: .03949396140042062, height: .032252771173697514 } },
+    { art: { x: .596, y: .605, width: .10173262261681602, height: .16757096243040315 }, cost: { x: .7596772071598391, y: .6257880668078925, width: .011290683436585588, height: .023298726682516455 }, sonata: { x: .7228523647528804, y: .6133286993644843, width: .028179791800018287, height: .049456801694708605 }, stats: { x: .6178608866358816, y: .8141822929366822, width: .16352150937842902, height: .16883910872856206 }, mainLabel: { x: .700761362986924, y: .6664800378972608, width: .08450810006800931, height: .031126267475412576 }, mainValue: { x: .7461970219344368, y: .6987042984942697, width: .038802387984637886, height: .03160006261176143 } },
+    { art: { x: .79, y: .6056754100879866, width: .10235940500411485, height: .1686851231660977 }, cost: { x: .954719135767191, y: .6251552816132244, width: .011953182150694953, height: .025328687616841414 }, sonata: { x: .9171658005955103, y: .6144428997881615, width: .031, height: .045 }, stats: { x: .8136406842938461, y: .8167805857819231, width: .16548490364392834, height: .1685496245834349 }, mainLabel: { x: .8914765374965711, y: .6655322094966675, width: .08879790014059061, height: .03182898289543202 }, mainValue: { x: .9440745644259785, y: .6972826749573275, width: .03513365555847653, height: .03372456032065351 } }
+  ].flatMap(({ art, cost, sonata, stats, mainLabel, mainValue }, index) => [
+    region(`echo-${index}-art`, 'name', `Echo ${index + 1} art`, art, 'visual', index),
+    region(`echo-${index}-cost`, 'cost', `Echo ${index + 1} cost`, cost, 'number', index),
+    region(`echo-${index}-sonata`, 'sonata', `Echo ${index + 1} Sonata`, sonata, 'visual', index),
+    region(`echo-${index}-main-stat-label`, 'main-stat-label', `Echo ${index + 1} main stat label`, mainLabel, 'text', index),
+    region(`echo-${index}-main-stat-value`, 'main-stat-value', `Echo ${index + 1} main stat value`, mainValue, 'number', index),
+    region(`echo-${index}-stats`, 'main-stat-label', `Echo ${index + 1} substats`, stats, 'text', index)
+  ])
+]
+
 export function regionsForLayout(layout: ScanLayout) {
-  return (layout === 'echo-management' ? BACKPACK_REGIONS : CHARACTER_MENU_REGIONS).map((entry) => ({ ...entry, rect: { ...entry.rect } }))
+  const regions = layout === 'build-card' ? BUILD_CARD_REGIONS : layout === 'echo-management' ? BACKPACK_REGIONS : CHARACTER_MENU_REGIONS
+  return regions.map((entry) => ({ ...entry, rect: { ...entry.rect } }))
 }
 
 export const regionColor = (region: ScanRegion) => ({
