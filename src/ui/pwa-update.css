@@ -1,0 +1,24 @@
+.pwa-update-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  width: min(440px, calc(100vw - 32px));
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--gold);
+  background: rgba(14, 18, 18, .98);
+  color: var(--text);
+  box-shadow: 0 18px 70px #000;
+}
+
+.pwa-update-toast > div:first-child { display: grid; gap: 5px; }
+.pwa-update-toast strong { color: var(--gold); font-size: 13px; }
+.pwa-update-toast span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.pwa-update-toast small { color: #ffb0aa; }
+.pwa-update-toast > div:last-child { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 520px) {
+  .pwa-update-toast { right: 16px; bottom: 16px; }
+}

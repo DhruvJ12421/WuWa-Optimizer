@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       manifest: {
         name: 'Tacet Lab - WuWa Optimizer',
@@ -23,7 +23,6 @@ export default defineConfig({
         ]
       },
       workbox: {
-        importScripts: ['sw-refresh.js'],
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,traineddata}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         cleanupOutdatedCaches: true,
