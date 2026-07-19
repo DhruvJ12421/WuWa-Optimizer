@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Echo, OwnedCharacter, OwnedWeapon } from '../domain/types'
 import { characterCatalog, weaponCatalog } from '../game-data'
 import { resolveCharacterShowcaseModel } from './character-showcase-model'

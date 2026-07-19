@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { alwaysOnPassiveStatLines, alwaysOnSequenceStatLines, hasConditionalStatLines } from './passive-stats'
 
 describe('passive stat extraction', () => {
