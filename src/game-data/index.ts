@@ -2,6 +2,7 @@ import type { AppSettings, Resonator, StatKey, Weapon } from '../domain/types'
 export { echoCatalog, type EchoCatalogEntry } from './echoes'
 export { characterCatalog, weaponCatalog, sonataCatalog, catalogProvenance } from './catalog'
 export type { CharacterCatalogEntry, WeaponCatalogEntry, SonataCatalogEntry } from './catalog'
+export { isFixedSkillValueName } from './attack-values'
 import { generatedSonataCatalog } from './catalog.generated'
 
 export const GAME_DATA_VERSION = 'nanoka-3.5-catalog'

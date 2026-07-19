@@ -5,7 +5,7 @@ import type {
   OwnedWeapon, Resonator, RotationAction, StatKey, StatLine, Team, Weapon
 } from '../domain/types'
 import {
-  characterCatalog, echoCatalog, sonataCatalog, statLabels, weaponCatalog,
+  characterCatalog, echoCatalog, isFixedSkillValueName, sonataCatalog, statLabels, weaponCatalog,
   type CharacterCatalogEntry
 } from '../game-data'
 import { generatedSonataIconSources } from '../game-data/catalog.generated'
@@ -76,6 +76,7 @@ export interface TeamActionModel {
   activates: BuffEffect[]
   warnings: string[]
   trace?: CalculationTrace
+  traces?: Record<'normal' | 'critical' | 'expected', CalculationTrace>
   formulaTargetId?: string
 }
 
@@ -120,10 +121,11 @@ function runtimeAttack(catalog: CharacterCatalogEntry, character: OwnedCharacter
 }
 
 function attackModels(catalog: CharacterCatalogEntry, character: OwnedCharacter): TeamAttackModel[] {
-  return catalog.attacks.map((attack, index) => {
+  return catalog.attacks.flatMap((attack, index) => {
+    if (isFixedSkillValueName(attack.name)) return []
     const level = Math.max(1, Math.min(attack.multipliers.length, character.skillLevels?.[attack.skillLevelIndex] ?? 1))
     const skill = catalog.skillIcons[SKILL_KEYS[attack.skillLevelIndex] ?? 'forteCircuit']
-    return {
+    return [{
       id: attack.id,
       name: attack.name,
       type: attack.type,
@@ -133,7 +135,7 @@ function attackModels(catalog: CharacterCatalogEntry, character: OwnedCharacter)
       skillLevel: level,
       skillName: skill.name,
       iconSourceUrl: skill.iconSourceUrl
-    }
+    }]
   })
 }
 
@@ -170,7 +172,7 @@ function runtimeResonator(catalog: CharacterCatalogEntry, character: OwnedCharac
       critRate: catalog.baseStats.critRate,
       critDamage: catalog.baseStats.critDamage
     },
-    attacks: catalog.attacks.map((_, index) => runtimeAttack(catalog, character, index))
+    attacks: catalog.attacks.flatMap((attack, index) => isFixedSkillValueName(attack.name) ? [] : [runtimeAttack(catalog, character, index)])
   }
 }
 
@@ -288,7 +290,7 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
     const activates = (input.team.buffs ?? []).filter((effect) => effect.sourceBuildId === action.buildId && effect.triggerAttackId === action.attackId)
     const formulaTargetId = action.formulaTargetId ?? (member?.catalog && attack ? `${member.catalog.id}:${attack.id}` : undefined)
     const target = formulaTargetId && member?.catalog ? resolveFormulaTarget(member.catalog.id, formulaTargetId) : undefined
-    let formulaResult: { normal: number; critical: number; expected: number; trace?: CalculationTrace } | undefined
+    let formulaResult: { normal: number; critical: number; expected: number; trace?: CalculationTrace; traces?: Record<'normal' | 'critical' | 'expected', CalculationTrace> } | undefined
     const ownedWeapon = member?.showcase?.weapon?.owned
     if (target && member?.build && member.character && ownedWeapon) {
       const calculator = new FormulaCalculator(createBuildCalculationContext({
@@ -298,11 +300,12 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
       }))
       const normal = calculator.evaluate(target.normal), critical = calculator.evaluate(target.critical), expected = calculator.evaluate(target.expected)
       const mode = input.team.scenario?.resultMode ?? 'expected'
-      formulaResult = { normal: Number(normal.value), critical: Number(critical.value), expected: Number(expected.value), trace: { normal: normal.trace, critical: critical.trace, expected: expected.trace }[mode] }
+      const traces = { normal: normal.trace, critical: critical.trace, expected: expected.trace }
+      formulaResult = { normal: Number(normal.value), critical: Number(critical.value), expected: Number(expected.value), trace: traces[mode], traces }
     }
     return {
       action, member, attack, normal: formulaResult?.normal ?? result?.normal ?? 0, critical: formulaResult?.critical ?? result?.critical ?? 0,
-      expected: formulaResult?.expected ?? result?.expected ?? 0, activeBuffs, activates, warnings, trace: formulaResult?.trace, formulaTargetId
+      expected: formulaResult?.expected ?? result?.expected ?? 0, activeBuffs, activates, warnings, trace: formulaResult?.trace, traces: formulaResult?.traces, formulaTargetId
     }
   })
 

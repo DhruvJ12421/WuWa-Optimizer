@@ -5,6 +5,7 @@ import { effectiveSubStats, fixedSecondaryMainStat } from '../game-data/echo-mai
 import { substatTierPoints } from '../domain/echo-grade'
 import type { Echo, StatKey } from '../domain/types'
 import { EchoWaveform } from './EchoWaveform'
+import { CalculatedValue, type CalculationDetail } from './CalculationDetails'
 
 export function Icon({ name }: { name: 'home' | 'scan' | 'echo' | 'build' | 'team' | 'optimize' | 'download' | 'upload' | 'lock' | 'unlock' | 'trash' | 'edit' | 'plus' }) {
   const paths: Record<typeof name, ReactNode> = {
@@ -33,8 +34,9 @@ export function PageHeader({ eyebrow, title, description, actions }: { eyebrow: 
   return <header className="page-header"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>{actions && <div className="header-actions">{actions}</div>}</header>
 }
 
-export function StatValue({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
-  return <div className="stat-value"><span>{label}</span><strong className={accent ? 'accent' : ''}>{value}</strong></div>
+export function StatValue({ label, value, accent = false, detail }: { label: string; value: string | number; accent?: boolean; detail?: CalculationDetail }) {
+  const output = <strong className={accent ? 'accent' : ''}>{value}</strong>
+  return <div className="stat-value"><span>{label}</span>{detail ? <CalculatedValue detail={detail}>{output}</CalculatedValue> : output}</div>
 }
 
 export function EchoMiniCard({ echo, selected, onClick, actions, equipment, grade, scoreLabel = 'ROLL QUALITY' }: { echo: Echo; selected?: boolean; onClick?: () => void; actions?: ReactNode; equipment?: ReactNode; grade?: string; scoreLabel?: string }) {

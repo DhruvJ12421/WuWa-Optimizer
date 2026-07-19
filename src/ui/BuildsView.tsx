@@ -6,6 +6,8 @@ import { echoStatLines } from '../game-data/echo-main-stats'
 import { db, saveSettings, setBuildEchoIds, setOwnedWeaponOwner } from '../storage/database'
 import type { AppSettings, Build, Echo, StatKey } from '../domain/types'
 import { EchoMiniCard, formatStat, Icon, PageHeader, Panel, StatValue } from './components'
+import { CalculatedValue } from './CalculationDetails'
+import { damageDetail, runtimeStatDetail } from './calculation-detail-model'
 
 function scoreEcho(echo: Echo, weights: Partial<Record<StatKey, number>>) {
   return echoStatLines(echo).reduce((sum, line) => sum + line.value * (weights[line.key] ?? 0), 0)
@@ -34,15 +36,20 @@ export function BuildsView({ echoes, builds, settings, refresh }: { echoes: Echo
   const equipped = build.echoIds.map((id) => echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo))
   const stats = aggregateStats(resonator, weapon, equipped)
   const attack = resonator.attacks[0]
-  const damage = calculateDamage(stats, attack, { level: 100, resistance: 10, damageReduction: 0 })
+  const previewEnemy = { level: 100, resistance: 10, damageReduction: 0 }
+  const damage = calculateDamage(stats, attack, previewEnemy)
   const weights = settings.scoreWeights[resonator.id] ?? {}
   const score = equipped.reduce((sum, echo) => sum + scoreEcho(echo, weights), 0)
   const inventoryScores = echoes.filter((echo) => !echo.excluded).map((echo) => scoreEcho(echo, weights))
-  const buildGrade = relativeGrade(equipped.length ? score / equipped.length : 0, inventoryScores)
+  const averageScore = equipped.length ? score / equipped.length : 0
+  const buildGrade = relativeGrade(averageScore, inventoryScores)
   const scoreBreakdown = Object.entries(weights).map(([key, weight]) => {
     const raw = equipped.flatMap(echoStatLines).filter((line) => line.key === key).reduce((sum, line) => sum + line.value, 0)
     return { key: key as StatKey, raw, weight: weight ?? 0, contribution: raw * (weight ?? 0) }
   }).filter((entry) => entry.contribution > 0)
+  const buildGradeDetail = { title: 'Build grade', value: buildGrade, formula: 'Average weighted Echo score ranked against visible inventory', rows: [
+    { label: 'Total weighted points', value: score.toFixed(1) }, { label: 'Equipped Echoes', value: String(equipped.length) }, { label: 'Average score', value: averageScore.toFixed(1), children: scoreBreakdown.map((entry) => ({ label: `${statLabels[entry.key]} × ${entry.weight}`, value: entry.contribution.toFixed(1) })) }
+  ] }
   const cost = equipped.reduce((sum, echo) => sum + echo.cost, 0)
   const weaponType = resonator.id === 'rover-spectro' ? 'sword' : resonator.id === 'chixia' ? 'pistols' : 'rectifier'
   const compatibleWeapons = weapons.filter((item) => item.type === weaponType)
@@ -90,7 +97,7 @@ export function BuildsView({ echoes, builds, settings, refresh }: { echoes: Echo
     <div className="build-layout">
       <div className={`build-card bg-${settings.background} mode-${cardMode}`} ref={cardRef} style={{ '--character-accent': resonator.accent } as React.CSSProperties}>
         <div className="card-noise"/><section className="character-art"><div className="character-sigil">{resonator.name[0]}</div><div className="character-copy"><span>{resonator.element} / {resonator.role}</span><h2>{resonator.name}</h2><p>{settings.privacyMode ? 'PRIVATE BUILD' : settings.displayName}</p></div><div className="sonata-tags">{Array.from(new Set(equipped.map((echo) => echo.sonata))).map((name) => <span key={name}>{name}</span>)}</div></section>
-        <section className="build-stats"><div className="card-title"><div><span>BUILD 01 / LV. {build.level}</span><h2>{resonator.name}</h2></div><b title={`${Math.round(score)} weighted points`}>{buildGrade}</b></div>{(['hp', 'atk', 'def', 'critRate', 'critDamage', 'energyRegen', `${resonator.element}Damage`] as Array<keyof typeof stats>).map((key) => <StatValue key={key} label={statLabels[key as StatKey] ?? String(key)} value={formatStat(key as StatKey, stats[key])} accent={key === 'critRate' || key === 'critDamage'}/>) }<div className="damage-callout"><span>{attack.name} / Expected</span><strong>{formatDamage(damage.expected)}</strong><small>{formatDamage(damage.normal)} normal · {formatDamage(damage.critical)} critical</small></div></section>
+        <section className="build-stats"><div className="card-title"><div><span>BUILD 01 / LV. {build.level}</span><h2>{resonator.name}</h2></div><CalculatedValue detail={buildGradeDetail}><b title={`${Math.round(score)} weighted points`}>{buildGrade}</b></CalculatedValue></div>{(['hp', 'atk', 'def', 'critRate', 'critDamage', 'energyRegen', `${resonator.element}Damage`] as Array<keyof typeof stats>).map((key) => <StatValue key={key} label={statLabels[key as StatKey] ?? String(key)} value={formatStat(key as StatKey, stats[key])} accent={key === 'critRate' || key === 'critDamage'} detail={runtimeStatDetail(resonator, weapon, equipped, key as StatKey, stats[key])}/>) }<div className="damage-callout"><span>{attack.name} / Expected</span><CalculatedValue detail={damageDetail(stats, attack, previewEnemy, 'expected', damage.expected, build.level)}><strong>{formatDamage(damage.expected)}</strong></CalculatedValue><small><CalculatedValue detail={damageDetail(stats, attack, previewEnemy, 'normal', damage.normal, build.level)}>{formatDamage(damage.normal)} normal</CalculatedValue> · <CalculatedValue detail={damageDetail(stats, attack, previewEnemy, 'critical', damage.critical, build.level)}>{formatDamage(damage.critical)} critical</CalculatedValue></small></div></section>
         <section className="weapon-card"><span>WEAPON / RANK 1</span><div className="weapon-glyph">◇</div><h3>{weapon.name}</h3><p>Base ATK <strong>{weapon.baseAtk}</strong></p>{weapon.stat && <p>{statLabels[weapon.stat.key]} <strong>{formatStat(weapon.stat.key, weapon.stat.value)}</strong></p>}</section>
         <section className="forte-card"><span>FORTE CIRCUIT / MVP</span><div className="forte-line">{resonator.attacks.map((item, index) => <div key={item.id}><i>{index + 1}</i><strong>{item.name}</strong><small>{(item.multiplier * 100).toFixed(2)}% × {item.hits}</small></div>)}</div></section>
         <section className="equipped-row">{Array.from({ length: 5 }, (_, index) => equipped[index] ? <EchoMiniCard key={equipped[index].id} echo={equipped[index]} grade={relativeGrade(scoreEcho(equipped[index], weights), inventoryScores)}/> : <div className="empty-echo" key={index}><span>+</span><small>EMPTY</small></div>)}</section>

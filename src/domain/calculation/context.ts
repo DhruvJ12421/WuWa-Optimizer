@@ -1,6 +1,6 @@
 import { aggregateStats, defenseMultiplier, resistanceMultiplier } from '../damage'
 import type { AttackDefinition, BuffEffect, Build, Echo, EnemyConfig, OwnedCharacter, OwnedWeapon, Resonator, TeamScenario, Weapon } from '../types'
-import { characterCatalog, weaponCatalog } from '../../game-data'
+import { characterCatalog, isFixedSkillValueName, weaponCatalog } from '../../game-data'
 import { weaponSecondaryStat } from '../../ui/character-showcase-model'
 import type { CalculationContext, FormulaEntry, FormulaScalar } from './engine'
 
@@ -24,7 +24,7 @@ export function resolveRuntimeBuild(build: Build, characters: OwnedCharacter[], 
   const characterStats = character.levelStats.reduce((nearest, row) => Math.abs(row.level - ownedCharacter.level) < Math.abs(nearest.level - ownedCharacter.level) ? row : nearest)
   const weaponStats = weapon.levelStats.reduce((nearest, row) => Math.abs(row.level - ownedWeapon.level) < Math.abs(nearest.level - ownedWeapon.level) ? row : nearest)
   const element = character.element.toLowerCase() as Resonator['element']
-  const attacks: AttackDefinition[] = character.attacks.map((attack) => {
+  const attacks: AttackDefinition[] = character.attacks.filter((attack) => !isFixedSkillValueName(attack.name)).map((attack) => {
     const level = Math.max(1, Math.min(attack.multipliers.length, ownedCharacter.skillLevels?.[attack.skillLevelIndex] ?? build.skillLevel ?? 1))
     return { id: attack.id, name: attack.name, type: attack.type, element, multiplier: attack.multipliers[level - 1] ?? attack.multipliers[0] ?? 0, hits: 1, scalesWith: attack.scalesWith }
   })

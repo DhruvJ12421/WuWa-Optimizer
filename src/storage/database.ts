@@ -34,6 +34,12 @@ class TacetDatabase extends Dexie {
       weapons: 'id, catalogId, level, rank, locked, equippedBy, createdAt',
       builds: 'id, resonatorId, weaponId', teams: 'id', settings: 'id'
     })
+    this.version(4).stores({
+      echoes: 'id, name, cost, sonata, locked, excluded, equippedBy, createdAt',
+      characters: 'id, catalogId, level, sequence, locked, createdAt',
+      weapons: 'id, catalogId, level, rank, locked, equippedBy, createdAt',
+      builds: 'id, resonatorId, weaponId', teams: 'id', settings: 'id'
+    })
   }
 }
 
@@ -182,7 +188,7 @@ export async function saveSettings(settings: AppSettings) {
 
 export async function exportAccount(): Promise<AccountDocument> {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     gameDataVersion: GAME_DATA_VERSION,
     exportedAt: new Date().toISOString(),
     echoes: (await db.echoes.toArray()).map((echo) => ({ ...echo, subStats: effectiveSubStats(echo) })),
@@ -195,7 +201,7 @@ export async function exportAccount(): Promise<AccountDocument> {
 }
 
 export function validateAccount(value: unknown): value is AccountDocument {
-  if (!isRecord(value) || ![1, 2, 3].includes(Number(value.schemaVersion)) || typeof value.gameDataVersion !== 'string' || typeof value.exportedAt !== 'string') return false
+  if (!isRecord(value) || ![1, 2, 3, 4].includes(Number(value.schemaVersion)) || typeof value.gameDataVersion !== 'string' || typeof value.exportedAt !== 'string') return false
   return Array.isArray(value.echoes) && value.echoes.every(isEcho)
     && (value.schemaVersion === 1 || (Array.isArray(value.characters) && value.characters.every(isOwnedCharacter)))
     && (value.schemaVersion === 1 || (Array.isArray(value.weapons) && value.weapons.every(isOwnedWeapon)))
@@ -224,6 +230,7 @@ function isOwnedCharacter(value: unknown) {
     && typeof value.locked === 'boolean'
     && (value.favorite === undefined || typeof value.favorite === 'boolean')
     && (value.skillLevels === undefined || (Array.isArray(value.skillLevels) && value.skillLevels.length === 5 && value.skillLevels.every((level) => isFiniteNumber(level) && level >= 1 && level <= 10)))
+    && (value.enabledSkillTreeBonusIds === undefined || (Array.isArray(value.enabledSkillTreeBonusIds) && value.enabledSkillTreeBonusIds.every((id) => typeof id === 'string') && new Set(value.enabledSkillTreeBonusIds).size === value.enabledSkillTreeBonusIds.length))
     && isFiniteNumber(value.createdAt)
 }
 

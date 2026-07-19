@@ -27,13 +27,13 @@ describe('local account persistence', () => {
   it('round-trips a versioned account document atomically', async () => {
     await ensureSeedData()
     const exported = await exportAccount()
-    expect(exported.schemaVersion).toBe(3)
+    expect(exported.schemaVersion).toBe(4)
     expect(validateAccount(exported)).toBe(true)
     await importAccount(exported)
     expect((await exportAccount()).builds).toHaveLength(0)
   })
 
-  it('accepts schema-2 teams and preserves schema-3 calculation scenarios', async () => {
+  it('accepts schema-2 teams and preserves calculation scenarios in the current schema', async () => {
     await ensureSeedData()
     const base = await exportAccount()
     const legacy = { ...base, schemaVersion: 2 as const, teams: [{ id: 'legacy', name: 'Legacy', buildIds: [], enemy: { level: 90, resistance: 10, damageReduction: 0 }, rotationDuration: 20, actions: [], buffs: [] }] }
@@ -41,7 +41,7 @@ describe('local account persistence', () => {
     await importAccount(legacy)
     await db.teams.update('legacy', { scenario: { resultMode: 'critical', memberConditions: {}, enemyConditions: { staggered: true }, selectedTargetByBuild: {} } })
     const roundTrip = await exportAccount()
-    expect(roundTrip.schemaVersion).toBe(3)
+    expect(roundTrip.schemaVersion).toBe(4)
     expect(roundTrip.teams[0].scenario?.resultMode).toBe('critical')
   })
 

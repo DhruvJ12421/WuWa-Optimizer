@@ -11,7 +11,9 @@ import { EchoMiniCard, Icon } from './components'
 import { EchoWaveform } from './EchoWaveform'
 import { EchoEditModal } from './EchoEditModal'
 import { NanokaSpinePortrait } from './NanokaSpinePortrait'
-import { resolveCharacterShowcaseModel } from './character-showcase-model'
+import { CalculatedValue, type CalculationDetail } from './CalculationDetails'
+import { showcaseStatDetail } from './calculation-detail-model'
+import { defaultEnabledSkillTreeBonusIds, inherentSkillBonusId, resolveCharacterShowcaseModel, skillTreeBonusId } from './character-showcase-model'
 import './character-showcase.css'
 
 const LEVELS = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90]
@@ -60,6 +62,17 @@ function formatStat(key: ShowcaseStatKey, value: number) {
     : `${value.toFixed(1)}%`
 }
 
+function formatBonusLines(lines: StatLine[]) {
+  const totals = lines.reduce<Partial<Record<StatKey, number>>>((result, line) => {
+    result[line.key] = (result[line.key] ?? 0) + line.value
+    return result
+  }, {})
+  return Object.entries(totals).map(([key, value]) => {
+    const label = statLabels[key as StatKey].replace(/\s*%$/, '')
+    return `+${Number(value).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')}% ${label}`
+  }).join(' · ')
+}
+
 function displayedStatValue(stats: AggregatedStats, key: ShowcaseStatKey) {
   if (key === 'tuneBreakBoost') return 10
   return key in stats ? stats[key as keyof typeof stats] : 0
@@ -74,7 +87,7 @@ function cleanSkillDescription(description: string) {
     .trim()
 }
 
-function richSkillDescription(description: string) {
+export function richSkillDescription(description: string) {
   const nodes: ReactNode[] = []
   const colors: string[] = []
   const sizes: string[] = []
@@ -236,7 +249,17 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
     onBack()
   }
   const currentBuild = builds.find((entry) => entry.resonatorId === character.catalogId)
+  const statDetail = (key: ShowcaseStatKey, label: string): CalculationDetail => key === 'tuneBreakBoost'
+    ? { title: label, value: '10.0', formula: 'Current fixed Tune Break baseline', rows: [{ label: 'Base Tune Break Boost', value: '10.0' }] }
+    : showcaseStatDetail(model, key, label)
   const toggleSkillTooltip = (id: string) => setOpenSkillTooltip((current) => current === id ? null : id)
+  const enabledSkillTreeNodeIds = character.enabledSkillTreeBonusIds ?? defaultEnabledSkillTreeBonusIds(catalog)
+  const toggleSkillTreeNode = async (id: string) => {
+    const enabled = new Set(enabledSkillTreeNodeIds)
+    if (enabled.has(id)) enabled.delete(id)
+    else enabled.add(id)
+    await updateCharacter({ enabledSkillTreeBonusIds: [...enabled].sort() })
+  }
 
   return <section className={`cs-page cs-element-${catalog.element.toLowerCase()}`}>
     <header className="cs-toolbar"><button className="cs-back" onClick={onBack}>← Back to roster</button><div><span className="eyebrow">Character showcase</span><strong>{catalog.name}</strong></div><div className="cs-toolbar-actions">{editing && <><button className={character.favorite ? 'cs-favorite active' : 'cs-favorite'} onClick={() => void updateCharacter({ favorite: !character.favorite })}>{character.favorite ? '♥ Favorited' : '♡ Favorite'}</button><button className={`danger ${deleteArmed ? 'is-armed' : ''}`} onClick={() => void removeCharacter()}><Icon name="trash"/>{deleteArmed ? 'Confirm delete' : 'Delete'}</button></>}<button className={editing ? 'primary' : 'secondary'} onClick={() => { setEditing(!editing); setDeleteArmed(false) }}>{editing ? 'Done editing' : 'Edit loadout'}</button></div></header>
@@ -258,13 +281,13 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
           onReady={showAnimatedPortrait}
           onFallback={showStaticPortrait}
         />}
-        <div className="cs-sequence-rail" aria-label={`Sequence ${character.sequence}`}>{catalog.sequenceIcons.slice(0, 6).map((sequence) => <button key={sequence.sequence} className={character.sequence >= sequence.sequence ? 'is-unlocked' : 'is-locked'} onClick={() => { if (editing) void updateCharacter({ sequence: character.sequence === sequence.sequence ? sequence.sequence - 1 : sequence.sequence }) }}><img src={sequence.iconSourceUrl} alt=""/><span>S{sequence.sequence}</span><span className="cs-skill-tooltip"><b>S{sequence.sequence} · {sequence.name}</b><small>{richSkillDescription(sequence.description)}</small></span></button>)}</div>
+        <div className="cs-sequence-rail" aria-label={`Sequence ${character.sequence}`}>{catalog.sequenceIcons.slice(0, 6).map((sequence) => <button key={sequence.sequence} className={character.sequence >= sequence.sequence ? 'is-unlocked' : 'is-locked'} onClick={() => void updateCharacter({ sequence: character.sequence === sequence.sequence ? sequence.sequence - 1 : sequence.sequence })}><img src={sequence.iconSourceUrl} alt=""/><span>S{sequence.sequence}</span><span className="cs-skill-tooltip"><b>S{sequence.sequence} · {sequence.name}</b><small>{richSkillDescription(sequence.description)}</small></span></button>)}</div>
         <div className="cs-character-copy"><h1>{catalog.name}</h1><p>{catalog.title}</p><div className="cs-level-rarity"><strong>Lv. {character.level}</strong><Stars rarity={catalog.rarity}/></div><div className="cs-character-kicker"><span>{catalog.element}</span><span>{catalog.weaponType}</span><span>{catalog.role}</span></div>{editing && <div className="cs-level-editor" aria-label="Character level">{LEVELS.map((level) => <button key={level} className={character.level === level ? 'active' : ''} onClick={() => void updateCharacter({ level })}>{level}</button>)}</div>}</div>
         <div className="cs-sonatas">{model.sonatas.length ? model.sonatas.map((sonata) => <span key={sonata.name}>{sonata.iconSourceUrl && <img src={sonata.iconSourceUrl} alt=""/>}<b>{sonata.name}</b><small>{sonata.count}</small></span>) : <span className="is-empty"><b>No active Sonata</b><small>0</small></span>}</div>
         <EchoWaveform element={catalog.element}/>
       </section>
 
-      <section className="cs-stats-panel cs-panel"><header><div><span className="eyebrow">Resonator statistics</span><h2>Current attributes</h2></div><span>Lv. {model.characterBaseStats.level}</span></header><div className="cs-stat-list">{statRows.map(([key, label]) => <div key={key}><StatIcon stat={key}/><span>{label}</span><i/><b>{formatStat(key, displayedStatValue(model.finalStats, key))}</b></div>)}</div><p className="cs-warning">{model.warning}</p></section>
+      <section className="cs-stats-panel cs-panel"><header><div><span className="eyebrow">Resonator statistics</span><h2>Current attributes</h2></div><span>Lv. {model.characterBaseStats.level}</span></header><div className="cs-stat-list">{statRows.map(([key, label]) => <div key={key}><StatIcon stat={key}/><span>{label}</span><i/><CalculatedValue detail={statDetail(key, label)}><b>{formatStat(key, displayedStatValue(model.finalStats, key))}</b></CalculatedValue></div>)}</div>{model.statBonusSources.length > 0 && <div className="cs-stat-sources"><span>Included bonuses</span>{model.statBonusSources.map((source) => <div key={source.id} title={source.description}><b>{source.label}</b><small>{source.lines.length ? formatBonusLines(source.lines) : 'No always-on stat'}{source.hasConditionalStats && ' · conditional effects excluded'}</small></div>)}</div>}<p className="cs-warning">{model.warning}</p></section>
 
       <section className={`cs-weapon-panel cs-panel ${editing ? 'is-editable' : ''}`} onClick={editing ? () => setWeaponPickerOpen(true) : undefined} role={editing ? 'button' : undefined} tabIndex={editing ? 0 : undefined}>
         {model.weapon ? <><div className="cs-weapon-copy"><span className="eyebrow">Equipped weapon</span><div className="cs-weapon-title"><h2>{model.weapon.catalog.name}</h2><b>LV. {model.weapon.owned.level} · R{model.weapon.owned.rank}</b></div><Stars rarity={model.weapon.catalog.rarity}/><div><span>Base ATK</span><b>{model.weapon.levelStats.baseAtk}</b></div><div><span>{model.weapon.catalog.secondaryStat}</span><b>{model.weapon.levelStats.secondaryStatValue}</b></div>{editing && <small>Select to replace</small>}</div><img src={model.weapon.catalog.iconSourceUrl} alt=""/></> : <div className="cs-empty-weapon"><span>+</span><strong>No weapon equipped</strong><small>{editing ? `Select a ${catalog.weaponType}` : catalog.weaponType}</small></div>}
@@ -275,13 +298,15 @@ export function CharacterShowcase({ character, catalog, weapons, echoes, builds,
         {SKILLS.map(([key, label], index) => {
           const skill = catalog.skillIcons[key]
           if (index === 2) return <div className="cs-skill-branch cs-skill-special" key={key}>
-            {[catalog.skillTreeExtras.inherentSkills[1], catalog.skillTreeExtras.inherentSkills[0]].map((extra, extraIndex) => { const tooltipId = `inherent-${extraIndex}`; return <div className="cs-special-step" key={`${extra?.name}-${extraIndex}`}>{extra?.iconSourceUrl && <div className={`cs-node-tooltip-anchor ${openSkillTooltip === tooltipId ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${extra.name}. ${cleanSkillDescription(extra.description)}`} aria-expanded={openSkillTooltip === tooltipId} onClick={() => toggleSkillTooltip(tooltipId)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(tooltipId) } }}><div className="cs-skill-small-diamond"><img src={extra.iconSourceUrl} alt=""/></div>{openSkillTooltip === tooltipId && <span className="cs-skill-tooltip"><b>{extra.name}</b><small>{richSkillDescription(extra.description)}</small></span>}</div>}<i/></div> })}
+            {catalog.skillTreeExtras.inherentSkills.map((extra, sourceIndex) => ({ extra, id: inherentSkillBonusId(sourceIndex) })).reverse().map(({ extra, id }) => { const enabled = enabledSkillTreeNodeIds.includes(id); return <div className="cs-special-step" key={id}><button type="button" className={`cs-node-tooltip-anchor cs-inherent-toggle ${enabled ? 'is-enabled' : 'is-disabled'}`} aria-pressed={enabled} aria-label={`${extra.name}, ${enabled ? 'enabled' : 'disabled'}. Click to ${enabled ? 'disable' : 'enable'}. ${cleanSkillDescription(extra.description)}`} onClick={() => { toggleSkillTooltip(id); void toggleSkillTreeNode(id) }}><div className="cs-skill-small-diamond"><img src={extra.iconSourceUrl} alt=""/></div>{openSkillTooltip === id && <span className="cs-skill-tooltip"><b>{extra.name}</b><small>{richSkillDescription(extra.description)}</small></span>}</button><i/></div> })}
             <div className={`cs-main-skill ${openSkillTooltip === `main-${key}` ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${skill.name}. ${cleanSkillDescription(skill.description)}`} aria-expanded={openSkillTooltip === `main-${key}`} onClick={() => toggleSkillTooltip(`main-${key}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(`main-${key}`) } }}><div className="cs-skill-diamond"><span><img src={skill.iconSourceUrl} alt=""/></span></div>{openSkillTooltip === `main-${key}` && <span className="cs-skill-tooltip"><b>{skill.name}</b><small>{richSkillDescription(skill.description)}</small></span>}<div className="cs-skill-level">{editing && <button disabled={model.skillLevels[index] <= 1} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] -= 1; void updateCharacter({ skillLevels: levels }) }}>−</button>}<b>Lv. {model.skillLevels[index]}</b>{editing && <button disabled={model.skillLevels[index] >= 10} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] += 1; void updateCharacter({ skillLevels: levels }) }}>+</button>}</div><strong>{label}</strong></div>
             <div className="cs-special-tail">{[catalog.skillTreeExtras.outroSkill, catalog.skillTreeExtras.tuneBreakSkill].map((extra, extraIndex) => { const tooltipId = `bottom-${extraIndex}`; return extra?.iconSourceUrl && <div className={`cs-node-tooltip-anchor ${openSkillTooltip === tooltipId ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${extra.name}. ${cleanSkillDescription(extra.description)}`} aria-expanded={openSkillTooltip === tooltipId} onClick={() => toggleSkillTooltip(tooltipId)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(tooltipId) } }} key={`${extra.name}-${extraIndex}`}><div className="cs-skill-small-diamond"><img src={extra.iconSourceUrl} alt=""/></div>{openSkillTooltip === tooltipId && <span className="cs-skill-tooltip"><b>{extra.name}</b><small>{richSkillDescription(extra.description)}</small></span>}</div> })}</div>
           </div>
-          const bonuses = [...catalog.skillTreeExtras.bonusStatBranches[key]].reverse()
+          const bonuses = catalog.skillTreeExtras.bonusStatBranches[key]
+            .map((bonus, sourceIndex) => ({ bonus, id: skillTreeBonusId(key, sourceIndex) }))
+            .reverse()
           return <div className={`cs-skill-branch cs-skill-side cs-skill-side-${index}`} key={key}>
-            {bonuses.map((bonus, bonusIndex) => <div className="cs-bonus-step" key={`${bonus.name}-${bonusIndex}`}><div className="cs-skill-bonus" tabIndex={0} aria-label={`${bonus.name}. ${cleanSkillDescription(bonus.description)}`}><img src={bonus.iconSourceUrl} alt=""/><span className="cs-skill-tooltip"><b>{bonus.name.replace(/\+$/, ' %')}</b><small>{richSkillDescription(bonus.description)}</small></span></div><i/></div>)}
+            {bonuses.map(({ bonus, id }) => { const enabled = enabledSkillTreeNodeIds.includes(id); return <div className="cs-bonus-step" key={id}><button type="button" className={`cs-skill-bonus ${enabled ? 'is-enabled' : 'is-disabled'}`} aria-pressed={enabled} aria-label={`${bonus.name}, ${enabled ? 'enabled' : 'disabled'}. Click to ${enabled ? 'disable' : 'enable'}. ${cleanSkillDescription(bonus.description)}`} onClick={() => void toggleSkillTreeNode(id)}><img src={bonus.iconSourceUrl} alt=""/><span className="cs-skill-tooltip"><b>{bonus.name.replace(/\+$/, ' %')}</b><small>{richSkillDescription(bonus.description)}</small></span></button><i/></div> })}
             <div className={`cs-main-skill ${openSkillTooltip === `main-${key}` ? 'is-tooltip-open' : ''}`} tabIndex={0} aria-label={`${skill.name}. ${cleanSkillDescription(skill.description)}`} aria-expanded={openSkillTooltip === `main-${key}`} onClick={() => toggleSkillTooltip(`main-${key}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSkillTooltip(`main-${key}`) } }}><div className="cs-skill-diamond"><span><img src={skill.iconSourceUrl} alt=""/></span></div>{openSkillTooltip === `main-${key}` && <span className="cs-skill-tooltip"><b>{skill.name}</b><small>{richSkillDescription(skill.description)}</small></span>}<div className="cs-skill-level">{editing && <button disabled={model.skillLevels[index] <= 1} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] -= 1; void updateCharacter({ skillLevels: levels }) }}>−</button>}<b>Lv. {model.skillLevels[index]}</b>{editing && <button disabled={model.skillLevels[index] >= 10} onClick={(event) => { event.stopPropagation(); const levels = [...model.skillLevels] as [number, number, number, number, number]; levels[index] += 1; void updateCharacter({ skillLevels: levels }) }}>+</button>}</div><strong>{label}</strong></div>
           </div>
         })}

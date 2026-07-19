@@ -1,8 +1,9 @@
 import type { AggregatedStats, Build, Echo, OwnedCharacter, OwnedWeapon, StatKey, StatLine } from '../domain/types'
 import { emptyStats } from '../domain/damage'
 import { echoStatLines } from '../game-data/echo-main-stats'
-import { characterCatalog, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
+import { characterCatalog, sonataCatalog, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
 import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { alwaysOnPassiveStatLines, alwaysOnSequenceStatLines, hasConditionalStatLines, skillTreeStatLine } from '../game-data/passive-stats'
 
 export const SHOWCASE_DATA_WARNING = 'Game data is generated from Nanoka 3.5 and has not yet been authoritatively verified against the current English in-game UI.'
 
@@ -27,6 +28,14 @@ export interface SonataCount {
   iconSourceUrl: string
 }
 
+export interface CharacterStatBonusSource {
+  id: string
+  label: string
+  description: string
+  lines: StatLine[]
+  hasConditionalStats: boolean
+}
+
 export interface CharacterShowcaseModel {
   character: OwnedCharacter
   catalog: CharacterCatalogEntry
@@ -38,6 +47,7 @@ export interface CharacterShowcaseModel {
   echoStatContributions: Partial<Record<StatKey, number>>
   finalStats: AggregatedStats
   sonatas: SonataCount[]
+  statBonusSources: CharacterStatBonusSource[]
   skillLevels: [number, number, number, number, number]
   totalEchoCost: number
   warning: string
@@ -118,6 +128,38 @@ function normalizedSkillLevels(character: OwnedCharacter): [number, number, numb
   return levels.map((level) => Math.max(1, Math.min(10, level))) as [number, number, number, number, number]
 }
 
+type SkillTreeBranch = keyof CharacterCatalogEntry['skillTreeExtras']['bonusStatBranches']
+
+export function skillTreeBonusId(branch: SkillTreeBranch, sourceIndex: number) {
+  return `${branch}:${sourceIndex}`
+}
+
+export function inherentSkillBonusId(sourceIndex: number) {
+  return `inherent:${sourceIndex}`
+}
+
+export function defaultEnabledSkillTreeBonusIds(catalog: CharacterCatalogEntry) {
+  const bonusIds = (Object.entries(catalog.skillTreeExtras.bonusStatBranches) as Array<[SkillTreeBranch, CharacterCatalogEntry['skillTreeExtras']['bonusStatBranches'][SkillTreeBranch]]>)
+    .flatMap(([branch, nodes]) => nodes.map((_, sourceIndex) => skillTreeBonusId(branch, sourceIndex)))
+  const inherentIds = catalog.skillTreeExtras.inherentSkills.map((_, sourceIndex) => inherentSkillBonusId(sourceIndex))
+  return [...bonusIds, ...inherentIds]
+}
+
+function enabledSkillTreeStats(catalog: CharacterCatalogEntry, enabledIds: string[]) {
+  const enabled = new Set(enabledIds)
+  const bonusNodeLines = (Object.entries(catalog.skillTreeExtras.bonusStatBranches) as Array<[SkillTreeBranch, CharacterCatalogEntry['skillTreeExtras']['bonusStatBranches'][SkillTreeBranch]]>)
+    .flatMap(([branch, nodes]) => nodes.flatMap((node, sourceIndex) => {
+      if (!enabled.has(skillTreeBonusId(branch, sourceIndex))) return []
+      const line = skillTreeStatLine(node.name, node.description)
+      return line ? [line] : []
+    }))
+  const inherentSkills = catalog.skillTreeExtras.inherentSkills.filter((_, sourceIndex) => enabled.has(inherentSkillBonusId(sourceIndex)))
+  return {
+    lines: [...bonusNodeLines, ...inherentSkills.flatMap((skill) => alwaysOnPassiveStatLines(skill.description))],
+    hasConditionalStats: inherentSkills.some((skill) => hasConditionalStatLines(skill.description))
+  }
+}
+
 export function resolveCharacterShowcaseModel(input: CharacterShowcaseInput): CharacterShowcaseModel | undefined {
   const catalog = input.catalog ?? characterCatalog.find((entry) => entry.id === input.character.catalogId)
   if (!catalog) return undefined
@@ -146,6 +188,36 @@ export function resolveCharacterShowcaseModel(input: CharacterShowcaseInput): Ch
     .map(([name, count]) => ({ name, count, iconSourceUrl: generatedSonataIconSources[name] ?? '' }))
     .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name))
   const characterBaseStats = characterStatsAtLevel(catalog, input.character.level)
+  const skillTreeStats = enabledSkillTreeStats(catalog, input.character.enabledSkillTreeBonusIds ?? defaultEnabledSkillTreeBonusIds(catalog))
+  const weaponPassiveDescription = weapon?.catalog.passiveEffects[Math.max(0, Math.min(4, weapon.owned.rank - 1))] ?? ''
+  const weaponPassiveLines = alwaysOnPassiveStatLines(weaponPassiveDescription)
+  const sonataSources = Object.entries(sonataCounts).flatMap(([name, count]) => {
+    const sonata = sonataCatalog.find((entry) => entry.name === name)
+    return sonata?.effects.filter((effect) => count >= effect.pieces).map((effect) => ({
+      id: `sonata-${sonata.id}-${effect.pieces}`,
+      label: `${name} · ${effect.pieces}-piece`,
+      description: effect.description,
+      lines: alwaysOnPassiveStatLines(effect.description),
+      hasConditionalStats: hasConditionalStatLines(effect.description)
+    })) ?? []
+  })
+  const statBonusSources: CharacterStatBonusSource[] = [
+    ...(skillTreeStats.lines.length || skillTreeStats.hasConditionalStats ? [{ id: 'skill-tree', label: 'Skill tree nodes', description: 'Selected stat bonus and inherent-skill nodes on this character card.', ...skillTreeStats }] : []),
+    ...catalog.sequenceIcons.filter((sequence) => sequence.sequence <= input.character.sequence).flatMap((sequence) => {
+      const lines = alwaysOnSequenceStatLines(sequence.description)
+      const hasConditionalStats = hasConditionalStatLines(sequence.description)
+      return lines.length || hasConditionalStats ? [{
+        id: `sequence-${sequence.sequence}`,
+        label: `S${sequence.sequence} · ${sequence.name}`,
+        description: sequence.description,
+        lines,
+        hasConditionalStats
+      }] : []
+    }),
+    ...(weapon && weaponPassiveDescription ? [{ id: `weapon-${weapon.owned.id}`, label: weapon.catalog.passiveName || 'Weapon passive', description: weaponPassiveDescription, lines: weaponPassiveLines, hasConditionalStats: hasConditionalStatLines(weaponPassiveDescription) }] : []),
+    ...sonataSources
+  ]
+  const passiveLines = statBonusSources.flatMap((source) => source.lines)
 
   return {
     character: input.character,
@@ -156,8 +228,9 @@ export function resolveCharacterShowcaseModel(input: CharacterShowcaseInput): Ch
     echoSlots,
     equippedEchoes,
     echoStatContributions: totalLines(echoLines),
-    finalStats: calculateFinalStats(catalog, characterBaseStats, weapon, echoLines),
+    finalStats: calculateFinalStats(catalog, characterBaseStats, weapon, [...echoLines, ...passiveLines]),
     sonatas,
+    statBonusSources,
     skillLevels: normalizedSkillLevels(input.character),
     totalEchoCost: equippedEchoes.reduce((total, echo) => total + echo.cost, 0),
     warning: SHOWCASE_DATA_WARNING

@@ -1,4 +1,4 @@
-import { characterCatalog, echoCatalog, sonataCatalog, weaponCatalog } from '../../game-data'
+import { characterCatalog, echoCatalog, isFixedSkillValueName, sonataCatalog, weaponCatalog } from '../../game-data'
 import type { DamageType, Element } from '../types'
 import { formula, type FormulaEntry, type FormulaNode } from './engine'
 
@@ -52,26 +52,30 @@ const typeKey = (type: DamageType) => type === 'basic' ? 'basicDamage' : type ==
 function damageTarget(characterId: string, element: string, attack: typeof characterCatalog[number]['attacks'][number]): FormulaTarget {
   const multipliers = Object.fromEntries(attack.multipliers.map((value, index) => [String(index + 1), formula.constant(value)]))
   const multiplier: FormulaNode = { op: 'lookup', key: formula.input(`skillLevel:${attack.skillLevelIndex}`, 1), values: multipliers, fallback: formula.constant(attack.multipliers[0] ?? 0), label: 'Skill multiplier' }
-  const scaling = formula.stat(attack.scalesWith)
+  const scaling = formula.stat(attack.scalesWith, 0, attack.scalesWith.toUpperCase())
   if (attack.type === 'healing') {
-    const healing = formula.prod(scaling, multiplier, addPercent(formula.stat('healingBonus')))
+    const healing = formula.prod(scaling, multiplier, addPercent(formula.stat('healingBonus', 0, 'Healing Bonus')))
     return { id: `${characterId}:${attack.id}`, label: attack.name, group: 'Healing', kind: 'healing', damageType: attack.type, element: element.toLowerCase() as Element, normal: healing, critical: healing, expected: healing }
   }
-  const typeBonus = typeKey(attack.type) ? formula.stat(typeKey(attack.type)!) : formula.constant(0)
-  const bonus = formula.sum(typeBonus, formula.stat(elementKey(element)), formula.input('bonusDamage', 0))
+  const typeBonus = typeKey(attack.type) ? formula.stat(typeKey(attack.type)!, 0, `${attack.type} DMG Bonus`) : formula.constant(0)
+  const elementBonus = formula.stat(elementKey(element), 0, `${element} DMG Bonus`)
+  const bonus: FormulaNode = { op: 'sum', operands: [typeBonus, elementBonus, formula.input('bonusDamage', 0, 'Scenario DMG Bonus')], label: 'Total DMG Bonus' }
+  const amplification: FormulaNode = { ...addPercent(formula.input('amplification', 0, 'Amplification')), label: 'Amplification multiplier' }
+  const reduction: FormulaNode = { op: 'sum', operands: [one, formula.prod(formula.input('damageReduction', 0, 'Damage reduction'), formula.constant(-0.01))], label: 'Damage reduction multiplier' }
   const base = formula.prod(
     scaling,
     multiplier,
     addPercent(bonus),
-    formula.input('defenseMultiplier', 0.5),
-    formula.input('resistanceMultiplier', 0.9),
-    addPercent(formula.input('amplification', 0)),
-    formula.sum(one, formula.prod(formula.input('damageReduction', 0), formula.constant(-0.01)))
+    formula.input('defenseMultiplier', 0.5, 'Enemy DEF multiplier'),
+    formula.input('resistanceMultiplier', 0.9, 'Enemy RES multiplier'),
+    amplification,
+    reduction
   )
-  const critMultiplier = formula.max(one, formula.prod(formula.stat('critDamage'), formula.constant(0.01)))
+  const critMultiplier: FormulaNode = { op: 'max', operands: [one, formula.prod(formula.stat('critDamage', 0, 'CRIT DMG'), formula.constant(0.01))], label: 'CRIT multiplier' }
   const critical = formula.prod(base, critMultiplier)
-  const critRate = formula.prod(clampedPercent('effectiveCritRate', 0, 100), formula.constant(0.01))
-  const expected = formula.prod(base, formula.sum(one, formula.prod(critRate, formula.sum(critMultiplier, formula.constant(-1)))))
+  const critRate: FormulaNode = { ...formula.prod(clampedPercent('effectiveCritRate', 0, 100), formula.constant(0.01)), label: 'Effective CRIT Rate' }
+  const expectedFactor: FormulaNode = { op: 'sum', operands: [one, formula.prod(critRate, formula.sum(critMultiplier, formula.constant(-1)))], label: 'Expected CRIT factor' }
+  const expected = formula.prod(base, expectedFactor)
   return {
     id: `${characterId}:${attack.id}`, label: attack.name, group: attack.type === 'basic' || attack.type === 'heavy' ? 'Basic Attack' : attack.type === 'skill' ? 'Resonance Skill / Forte' : 'Resonance Liberation',
     kind: 'damage', damageType: attack.type, element: element.toLowerCase() as Element, normal: base, critical, expected
@@ -86,7 +90,7 @@ function characterSheet(character: typeof characterCatalog[number]): FormulaShee
       { id: 'forteActive', label: 'Forte state active', type: 'boolean', defaultValue: false, scope: 'self' },
       { id: 'resource', label: 'Current Forte resource', type: 'number', defaultValue: 0, min: 0, max: 100, scope: 'self' }
     ],
-    entries: [], targets: character.attacks.map((attack) => damageTarget(character.id, character.element, attack))
+    entries: [], targets: character.attacks.filter((attack) => !isFixedSkillValueName(attack.name)).map((attack) => damageTarget(character.id, character.element, attack))
   }
 }
 
