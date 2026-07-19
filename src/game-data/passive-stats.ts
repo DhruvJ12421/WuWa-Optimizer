@@ -15,7 +15,7 @@ function normalizedEffectText(description: string) {
 function effectSentences(description: string) {
   return normalizedEffectText(description)
     .replace(/\n+/g, ' ')
-    .split(/(?<=\.)\s+(?=(?:\d+s\b|[A-Z]))/)
+    .split(/(?<!Crit\.)(?<=\.)\s+(?=(?:\d+s\b|[A-Z]))/)
     .map((sentence) => sentence.trim())
     .filter(Boolean)
 }
