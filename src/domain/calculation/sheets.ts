@@ -1,4 +1,8 @@
-import { characterCatalog, echoCatalog, isFixedSkillValueName, sonataCatalog, weaponCatalog } from '../../game-data'
+import {
+  characterConditionCard, characterConditionId, characterConditionInherentSkillIndex, characterConditionModeId, characterConditionModes, characterConditionRequiresToggle, characterConditions,
+  characterCatalog, echoCatalog, isFixedSkillValueName, sonataCatalog, weaponCatalog,
+  type CharacterConditionModifier, type CharacterSkillCardKey
+} from '../../game-data'
 import type { DamageType, Element } from '../types'
 import { formula, type FormulaEntry, type FormulaNode } from './engine'
 
@@ -12,6 +16,14 @@ export interface ConditionDefinition {
   max?: number
   options?: string[]
   scope: 'self' | 'team' | 'enemy' | 'action'
+  description?: string
+  card?: CharacterSkillCardKey
+  inherentSkillIndex?: number
+  stance?: string
+  sequence?: number
+  source?: 'wutheringtools'
+  modifiers?: CharacterConditionModifier[]
+  disabled?: boolean
 }
 
 export interface FormulaTarget {
@@ -30,7 +42,7 @@ export type FormulaSheetKind = 'character' | 'weapon' | 'sonata' | 'echo'
 export interface FormulaSheet {
   id: string
   kind: FormulaSheetKind
-  version: 'nanoka-3.5-formula-v1'
+  version: 'nanoka-3.5-formula-v2'
   status: 'modeled' | 'noCombatEffect'
   name: string
   source: string
@@ -40,7 +52,7 @@ export interface FormulaSheet {
   targets: FormulaTarget[]
 }
 
-export const FORMULA_SHEET_VERSION = 'nanoka-3.5-formula-v1' as const
+export const FORMULA_SHEET_VERSION = 'nanoka-3.5-formula-v2' as const
 const one = formula.constant(1)
 const hundred = formula.constant(100)
 const addPercent = (node: FormulaNode) => formula.sum(one, formula.prod(node, formula.constant(0.01)))
@@ -51,7 +63,15 @@ const typeKey = (type: DamageType) => type === 'basic' ? 'basicDamage' : type ==
 
 function damageTarget(characterId: string, element: string, attack: typeof characterCatalog[number]['attacks'][number]): FormulaTarget {
   const multipliers = Object.fromEntries(attack.multipliers.map((value, index) => [String(index + 1), formula.constant(value)]))
-  const multiplier: FormulaNode = { op: 'lookup', key: formula.input(`skillLevel:${attack.skillLevelIndex}`, 1), values: multipliers, fallback: formula.constant(attack.multipliers[0] ?? 0), label: 'Skill multiplier' }
+  const baseMultiplier: FormulaNode = { op: 'lookup', key: formula.input(`skillLevel:${attack.skillLevelIndex}`, 1), values: multipliers, fallback: formula.constant(attack.multipliers[0] ?? 0), label: 'Base motion value' }
+  const multiplier: FormulaNode = {
+    op: 'prod',
+    operands: [
+      formula.sum(baseMultiplier, formula.percent(formula.input('additionalMotionValue', 0, 'Additional motion value'))),
+      addPercent(formula.input('motionValueMultiplier', 0, 'Motion value multiplier'))
+    ],
+    label: 'Total motion value'
+  }
   const scaling = formula.stat(attack.scalesWith, 0, attack.scalesWith.toUpperCase())
   if (attack.type === 'healing') {
     const healing = formula.prod(scaling, multiplier, addPercent(formula.stat('healingBonus', 0, 'Healing Bonus')))
@@ -61,6 +81,7 @@ function damageTarget(characterId: string, element: string, attack: typeof chara
   const elementBonus = formula.stat(elementKey(element), 0, `${element} DMG Bonus`)
   const bonus: FormulaNode = { op: 'sum', operands: [typeBonus, elementBonus, formula.input('bonusDamage', 0, 'Scenario DMG Bonus')], label: 'Total DMG Bonus' }
   const amplification: FormulaNode = { ...addPercent(formula.input('amplification', 0, 'Amplification')), label: 'Amplification multiplier' }
+  const specialMultiplier: FormulaNode = { ...addPercent(formula.input('specialMultiplier', 0, 'Special multiplier / vulnerability')), label: 'Special multiplier' }
   const reduction: FormulaNode = { op: 'sum', operands: [one, formula.prod(formula.input('damageReduction', 0, 'Damage reduction'), formula.constant(-0.01))], label: 'Damage reduction multiplier' }
   const base = formula.prod(
     scaling,
@@ -69,6 +90,7 @@ function damageTarget(characterId: string, element: string, attack: typeof chara
     formula.input('defenseMultiplier', 0.5, 'Enemy DEF multiplier'),
     formula.input('resistanceMultiplier', 0.9, 'Enemy RES multiplier'),
     amplification,
+    specialMultiplier,
     reduction
   )
   const critMultiplier: FormulaNode = { op: 'max', operands: [one, formula.prod(formula.stat('critDamage', 0, 'CRIT DMG'), formula.constant(0.01))], label: 'CRIT multiplier' }
@@ -83,12 +105,33 @@ function damageTarget(characterId: string, element: string, attack: typeof chara
 }
 
 function characterSheet(character: typeof characterCatalog[number]): FormulaSheet {
+  const modes = characterConditionModes(character)
+  const sourcedConditions: ConditionDefinition[] = characterConditions(character).map((condition) => {
+    const sequenceAlwaysOn = condition.sequence > 0 && !characterConditionRequiresToggle(condition)
+    return {
+      id: characterConditionId(condition),
+      label: condition.name,
+      type: condition.hasStacks ? 'stack' : 'boolean',
+      defaultValue: sequenceAlwaysOn ? true : condition.hasStacks ? condition.minStacks : false,
+      min: condition.minStacks,
+      max: condition.maxStacks,
+      scope: 'self',
+      description: condition.description,
+      card: characterConditionCard(condition, character),
+      inherentSkillIndex: characterConditionInherentSkillIndex(condition, character),
+      stance: condition.stance,
+      sequence: condition.sequence || undefined,
+      source: 'wutheringtools',
+      modifiers: condition.modifiers,
+      disabled: sequenceAlwaysOn
+    }
+  })
   return {
     id: character.id, kind: 'character', version: FORMULA_SHEET_VERSION, status: 'modeled', name: character.name,
     source: character.articleUrl, referenceText: [character.skillIcons.normalAttack.description, character.skillIcons.resonanceSkill.description, character.skillIcons.forteCircuit.description, character.skillIcons.resonanceLiberation.description].join('\n'),
     conditions: [
-      { id: 'forteActive', label: 'Forte state active', type: 'boolean', defaultValue: false, scope: 'self' },
-      { id: 'resource', label: 'Current Forte resource', type: 'number', defaultValue: 0, min: 0, max: 100, scope: 'self' }
+      ...(modes.length ? [{ id: characterConditionModeId, label: 'Resonance Mode', type: 'enum' as const, defaultValue: modes[0], options: modes, scope: 'self' as const, source: 'wutheringtools' as const }] : []),
+      ...sourcedConditions
     ],
     entries: [], targets: character.attacks.filter((attack) => !isFixedSkillValueName(attack.name)).map((attack) => damageTarget(character.id, character.element, attack))
   }

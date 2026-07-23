@@ -3,6 +3,16 @@ export { echoCatalog, type EchoCatalogEntry } from './echoes'
 export { characterCatalog, weaponCatalog, sonataCatalog, catalogProvenance } from './catalog'
 export type { CharacterCatalogEntry, WeaponCatalogEntry, SonataCatalogEntry } from './catalog'
 export { isFixedSkillValueName } from './attack-values'
+export {
+  weaponPassiveConditions,
+  type WeaponConditionEffect, type WeaponPassiveCondition
+} from './weapon-conditions'
+export {
+  characterConditionCard, characterConditionCatalogKey, characterConditionId, characterConditionInherentSkillIndex, characterConditionModeId,
+  characterConditionModes, characterConditionRequiresToggle, characterConditionStackId, characterConditions, conditionTargetsAttack,
+  characterConditionProvenance,
+  type CharacterCondition, type CharacterConditionModifier, type CharacterSkillCardKey
+} from './character-conditions'
 import { generatedSonataCatalog } from './catalog.generated'
 
 export const GAME_DATA_VERSION = 'nanoka-3.5-catalog'

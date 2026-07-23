@@ -60,7 +60,7 @@ export function optimizeBuilds(request: OptimizerRequest, maxEvaluations = reque
     visitedNodes += 1
     if (visitedNodes > maxEvaluations) return
     if (selected.length === 5) {
-      const stats = aggregateStats(request.resonator, request.weapon, selected)
+      const stats = aggregateStats(request.resonator, request.weapon, selected, request.bonusStatLines)
       if (!meetsMinimums(stats, request.minimumStats) || !meetsMaximums(stats, request.maximumStats)) return
       const damage = calculateDamage(stats, request.attack, request.enemy)
       const partial = { requestId: request.requestId, echoIds: selected.map((echo) => echo.id), stats, damage }

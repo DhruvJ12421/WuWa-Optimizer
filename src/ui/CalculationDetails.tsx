@@ -43,7 +43,19 @@ export function traceCalculationDetail(trace: CalculationTrace, title = trace.la
   return { title, value: row(trace).value, formula: 'Declarative formula trace', rows: [row(trace)] }
 }
 
-export function CalculatedValue({ children, detail, className = '', ariaLabel, presentation = 'dialog' }: { children: ReactNode; detail: CalculationDetail; className?: string; ariaLabel?: string; presentation?: 'dialog' | 'tooltip' }) {
+function CalculationDialog({ detail, onClose }: { detail: CalculationDetail; onClose: () => void }) {
+  return <div className="calculation-backdrop" role="presentation" onMouseDown={onClose}>
+    <article className="calculation-box" role="dialog" aria-modal="true" aria-label={`${detail.title} calculation`} onMouseDown={(event) => event.stopPropagation()}>
+      <header><div><span>Calculation details</span><h2>{detail.title}</h2></div><button type="button" onClick={onClose} aria-label="Close calculation">×</button></header>
+      <div className="calculation-result"><span>Calculated value</span><strong>{detail.value}</strong></div>
+      {detail.formula && <code>{detail.formula}</code>}
+      <DetailRows rows={detail.rows}/>
+      {detail.note && <p>{detail.note}</p>}
+    </article>
+  </div>
+}
+
+export function CalculatedValue({ children, detail, className = '', ariaLabel, presentation = 'dialog', tooltipValues }: { children: ReactNode; detail: CalculationDetail; className?: string; ariaLabel?: string; presentation?: 'dialog' | 'tooltip'; tooltipValues?: Array<string | number> }) {
   const [open, setOpen] = useState(false)
   useEffect(() => {
     if (!open) return
@@ -53,10 +65,20 @@ export function CalculatedValue({ children, detail, className = '', ariaLabel, p
   }, [open])
   if (presentation === 'tooltip') {
     const rows = compactDetailRows(detail.rows)
-    return <span className="calculation-tooltip-anchor">
-      <button type="button" className={`calculated-value ${className}`} aria-label={ariaLabel ?? `Show calculation for ${detail.title}`}>{children}</button>
-      <span className="calculation-tooltip" role="tooltip"><strong>{detail.title}</strong><span className="calculation-tooltip-expression">{rows.length ? rows.map((row, index) => <span key={`${row.label}-${index}`}><b>{row.label}</b> {row.value}</span>) : <span>{detail.formula ?? 'Calculated formula'}: {detail.value}</span>}</span></span>
-    </span>
+    return <>
+      <span className="calculation-tooltip-anchor">
+        <button type="button" className={`calculated-value ${className}`} onClick={() => setOpen(true)} aria-label={ariaLabel ?? `Show calculation for ${detail.title}`}>{children}</button>
+        <span className="calculation-tooltip" role="tooltip">
+          {!tooltipValues?.length && <strong>{detail.title}</strong>}
+          <span className={`calculation-tooltip-expression ${tooltipValues?.length ? 'damage-split' : ''}`}>{tooltipValues?.length
+            ? tooltipValues.map((value, index) => <span key={`${value}-${index}`}><b>{value}</b></span>)
+            : rows.length
+              ? rows.map((row, index) => <span key={`${row.label}-${index}`}><b>{row.label}</b> {row.value}</span>)
+              : <span>{detail.formula ?? 'Calculated formula'}: {detail.value}</span>}</span>
+        </span>
+      </span>
+      {open && <CalculationDialog detail={detail} onClose={() => setOpen(false)}/>}
+    </>
   }
   return <>
     <button type="button" className={`calculated-value ${className}`} onClick={() => setOpen(true)} aria-label={ariaLabel ?? `Show calculation for ${detail.title}`}>{children}</button>

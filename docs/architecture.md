@@ -45,7 +45,7 @@ Every scan carries a session ID, frame sequence, frame ID, region ID, and job ID
 
 `src/domain/calculation/` is a clean-room declarative engine. Formula nodes support constants, inputs, stats, arithmetic, lookups, comparisons, conditional branches, and tagged accumulation. Evaluation is deterministic, memoized, cycle checked, finite-number checked, and returns a nested trace suitable for UI explanation. The same generated character targets feed member result sheets, rotation actions, and optimizer objectives.
 
-Formula data is labeled `nanoka-3.5-formula-v1`. This is reproducible from the pinned dataset; it is not a claim of independent verification against the live game.
+Formula data is labeled `nanoka-3.5-formula-v2`. This is reproducible from the pinned dataset; it is not a claim of independent verification against the live game.
 
 ## Optimizer
 

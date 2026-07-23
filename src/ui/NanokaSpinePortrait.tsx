@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import type { SkeletonData } from '@pixi-spine/all-4.1'
+import type { SkeletonData, TextureAtlas } from '@pixi-spine/all-4.1'
 
 type PortraitStatus = 'idle' | 'loading' | 'ready' | 'error' | 'reduced-motion'
+
+// These source textures are 2048px squares, while their atlases were authored
+// against smaller canvases. Match Nanoka's viewer by restoring the authored
+// atlas dimensions before the Spine runtime creates its mesh regions.
+const NORMALIZED_ATLAS_FOLDERS = [
+  'Portraits_Kanteleila',
+  'Portraits_Female',
+  'Portraits_Male',
+  'Portraits_Xiangliyao',
+  'Portraits_Zanni'
+]
 
 interface NanokaSpinePortraitProps {
   skeletonSourceUrl: string
@@ -12,6 +23,19 @@ interface NanokaSpinePortraitProps {
 
 interface SpineResource {
   spineData: SkeletonData
+  spineAtlas?: TextureAtlas
+}
+
+function atlasPageSizes(atlasText: string) {
+  const sizes = new Map<string, { width: number; height: number }>()
+  for (const match of atlasText.matchAll(/(?:^|\r?\n\r?\n)([^\r\n]+)\r?\nsize:\s*(\d+)\s*,\s*(\d+)/g)) {
+    sizes.set(match[1].trim(), { width: Number(match[2]), height: Number(match[3]) })
+  }
+  return sizes
+}
+
+function needsAtlasNormalization(atlasSourceUrl: string) {
+  return NORMALIZED_ATLAS_FOLDERS.some((folder) => atlasSourceUrl.includes(`/portraits/${folder}/`))
 }
 
 export function NanokaSpinePortrait({ skeletonSourceUrl, atlasSourceUrl, onReady, onFallback }: NanokaSpinePortraitProps) {
@@ -33,19 +57,22 @@ export function NanokaSpinePortrait({ skeletonSourceUrl, atlasSourceUrl, onReady
 
     let disposed = false
     let app: import('pixi.js').Application | undefined
+    let spineAtlas: TextureAtlas | undefined
     let resizeObserver: ResizeObserver | undefined
     const disposeRuntime = () => {
       resizeObserver?.disconnect()
       resizeObserver = undefined
       app?.destroy(true, { children: true, texture: false, baseTexture: false })
       app = undefined
+      spineAtlas?.dispose()
+      spineAtlas = undefined
     }
     setStatus('loading')
     onFallback()
 
     void (async () => {
       try {
-        const [{ Application, Assets }, { Spine }] = await Promise.all([
+        const [{ Application, Assets, BaseTexture }, { AtlasAttachmentLoader, SkeletonBinary, Spine, TextureAtlas }] = await Promise.all([
           import('pixi.js'),
           import('@pixi-spine/all-4.1')
         ])
@@ -64,10 +91,48 @@ export function NanokaSpinePortrait({ skeletonSourceUrl, atlasSourceUrl, onReady
         canvas.setAttribute('aria-hidden', 'true')
         host.replaceChildren(canvas)
 
-        const resource = await Assets.load<SpineResource>({
-          src: skeletonSourceUrl,
-          data: { spineAtlasFile: atlasSourceUrl }
-        })
+        let resource: SpineResource
+        if (needsAtlasNormalization(atlasSourceUrl)) {
+          const [atlasResponse, skeletonResponse] = await Promise.all([
+            fetch(atlasSourceUrl),
+            fetch(skeletonSourceUrl)
+          ])
+          if (!atlasResponse.ok || !skeletonResponse.ok) throw new Error('Nanoka Spine asset request failed.')
+          const atlasText = await atlasResponse.text()
+          const pageSizes = atlasPageSizes(atlasText)
+          const normalizedAtlas = await new Promise<TextureAtlas>((resolve, reject) => {
+            new TextureAtlas(atlasText, (pagePath, loaded) => {
+              void (async () => {
+                const textureResponse = await fetch(new URL(pagePath, atlasSourceUrl))
+                if (!textureResponse.ok) throw new Error(`Nanoka Spine texture request failed: ${pagePath}`)
+                const bitmap = await createImageBitmap(await textureResponse.blob())
+                const expected = pageSizes.get(pagePath)
+                const canvas = document.createElement('canvas')
+                canvas.width = expected?.width ?? bitmap.width
+                canvas.height = expected?.height ?? bitmap.height
+                const context = canvas.getContext('2d')
+                if (!context) throw new Error('A canvas context could not be created for the Nanoka Spine texture.')
+                context.imageSmoothingEnabled = true
+                context.imageSmoothingQuality = 'high'
+                context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0, canvas.width, canvas.height)
+                bitmap.close()
+                loaded(BaseTexture.from(canvas))
+              })().catch(reject)
+            }, resolve)
+          })
+          spineAtlas = normalizedAtlas
+          const parser = new SkeletonBinary(new AtlasAttachmentLoader(normalizedAtlas))
+          resource = {
+            spineData: parser.readSkeletonData(new Uint8Array(await skeletonResponse.arrayBuffer())),
+            spineAtlas: normalizedAtlas
+          }
+        } else {
+          resource = await Assets.load<SpineResource>({
+            src: skeletonSourceUrl,
+            data: { spineAtlasFile: atlasSourceUrl }
+          })
+        }
+        spineAtlas = resource.spineAtlas
         if (disposed) {
           disposeRuntime()
           return

@@ -34,7 +34,8 @@ export interface TeamAttackModel {
   type: DamageType
   multiplier: number
   multiplierLabel: string
-  scalesWith: 'atk' | 'hp'
+  hitMultipliers: number[]
+  scalesWith: 'atk' | 'hp' | 'def'
   skillLevel: number
   skillName: string
   iconSourceUrl: string
@@ -55,6 +56,7 @@ export interface TeamMemberModel {
   roles: string[]
   warnings: string[]
   formulaRows: TeamFormulaRow[]
+  conditionedStats?: Record<string, number>
 }
 
 export interface TeamFormulaRow {
@@ -131,6 +133,7 @@ function attackModels(catalog: CharacterCatalogEntry, character: OwnedCharacter)
       type: attack.type,
       multiplier: attack.multipliers[level - 1] ?? 0,
       multiplierLabel: `${((attack.multipliers[level - 1] ?? 0) * 100).toFixed(2)}%`,
+      hitMultipliers: attack.hitMultipliers?.map((hit) => hit[level - 1] ?? 0) ?? [attack.multipliers[level - 1] ?? 0],
       scalesWith: attack.scalesWith,
       skillLevel: level,
       skillName: skill.name,
@@ -260,14 +263,16 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
     member.receivedBuffs = (input.team.buffs ?? []).filter((effect) => buffAppliesTo(effect, member))
     const ownedWeapon = member.showcase?.weapon?.owned
     if (member.character && member.build && ownedWeapon) {
-      const context = createBuildCalculationContext({
-        build: member.build, character: member.character, weapon: ownedWeapon,
-        echoes: member.build.echoIds.map((id) => input.echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)),
-        enemy: input.team.enemy, scenario: input.team.scenario, buffs: member.receivedBuffs
-      })
-      const calculator = new FormulaCalculator(context)
       const sheet = characterFormulaSheets.find((entry) => entry.id === member.character?.catalogId)
+      const selectedTargetId = input.team.scenario?.selectedTargetByBuild[member.build.id]
       member.formulaRows = (sheet?.targets ?? []).map((target) => {
+        const context = createBuildCalculationContext({
+          build: member.build!, character: member.character!, weapon: ownedWeapon,
+          echoes: member.build!.echoIds.map((id) => input.echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)),
+          enemy: input.team.enemy, scenario: input.team.scenario, buffs: member.receivedBuffs, targetId: target.id
+        })
+        if (!member.conditionedStats || target.id === selectedTargetId) member.conditionedStats = context.stats
+        const calculator = new FormulaCalculator(context)
         const normal = calculator.evaluate(target.normal), critical = calculator.evaluate(target.critical), expected = calculator.evaluate(target.expected)
         return { target, normal: Number(normal.value), critical: Number(critical.value), expected: Number(expected.value), traces: { normal: normal.trace, critical: critical.trace, expected: expected.trace } }
       })
@@ -296,7 +301,7 @@ export function resolveTeamWorkspace(input: TeamWorkspaceInput): TeamWorkspaceMo
       const calculator = new FormulaCalculator(createBuildCalculationContext({
         build: member.build, character: member.character, weapon: ownedWeapon,
         echoes: member.build.echoIds.map((id) => input.echoes.find((echo) => echo.id === id)).filter((echo): echo is Echo => Boolean(echo)),
-        enemy: input.team.enemy, scenario: input.team.scenario, buffs: activeBuffs, actionInputs: action.inputs
+        enemy: input.team.enemy, scenario: input.team.scenario, buffs: activeBuffs, actionInputs: action.inputs, targetId: target.id
       }))
       const normal = calculator.evaluate(target.normal), critical = calculator.evaluate(target.critical), expected = calculator.evaluate(target.expected)
       const mode = input.team.scenario?.resultMode ?? 'expected'

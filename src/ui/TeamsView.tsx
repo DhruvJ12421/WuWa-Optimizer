@@ -2,9 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { formatDamage } from '../domain/damage'
 import { createLocalId } from '../domain/id'
-import type { BuffEffect, Build, Echo, OwnedCharacter, OwnedWeapon, RotationAction, StatKey, Team } from '../domain/types'
-import { characterCatalog, echoCatalog, statLabels, weaponCatalog } from '../game-data'
-import { characterFormulaSheets, FORMULA_SHEET_VERSION, getFormulaCoverage, type CalculationTrace } from '../domain/calculation'
+import type { BuffEffect, Build, Echo, FormulaResultMode, OwnedCharacter, OwnedWeapon, RotationAction, StatKey, Team } from '../domain/types'
+import { characterCatalog, echoCatalog, statLabels, weaponCatalog, weaponPassiveConditions } from '../game-data'
+import { characterFormulaSheets, FORMULA_SHEET_VERSION, getFormulaCoverage, type CalculationTrace, type ConditionDefinition } from '../domain/calculation'
 import { db } from '../storage/database'
 import { EchoWaveform } from './EchoWaveform'
 import { richSkillDescription } from './CharacterShowcase'
@@ -27,6 +27,12 @@ const MEMBER_SECTIONS: Array<{ id: MemberSection; label: string }> = [
   { id: 'forte', label: 'Forte' },
   { id: 'optimizer', label: 'Optimize' },
   { id: 'rotation', label: 'Rotation' }
+]
+
+const DAMAGE_RESULT_MODES: Array<{ id: FormulaResultMode; label: string }> = [
+  { id: 'normal', label: 'Non-crit hit DMG' },
+  { id: 'expected', label: 'Avg DMG' },
+  { id: 'critical', label: 'Crit hit DMG' }
 ]
 
 const CORE_STATS: Array<[StatKey, string]> = [
@@ -219,7 +225,12 @@ function TeamOverview({ model, builds, updateTeam, openMember }: {
       <div><span>Rotation DPS</span><CalculatedValue detail={sumDetail('Rotation DPS', model.dps, [{ label: 'Expected rotation total', value: model.total }, { label: 'Rotation duration', value: model.team.rotationDuration }], 'Expected rotation ÷ rotation duration')}><strong>{formatDamage(model.dps)}</strong></CalculatedValue><small>{model.team.rotationDuration.toFixed(1)} second window</small></div>
       <label><span>Enemy level</span><input type="number" min="1" max="200" value={model.team.enemy.level} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, level: Math.max(1, Math.min(200, Number(event.target.value))) } })}/></label>
       <label><span>Resistance %</span><input type="number" min="-100" max="100" value={model.team.enemy.resistance} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, resistance: Math.max(-100, Math.min(100, Number(event.target.value))) } })}/></label>
-      <label><span>Reduction %</span><input type="number" min="0" max="100" value={model.team.enemy.damageReduction} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, damageReduction: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>DMG reduction %</span><input type="number" min="0" max="100" value={model.team.enemy.damageReduction} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, damageReduction: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>DEF ignore %</span><input type="number" min="0" max="100" value={model.team.enemy.defenseIgnore ?? 0} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, defenseIgnore: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>DEF reduction %</span><input type="number" min="0" max="100" value={model.team.enemy.defenseReduction ?? 0} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, defenseReduction: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>RES ignore %</span><input type="number" min="0" max="100" value={model.team.enemy.resistanceIgnore ?? 0} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, resistanceIgnore: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>RES reduction %</span><input type="number" min="0" max="100" value={model.team.enemy.resistanceReduction ?? 0} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, resistanceReduction: Math.max(0, Math.min(100, Number(event.target.value))) } })}/></label>
+      <label><span>Special multiplier %</span><input type="number" min="0" value={model.team.enemy.specialMultiplier ?? 0} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, specialMultiplier: Math.max(0, Number(event.target.value)) } })}/></label>
       <label><span>Duration</span><input type="number" min="1" max="600" step="0.1" value={model.team.rotationDuration} onChange={(event) => void updateTeam({ rotationDuration: Math.max(1, Math.min(600, Number(event.target.value))) })}/></label>
     </section>
 
@@ -343,6 +354,34 @@ function attackSectionScore(sectionTitle: string, attack: ForteAttackGroup) {
   return score
 }
 
+const flatValueSuffixPattern = /(?:^|\s+)(?:sta(?:mina)?\s+cost|concerto\s+(?:regen|regeneration|recovery)|cooldown|duration|resonance(?:\s+energy)?\s+cost)\s*$/i
+
+function flatValueMoveName(valueName: string, skillName: string) {
+  const label = valueName.startsWith(`${skillName} - `) ? valueName.slice(skillName.length + 3) : valueName
+  return label.replace(flatValueSuffixPattern, '').replace(/\s+-\s*$/, '').trim()
+}
+
+function flatValueSectionScore(sectionTitle: string, valueName: string, skillName: string) {
+  const section = normalizedMoveName(sectionTitle)
+  const move = normalizedMoveName(flatValueMoveName(valueName, skillName))
+  if (!section) return 0
+  if (!move) return 1
+  let score = 0
+  if (section === move) score += 100
+  else if (move.includes(section)) score += 30
+  else if (section.includes(move)) score += 20
+  const sectionWords = new Set(section.split(' ').filter((word) => word.length > 2))
+  move.split(' ').forEach((word) => { if (sectionWords.has(word)) score += 2 })
+  return score
+}
+
+function flatValueLabel(valueName: string, skillName: string, sectionTitle: string) {
+  const label = valueName.startsWith(`${skillName} - `) ? valueName.slice(skillName.length + 3) : valueName
+  if (!sectionTitle) return label
+  const sectionPrefix = new RegExp(`^${sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s+-)?\\s+`, 'i')
+  return label.replace(sectionPrefix, '')
+}
+
 function ForteDamageRows({ attacks, member, resultMode, skillName }: { attacks: ForteAttackGroup[]; member: TeamMemberModel; resultMode: 'normal' | 'expected' | 'critical'; skillName: string }) {
   if (!attacks.length) return null
   return <dl className="tw-skill-damage-rows">{attacks.map((attack) => {
@@ -350,13 +389,51 @@ function ForteDamageRows({ attacks, member, resultMode, skillName }: { attacks: 
     const damage = formulaRows.reduce((total, row) => total + row[resultMode], 0)
     const detail = formulaRows.length === 1
       ? traceCalculationDetail(formulaRows[0].traces[resultMode], attack.name)
-      : sumDetail(`${attack.name} · ${resultMode}`, damage, formulaRows.map((row, rowIndex) => ({ label: `${row.target.label} · hit ${rowIndex + 1}`, value: row[resultMode] })))
+      : sumDetail(`${attack.name} · ${resultMode}`, damage, formulaRows.map((row, rowIndex) => ({ label: String(rowIndex + 1), value: row[resultMode] })))
+    const hitValues = formulaRows.flatMap((row) => {
+      const sourceAttack = member.attacks.find((candidate) => row.target.id === `${member.catalog!.id}:${candidate.id}`)
+      const hitMultipliers = sourceAttack?.hitMultipliers.length ? sourceAttack.hitMultipliers : [sourceAttack?.multiplier ?? 1]
+      const totalMultiplier = hitMultipliers.reduce((total, multiplier) => total + multiplier, 0)
+      return hitMultipliers.map((multiplier) => totalMultiplier > 0 ? row[resultMode] * multiplier / totalMultiplier : row[resultMode])
+    })
     const label = attack.name.startsWith(`${skillName} - `) ? attack.name.slice(skillName.length + 3) : attack.name
-    return <div key={`${attack.name}:${attack.type}`}><dt>{label}<small>{attack.type}{attack.attackIds.length > 1 ? ` · ${attack.attackIds.length}-hit sequence` : ''}</small></dt><dd><CalculatedValue detail={detail} presentation="tooltip"><b>{formulaRows.length ? formatDamage(damage) : '—'}</b></CalculatedValue><small>{resultMode}</small></dd></div>
+    return <div key={`${attack.name}:${attack.type}`}><dt>{label}<small>{attack.type}{hitValues.length > 1 ? ` · ${hitValues.length}-hit sequence` : ''}</small></dt><dd><CalculatedValue detail={detail} presentation="tooltip" tooltipValues={hitValues.map(formatDamage)}><b>{formulaRows.length ? formatDamage(damage) : '—'}</b></CalculatedValue><small>{resultMode}</small></dd></div>
   })}</dl>
 }
 
-function ForteWorkspace({ member, model, refresh }: { member: TeamMemberModel; model: TeamWorkspaceModel; refresh: () => Promise<void> }) {
+function ForteConditionControls({ conditions, values, mode, modes, disabled = false, setCondition }: {
+  conditions: ConditionDefinition[]
+  values: Record<string, boolean | number | string>
+  mode?: string
+  modes: string[]
+  disabled?: boolean
+  setCondition: (id: string, value: boolean | number | string) => void
+}) {
+  if (!conditions.length && modes.length < 2) return null
+  return <div className={`tw-card-conditions ${disabled ? 'is-disabled' : ''}`}>
+    {modes.length > 1 && <div className="tw-condition-mode"><span>Mode</span><div>{modes.map((option) => <button type="button" disabled={disabled} className={mode === option ? 'active' : ''} aria-pressed={mode === option} key={option} onClick={() => setCondition('wt:mode', option)}>{option}</button>)}</div></div>}
+    {conditions.map((condition) => {
+      const value = values[condition.id] ?? condition.defaultValue
+      const conditionDisabled = disabled || condition.disabled === true
+      const numeric = condition.type === 'stack' || condition.type === 'number'
+      const valueActive = numeric ? Number(value) > Number(condition.min ?? 0) : Boolean(value)
+      const active = condition.disabled ? valueActive : !disabled && valueActive
+      return <article className={active ? 'is-active' : ''} key={condition.id}>
+        <div><strong>{condition.label}</strong>{condition.description && <p>{condition.description}</p>}</div>
+        {numeric
+          ? <label className="tw-stack-condition"><span>{condition.type === 'stack' ? 'Stacks' : 'Value'}</span><select disabled={conditionDisabled} value={Number(value)} onChange={(event) => setCondition(condition.id, Number(event.target.value))}>{Array.from({ length: Math.max(1, (condition.max ?? condition.min ?? 0) - (condition.min ?? 0) + 1) }, (_, index) => (condition.min ?? 0) + index).map((option) => <option value={option} key={option}>{option}</option>)}</select><small>/{condition.max}</small></label>
+          : <button type="button" disabled={conditionDisabled} className="tw-condition-toggle" aria-pressed={active} onClick={() => setCondition(condition.id, !active)}><i/><span>{active ? 'On' : 'Off'}</span></button>}
+      </article>
+    })}
+  </div>
+}
+
+function sequenceConditionLabel(condition: ConditionDefinition) {
+  const trigger = condition.description?.match(/\b((?:After|When|While|Upon|Casting|Obtaining|Dealing|Using|If|Whenever|Once|In the)\b[^,.;]{0,80})/i)?.[1]
+  return trigger?.trim() || 'Conditional effect'
+}
+
+function ForteWorkspace({ member, model, refresh, updateTeam }: { member: TeamMemberModel; model: TeamWorkspaceModel; refresh: () => Promise<void>; updateTeam: (patch: Partial<Team>) => Promise<void> }) {
   if (!member.catalog || !member.character || !member.showcase) return null
   const skillEntries = [
     ...Object.entries(member.catalog.skillIcons).map(([key, skill], index) => ({ key, skill, level: member.showcase!.skillLevels[index] ?? 1, skillLevelIndex: index })),
@@ -366,10 +443,20 @@ function ForteWorkspace({ member, model, refresh }: { member: TeamMemberModel; m
   const bonusNodes = Object.entries(bonusBranches).flatMap(([branch, nodes]) => nodes.map((node, sourceIndex) => ({ ...node, id: skillTreeBonusId(branch as keyof typeof bonusBranches, sourceIndex) })))
   const enabledNodeIds = member.character.enabledSkillTreeBonusIds ?? defaultEnabledSkillTreeBonusIds(member.catalog)
   const passiveCards = [
-    ...member.catalog.skillTreeExtras.inherentSkills.map((skill, index) => ({ ...skill, eyebrow: `Inherent Skill ${index + 1}`, id: inherentSkillBonusId(index) })),
-    { ...member.catalog.skillTreeExtras.tuneBreakSkill, eyebrow: 'Tune Break', id: undefined }
+    ...member.catalog.skillTreeExtras.inherentSkills.map((skill, index) => ({ ...skill, eyebrow: `Inherent Skill ${index + 1}`, id: inherentSkillBonusId(index), inherentSkillIndex: index })),
+    { ...member.catalog.skillTreeExtras.tuneBreakSkill, eyebrow: 'Tune Break', id: undefined, inherentSkillIndex: undefined }
   ].filter((skill) => skill.name || skill.description || skill.iconSourceUrl)
   const resultMode = model.team.scenario?.resultMode ?? 'expected'
+  const sheet = characterFormulaSheets.find((entry) => entry.id === member.catalog!.id)
+  const scenario = model.team.scenario ?? { resultMode: 'expected' as const, memberConditions: {}, enemyConditions: {}, selectedTargetByBuild: {} }
+  const conditionValues = member.build ? scenario.memberConditions[member.build.id] ?? {} : {}
+  const modeDefinition = sheet?.conditions.find((condition) => condition.id === 'wt:mode')
+  const modes = modeDefinition?.options ?? []
+  const mode = String(conditionValues['wt:mode'] ?? modeDefinition?.defaultValue ?? '')
+  const setCondition = (id: string, value: boolean | number | string) => {
+    if (!member.build) return
+    void updateTeam({ scenario: { ...scenario, memberConditions: { ...scenario.memberConditions, [member.build.id]: { ...conditionValues, [id]: value } } } })
+  }
   const updateCharacter = async (patch: Partial<OwnedCharacter>) => {
     await db.characters.update(member.character!.id, patch)
     await refresh()
@@ -384,9 +471,10 @@ function ForteWorkspace({ member, model, refresh }: { member: TeamMemberModel; m
   return <section className="tw-forte-workspace">
     <aside className="tw-sequence-column">
       <header><span>Sequence</span><b>S{member.character.sequence}</b></header>
-      {member.catalog.sequenceIcons.slice(0, 6).map((sequence) => { const active = member.character!.sequence >= sequence.sequence; return <article className={active ? 'unlocked' : ''} key={sequence.sequence}>
+      {member.catalog.sequenceIcons.slice(0, 6).map((sequence) => { const active = member.character!.sequence >= sequence.sequence; const sequenceConditions = (sheet?.conditions ?? []).filter((condition) => condition.sequence === sequence.sequence && !condition.disabled && (condition.modifiers?.length ?? 0) > 0 && (!condition.stance || condition.stance === mode)).map((condition) => ({ ...condition, label: sequenceConditionLabel(condition), description: undefined })); return <article className={active ? 'unlocked' : ''} key={sequence.sequence}>
         <button type="button" className="tw-node-header" aria-pressed={active} onClick={() => void updateCharacter({ sequence: active ? sequence.sequence - 1 : sequence.sequence })}><img src={sequence.iconSourceUrl} alt=""/><span><strong>{sequence.name}</strong><small>Sequence Node {sequence.sequence}</small></span></button>
         <GameDescription value={sequence.description}/>
+        <ForteConditionControls conditions={sequenceConditions} values={conditionValues} mode={mode} modes={sequenceConditions.some((condition) => condition.stance) ? modes : []} disabled={!active} setCondition={setCondition}/>
       </article>})}
     </aside>
     <div className="tw-skill-board">
@@ -402,7 +490,7 @@ function ForteWorkspace({ member, model, refresh }: { member: TeamMemberModel; m
           } else groups.set(groupKey, { name: attack.name, type: attack.type, multipliers: [attack.multiplier], attackIds: [attack.id] })
           return groups
         }, new Map<string, ForteAttackGroup>()).values()]
-        const sectionBlocks = splitSkillDescription(skill.description).map((section) => ({ ...section, attacks: [] as ForteAttackGroup[] }))
+        const sectionBlocks = splitSkillDescription(skill.description).map((section) => ({ ...section, attacks: [] as ForteAttackGroup[], flatValues: [] as typeof flatValues }))
         const unmatchedAttacks: ForteAttackGroup[] = []
         attackGroups.forEach((attack) => {
           let bestIndex = -1
@@ -414,25 +502,44 @@ function ForteWorkspace({ member, model, refresh }: { member: TeamMemberModel; m
           if (bestIndex >= 0) sectionBlocks[bestIndex].attacks.push(attack)
           else unmatchedAttacks.push(attack)
         })
-        if (unmatchedAttacks.length) sectionBlocks.push({ title: sectionBlocks.length > 1 ? 'Other Calculations' : '', description: '', attacks: unmatchedAttacks })
+        const unmatchedFlatValues: typeof flatValues = []
+        flatValues.forEach((value) => {
+          let bestIndex = -1
+          let bestScore = 0
+          sectionBlocks.forEach((section, sectionIndex) => {
+            const score = flatValueSectionScore(section.title, value.name, skill.name)
+            if (score > bestScore) { bestScore = score; bestIndex = sectionIndex }
+          })
+          if (bestIndex >= 0) sectionBlocks[bestIndex].flatValues.push(value)
+          else unmatchedFlatValues.push(value)
+        })
+        if (unmatchedAttacks.length || unmatchedFlatValues.length) sectionBlocks.push({ title: sectionBlocks.length > 1 ? 'Other Details' : '', description: '', attacks: unmatchedAttacks, flatValues: unmatchedFlatValues })
+        const allCardConditions = (sheet?.conditions ?? []).filter((condition) => condition.source === 'wutheringtools'
+          && condition.id !== 'wt:mode'
+          && condition.inherentSkillIndex === undefined
+          && !condition.sequence
+          && condition.card === key
+          && (!condition.sequence || member.character!.sequence >= condition.sequence))
+        const cardConditions = allCardConditions.filter((condition) => !condition.stance || condition.stance === mode)
         return <article className={`tw-skill-card skill-${key}`} key={key}>
           <header><span>{level === undefined ? 'Outro Skill' : `Skill Lv. ${level}`}</span></header>
           <div className="tw-skill-title"><img src={skill.iconSourceUrl} alt=""/><div><strong>{skill.name}</strong><small>{key.replace(/([A-Z])/g, ' $1')}</small></div></div>
-          {flatValues.length > 0 && <dl className="tw-flat-values">{flatValues.map((value) => {
-            const valueIndex = Math.max(0, Math.min(value.values.length - 1, (level ?? 1) - 1))
-            const label = value.name.startsWith(`${skill.name} - `) ? value.name.slice(skill.name.length + 3) : value.name
-            return <div key={value.id}><dt>{label}<small>Flat value</small></dt><dd>{value.values[valueIndex] ?? value.values[0] ?? '—'}</dd></div>
-          })}</dl>}
+          <ForteConditionControls conditions={cardConditions} values={conditionValues} mode={mode} modes={allCardConditions.some((condition) => condition.stance) ? modes : []} setCondition={setCondition}/>
           <div className="tw-skill-sections">{sectionBlocks.map((section, sectionIndex) => <section key={`${section.title}-${sectionIndex}`}>
             {section.title && <h3>{section.title}</h3>}
             {section.description && <GameDescription value={section.description}/>}
+            {section.flatValues.length > 0 && <dl className="tw-flat-values">{section.flatValues.map((value) => {
+              const valueIndex = Math.max(0, Math.min(value.values.length - 1, (level ?? 1) - 1))
+              return <div key={value.id}><dt>{flatValueLabel(value.name, skill.name, section.title)}<small>Flat value</small></dt><dd>{value.values[valueIndex] ?? value.values[0] ?? '—'}</dd></div>
+            })}</dl>}
             <ForteDamageRows attacks={section.attacks} member={member} resultMode={resultMode} skillName={skill.name}/>
           </section>)}</div>
         </article>
       })}</div>
-      <div className="tw-passive-grid">{passiveCards.map((skill) => { const active = skill.id ? enabledNodeIds.includes(skill.id) : undefined; return <article className={`tw-passive-card ${active === true ? 'is-enabled' : active === false ? 'is-disabled' : ''}`} key={`${skill.eyebrow}-${skill.name}`}>
+      <div className="tw-passive-grid">{passiveCards.map((skill) => { const active = skill.id ? enabledNodeIds.includes(skill.id) : undefined; const skillConditions = (sheet?.conditions ?? []).filter((condition) => condition.source === 'wutheringtools' && !condition.sequence && condition.inherentSkillIndex === skill.inherentSkillIndex && skill.inherentSkillIndex !== undefined && (!condition.stance || condition.stance === mode)); return <article className={`tw-passive-card ${active === true ? 'is-enabled' : active === false ? 'is-disabled' : ''}`} key={`${skill.eyebrow}-${skill.name}`}>
         {skill.id ? <button type="button" className="tw-skill-title tw-node-toggle" aria-pressed={active} onClick={() => void toggleNode(skill.id!)}><img src={skill.iconSourceUrl} alt=""/><span><strong>{skill.name}</strong><small>{skill.eyebrow}</small></span></button> : <div className="tw-skill-title"><img src={skill.iconSourceUrl} alt=""/><div><strong>{skill.name}</strong><small>{skill.eyebrow}</small></div></div>}
         <GameDescription value={skill.description}/>
+        <ForteConditionControls conditions={skillConditions} values={conditionValues} mode={mode} modes={skillConditions.some((condition) => condition.stance) ? modes : []} disabled={active === false} setCondition={setCondition}/>
       </article>})}</div>
       {bonusNodes.length > 0 && <section className="tw-bonus-nodes"><header><span className="eyebrow">Skill tree</span><h3>Bonus stat nodes</h3></header><div>{bonusNodes.map((node) => { const active = enabledNodeIds.includes(node.id); return <article className={active ? 'is-enabled' : 'is-disabled'} key={node.id}><button type="button" className="tw-bonus-node-header" aria-pressed={active} onClick={() => void toggleNode(node.id)}><img src={node.iconSourceUrl} alt=""/><strong>{node.name}</strong></button><GameDescription value={node.description}/></article> })}</div></section>}
     </div>
@@ -468,15 +575,14 @@ function FormulaResultSheet({ member, model, updateTeam }: { member: TeamMemberM
   const coverage = getFormulaCoverage()
   return <>
     <section className="tw-formula-toolbar tw-panel">
-      <div className="tw-result-modes" role="tablist" aria-label="Damage result mode">{([['normal', 'Non-CRIT'], ['expected', 'Average'], ['critical', 'CRIT']] as const).map(([value, label]) => <button role="tab" aria-selected={mode === value} className={mode === value ? 'active' : ''} key={value} onClick={() => void updateScenario({ resultMode: value })}>{label}</button>)}</div>
-      <div className="tw-condition-chips">{sheet?.conditions.map((condition) => condition.type === 'boolean'
+      <div className="tw-condition-chips">{sheet?.conditions.filter((condition) => condition.source !== 'wutheringtools').map((condition) => condition.type === 'boolean'
         ? <label className={Boolean(conditions[condition.id] ?? condition.defaultValue) ? 'active' : ''} key={condition.id}><input type="checkbox" checked={Boolean(conditions[condition.id] ?? condition.defaultValue)} onChange={(event) => setCondition(condition.id, event.target.checked)}/>{condition.label}</label>
         : <label key={condition.id}><span>{condition.label}</span><input type="number" min={condition.min} max={condition.max} value={Number(conditions[condition.id] ?? condition.defaultValue)} onChange={(event) => setCondition(condition.id, Number(event.target.value))}/></label>)}</div>
       <label className="tw-compare"><span>Compare</span><select value={scenario.compareBuildId ?? ''} onChange={(event) => void updateScenario({ compareBuildId: event.target.value || undefined })}><option value="">Current only</option>{model.members.filter((entry) => entry.build && entry.build.id !== member.build?.id).map((entry) => <option key={entry.build!.id} value={entry.build!.id}>{teamMemberName(entry)}</option>)}</select></label>
       <span className="tw-provenance">{FORMULA_SHEET_VERSION}<b>{coverage.complete ? 'Full catalog classified' : 'Coverage incomplete'}</b></span>
     </section>
     <section className="tw-formula-grid">
-      <article className="tw-sheet-column tw-sheet-stats"><header><span>Basic Stats</span></header><dl>{CORE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{member.showcase ? <CalculatedValue detail={showcaseStatDetail(member.showcase, key, label)}>{formatWorkspaceStat(key, member.showcase.finalStats[key as keyof typeof member.showcase.finalStats])}</CalculatedValue> : '—'}</dd></div>)}</dl><header><span>Bonus Stats</span></header><dl>{DAMAGE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{member.showcase ? <CalculatedValue detail={showcaseStatDetail(member.showcase, key, label)}>{formatWorkspaceStat(key, member.showcase.finalStats[key as keyof typeof member.showcase.finalStats])}</CalculatedValue> : '—'}</dd></div>)}</dl></article>
+      <article className="tw-sheet-column tw-sheet-stats"><header><span>Basic Stats</span></header><dl>{CORE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{member.showcase ? <CalculatedValue detail={showcaseStatDetail(member.showcase, key, label)}>{formatWorkspaceStat(key, member.conditionedStats?.[key] ?? member.showcase.finalStats[key as keyof typeof member.showcase.finalStats])}</CalculatedValue> : '—'}</dd></div>)}</dl><header><span>Bonus Stats</span></header><dl>{DAMAGE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{member.showcase ? <CalculatedValue detail={showcaseStatDetail(member.showcase, key, label)}>{formatWorkspaceStat(key, member.conditionedStats?.[key] ?? member.showcase.finalStats[key as keyof typeof member.showcase.finalStats])}</CalculatedValue> : '—'}</dd></div>)}</dl></article>
       <div className="tw-sheet-results">{groups.map((group) => <article className="tw-sheet-column" key={group}><header><span>{group}</span><small>{mode}</small></header>{member.formulaRows.filter((row) => row.target.group === group).map((row) => <button className={scenario.selectedTargetByBuild[member.build?.id ?? ''] === row.target.id ? 'selected' : ''} onClick={() => selectRow(row)} key={row.target.id}><span>{row.target.label}<small>{row.target.damageType ?? row.target.kind}</small></span><b>{formatDamage(row[mode])}</b></button>)}</article>)}</div>
       <aside className="tw-sheet-side"><article className="tw-sheet-column"><header><span>Received Team Buffs</span></header>{member.receivedBuffs.map((buff) => <div className="tw-sheet-buff" key={buff.id}><span>{buff.name}</span><b>{buff.value.toFixed(1)}%</b></div>)}{!member.receivedBuffs.length && <p>No active custom team buffs.</p>}</article><article className="tw-sheet-column"><header><span>Enemy</span></header><label>Level<input type="number" min="1" max="200" value={model.team.enemy.level} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, level: Number(event.target.value) } })}/></label><label>Resistance %<input type="number" min="-100" max="100" value={model.team.enemy.resistance} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, resistance: Number(event.target.value) } })}/></label><label>Reduction %<input type="number" min="0" max="100" value={model.team.enemy.damageReduction} onChange={(event) => void updateTeam({ enemy: { ...model.team.enemy, damageReduction: Number(event.target.value) } })}/></label></article></aside>
     </section>
@@ -489,27 +595,53 @@ function MemberWorkspace({ member, model, section, setSection, updateTeam, echoe
   const showcase = member.showcase
   const elementStat = `${member.catalog.element.toLowerCase()}Damage` as StatKey
   const weaponPassive = showcase.weapon?.catalog.passiveEffects[Math.max(0, (showcase.weapon?.owned.rank ?? 1) - 1)] ?? showcase.weapon?.catalog.passiveEffects[0]
+  const scenario = model.team.scenario ?? { resultMode: 'expected' as const, memberConditions: {}, enemyConditions: {}, selectedTargetByBuild: {} }
+  const conditionValues = scenario.memberConditions[member.build.id] ?? {}
+  const weaponConditions: ConditionDefinition[] = showcase.weapon ? weaponPassiveConditions(showcase.weapon.catalog, showcase.weapon.owned.rank).map((condition) => ({
+    id: condition.id,
+    label: condition.label,
+    type: condition.type,
+    defaultValue: condition.defaultValue,
+    min: condition.min,
+    max: condition.max,
+    scope: 'self',
+    description: condition.description,
+    disabled: condition.alwaysOn
+  })) : []
+  const setCondition = (id: string, value: boolean | number | string) => void updateTeam({
+    scenario: { ...scenario, memberConditions: { ...scenario.memberConditions, [member.build!.id]: { ...conditionValues, [id]: value } } }
+  })
+  const setResultMode = (resultMode: FormulaResultMode) => updateTeam({ scenario: { ...scenario, resultMode } })
   return <div className={`tw-member-page section-${section}`}>
     <nav className="tw-subnav" aria-label={`${member.catalog.name} sections`} role="tablist">
       {MEMBER_SECTIONS.map((item) => <button key={item.id} role="tab" className={section === item.id ? 'active' : ''} aria-selected={section === item.id} onClick={() => setSection(item.id)}>{item.label}</button>)}
+      <div className="tw-nav-result-modes" role="group" aria-label="Damage result mode">
+        {DAMAGE_RESULT_MODES.map((mode) => <button type="button" aria-pressed={scenario.resultMode === mode.id} className={scenario.resultMode === mode.id ? 'active' : ''} key={mode.id} onClick={() => void setResultMode(mode.id)}>{mode.label}</button>)}
+      </div>
     </nav>
     {section === 'rotation' ? <RotationWorkspace model={model} updateTeam={updateTeam}/>
-      : section === 'optimizer' ? <OptimizerView echoes={echoes} builds={builds} characters={characters} ownedWeapons={weapons} refresh={refresh} openScanner={openScanner} buildId={member.build.id} initialEnemyLevel={model.team.enemy.level} initialEnemyResistance={model.team.enemy.resistance}/>
+      : section === 'optimizer' ? <OptimizerView echoes={echoes} builds={builds} characters={characters} ownedWeapons={weapons} refresh={refresh} openScanner={openScanner} buildId={member.build.id} initialEnemy={model.team.enemy} damageMode={scenario.resultMode} scenario={scenario}/>
       : <>
     <section className={`tw-member-hero tw-panel ${section === 'forte' ? 'forte-mode' : ''}`} style={{ '--tw-element': member.catalog.element.toLowerCase() } as CSSProperties}>
       <div className="tw-member-art"><img src={member.catalog.portraitSourceUrl || member.catalog.iconSourceUrl} alt=""/><div className="tw-sequence-rail">{member.catalog.sequenceIcons.slice(0, 6).map((sequence) => <span className={member.character && member.character.sequence >= sequence.sequence ? 'unlocked' : ''} key={sequence.sequence} title={sequence.name}><img src={sequence.iconSourceUrl} alt=""/><b>S{sequence.sequence}</b></span>)}</div><div><span>{member.catalog.element} · {member.catalog.weaponType}</span><h1>{member.catalog.name}</h1><p>{member.catalog.title}</p><strong>Lv. {member.character.level} · Sequence {member.character.sequence}</strong></div><EchoWaveform element={member.catalog.element}/></div>
       <div className="tw-member-summary">
-        {(section === 'overview' || section === 'damage') && <><article className="tw-stat-block"><header><span className="eyebrow">Basic stats</span><h2>Current attributes</h2></header><dl>{CORE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd><CalculatedValue detail={showcaseStatDetail(showcase, key, label)}>{formatWorkspaceStat(key, showcase.finalStats[key as keyof typeof showcase.finalStats])}</CalculatedValue></dd></div>)}</dl></article><article className="tw-stat-block"><header><span className="eyebrow">Damage bonuses</span><h2>Specialized output</h2></header><dl>{[...DAMAGE_STATS, [elementStat, `${member.catalog.element} DMG`] as [StatKey, string]].map(([key, label]) => <div key={key}><dt>{label}</dt><dd><CalculatedValue detail={showcaseStatDetail(showcase, key, label)}>{formatWorkspaceStat(key, showcase.finalStats[key as keyof typeof showcase.finalStats])}</CalculatedValue></dd></div>)}</dl></article></>}
+        {(section === 'overview' || section === 'damage') && <><article className="tw-stat-block"><header><span className="eyebrow">Basic stats</span><h2>Current attributes</h2></header><dl>{CORE_STATS.map(([key, label]) => <div key={key}><dt>{label}</dt><dd><CalculatedValue detail={showcaseStatDetail(showcase, key, label)}>{formatWorkspaceStat(key, member.conditionedStats?.[key] ?? showcase.finalStats[key as keyof typeof showcase.finalStats])}</CalculatedValue></dd></div>)}</dl></article><article className="tw-stat-block"><header><span className="eyebrow">Damage bonuses</span><h2>Specialized output</h2></header><dl>{[...DAMAGE_STATS, [elementStat, `${member.catalog.element} DMG`] as [StatKey, string]].map(([key, label]) => <div key={key}><dt>{label}</dt><dd><CalculatedValue detail={showcaseStatDetail(showcase, key, label)}>{formatWorkspaceStat(key, member.conditionedStats?.[key] ?? showcase.finalStats[key as keyof typeof showcase.finalStats])}</CalculatedValue></dd></div>)}</dl></article></>}
         {section === 'overview' && <article className="tw-forte-block"><header><span className="eyebrow">Skills</span><h2>Forte and skill levels</h2></header><div>{Object.entries(member.catalog.skillIcons).map(([key, skill], index) => <span key={key}><img src={skill.iconSourceUrl} alt=""/><b>{skill.name}</b><small>Lv. {showcase.skillLevels[index]}</small></span>)}</div></article>}
-        {section === 'forte' && <ForteWorkspace member={member} model={model} refresh={refresh}/>}
-        {(section === 'overview' || section === 'echoes') && <article className="tw-loadout-block"><header><span className="eyebrow">Loadout</span><h2>Weapon and Echoes</h2></header><div className="tw-weapon-detail">{showcase.weapon ? <><img src={showcase.weapon.catalog.iconSourceUrl} alt=""/><span><strong>{showcase.weapon.catalog.name}</strong><small>Lv. {showcase.weapon.owned.level} · R{showcase.weapon.owned.rank} · {showcase.weapon.catalog.type}</small><b>{showcase.weapon.levelStats.baseAtk} Base ATK</b><em>{showcase.weapon.catalog.secondaryStat} {showcase.weapon.levelStats.secondaryStatValue}</em></span></> : <p>No weapon equipped.</p>}</div><EchoThumbs member={member}/><SonataChips member={member}/></article>}
+        {section === 'forte' && <ForteWorkspace member={member} model={model} refresh={refresh} updateTeam={updateTeam}/>}
         {(section === 'overview' || section === 'damage') && <article className="tw-damage-block"><header><span className="eyebrow">Rotation participation</span><h2>Attack and healing breakdown</h2></header><div className="tw-contribution"><CalculatedValue detail={sumDetail(`${teamMemberName(member)} contribution`, member.contribution, model.actions.filter((row) => row.member?.slot === member.slot).map((row) => ({ label: row.attack?.name ?? 'Action', value: row.expected })))}><strong>{formatDamage(member.contribution)}</strong></CalculatedValue><span>{member.contributionPercent.toFixed(1)}% of expected rotation</span><div><i style={{ width: `${member.contributionPercent}%` }}/></div></div><dl>{Object.entries(member.byType).map(([type, value]) => <div key={type}><dt>{type}</dt><dd><CalculatedValue detail={sumDetail(`${type} contribution`, value ?? 0, model.actions.filter((row) => row.member?.slot === member.slot && row.attack?.type === type).map((row) => ({ label: row.attack?.name ?? 'Action', value: row.expected })))}>{formatDamage(value ?? 0)}</CalculatedValue></dd></div>)}</dl>{model.actions.filter((row) => row.member?.slot === member.slot).map((row) => <div className="tw-member-action" key={row.action.id}><span>{row.action.timestamp.toFixed(1)}s · {row.attack?.name ?? 'Missing attack'}<small>{row.attack?.type ?? 'invalid'} · Normal <CalculatedValue detail={row.traces ? traceCalculationDetail(row.traces.normal) : sumDetail('Normal damage', row.normal, [{ label: 'Calculated action', value: row.normal }])}>{formatDamage(row.normal)}</CalculatedValue> · Critical <CalculatedValue detail={row.traces ? traceCalculationDetail(row.traces.critical) : sumDetail('Critical damage', row.critical, [{ label: 'Calculated action', value: row.critical }])}>{formatDamage(row.critical)}</CalculatedValue></small></span><CalculatedValue detail={row.traces ? traceCalculationDetail(row.traces.expected) : sumDetail('Expected damage', row.expected, [{ label: 'Calculated action', value: row.expected }])}><b>{formatDamage(row.expected)}<small>Expected</small></b></CalculatedValue></div>)}</article>}
         {(section === 'overview' || section === 'damage') && <article className="tw-buff-summary"><header><span className="eyebrow">Team effects</span><h2>Applied and received buffs</h2></header><h3>Applied</h3><div className="tw-chip-list">{member.appliedBuffs.map((buff) => <span className="tw-chip" key={buff.id}>{teamBuffLabel(buff)}</span>)}{!member.appliedBuffs.length && <span className="tw-chip muted">None authored</span>}</div><h3>Received</h3><div className="tw-chip-list">{member.receivedBuffs.map((buff) => <span className="tw-chip" key={buff.id}>{teamBuffLabel(buff)}</span>)}{!member.receivedBuffs.length && <span className="tw-chip muted">None authored</span>}</div></article>}
         {section === 'echoes' && <article className="tw-sonata-detail"><header><span className="eyebrow">Coverage details</span><h2>Active Sonata sets</h2></header>{showcase.sonatas.map((sonata) => <div key={sonata.name}>{sonata.iconSourceUrl && <img src={sonata.iconSourceUrl} alt=""/>}<span><b>{sonata.name}</b><small>{sonata.count} equipped pieces</small></span></div>)}</article>}
       </div>
     </section>
+    {(section === 'overview' || section === 'echoes') && <section className="tw-loadout-block tw-panel">
+      <header><span className="eyebrow">Loadout</span><h2>Weapon and Echoes</h2></header>
+      <div className="tw-loadout-weapon-row">
+        <div className="tw-weapon-detail">{showcase.weapon ? <><img src={showcase.weapon.catalog.iconSourceUrl} alt=""/><span><strong>{showcase.weapon.catalog.name}</strong><small>Lv. {showcase.weapon.owned.level} · R{showcase.weapon.owned.rank} · {showcase.weapon.catalog.type}</small><b>{showcase.weapon.levelStats.baseAtk} Base ATK</b><em>{showcase.weapon.catalog.secondaryStat} {showcase.weapon.levelStats.secondaryStatValue}</em></span></> : <p>No weapon equipped.</p>}</div>
+        {section === 'overview' && <div className="tw-weapon-passive"><header><span className="eyebrow">Weapon passive</span><h3>{showcase.weapon?.catalog.passiveName ?? 'No weapon passive'}</h3></header><p>{weaponPassive ?? 'Equip a supported weapon to display its generated Nanoka passive text.'}</p><ForteConditionControls conditions={weaponConditions} values={conditionValues} modes={[]} setCondition={setCondition}/>{showcase.weapon && <strong>Always-on lines are locked on. Triggered and stackable effects use the controls above.</strong>}</div>}
+      </div>
+      <div className="tw-loadout-echoes"><EchoThumbs member={member}/><SonataChips member={member}/></div>
+    </section>}
     {(section === 'overview' || section === 'damage') && <FormulaResultSheet member={member} model={model} updateTeam={updateTeam}/>}
-    {section === 'overview' && <section className="tw-panel tw-passive"><header><span className="eyebrow">Weapon passive</span><h2>{showcase.weapon?.catalog.passiveName ?? 'No weapon passive'}</h2></header><p>{weaponPassive ?? 'Equip a supported weapon to display its generated Nanoka passive text.'}</p><strong>Reference only — passive effects are not included in current damage calculations.</strong></section>}
     {(section === 'overview' || section === 'echoes') && <section className="tw-member-echoes"><header><div><span className="eyebrow">Detailed Echo loadout</span><h2>Five equipped Echoes</h2></div><span>{showcase.equippedEchoes.length}/5 · {showcase.totalEchoCost}/12 cost</span></header><div>{showcase.echoSlots.map((echo, index) => <DetailedEchoCard echo={echo} index={index} key={echo?.id ?? index}/>)}</div></section>}
     </>}
     <WarningList warnings={section === 'rotation' ? model.warnings : member.warnings}/>

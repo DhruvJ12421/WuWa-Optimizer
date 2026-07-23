@@ -49,8 +49,9 @@ export function damageDetail(stats: AggregatedStats, attack: AttackDefinition, e
   const rows: CalculationDetailRow[] = [
     { label: attack.scalesWith.toUpperCase(), value: numeric(scaling) }, { label: 'Skill multiplier', value: `${numeric(attack.multiplier * 100)}%` }, { label: 'Hits', value: numeric(attack.hits) },
     { label: 'Damage bonus', value: `${numeric(typeBonus(stats, attack) + elementBonus(stats, attack))}%`, children: [{ label: `${attack.type} bonus`, value: `${numeric(typeBonus(stats, attack))}%` }, { label: `${attack.element} bonus`, value: `${numeric(elementBonus(stats, attack))}%` }] },
-    { label: 'Defense multiplier', value: numeric(defenseMultiplier(characterLevel, enemy.level)) }, { label: 'Resistance multiplier', value: numeric(resistanceMultiplier(enemy.resistance)) },
-    { label: 'Damage reduction multiplier', value: numeric(Math.max(0, 1 - enemy.damageReduction / 100)) }, { label: 'Amplification multiplier', value: numeric(Math.max(0, 1 + amplify / 100)) }
+    { label: 'Defense multiplier', value: numeric(defenseMultiplier(characterLevel, enemy.level, enemy.defenseIgnore, enemy.defenseReduction)) }, { label: 'Resistance multiplier', value: numeric(resistanceMultiplier(enemy.resistance, enemy.resistanceReduction, enemy.resistanceIgnore)) },
+    { label: 'Damage reduction multiplier', value: numeric(Math.max(0, 1 - enemy.damageReduction / 100)) }, { label: 'Amplification multiplier', value: numeric(Math.max(0, 1 + amplify / 100)) },
+    { label: 'Special multiplier', value: numeric(Math.max(0, 1 + (enemy.specialMultiplier ?? 0) / 100)) }
   ]
   if (mode === 'critical') rows.push({ label: 'CRIT multiplier', value: numeric(critMultiplier) })
   if (mode === 'expected') rows.push({ label: 'Expected CRIT factor', value: numeric(1 + critRate * (critMultiplier - 1)), children: [{ label: 'Crit. Rate', value: `${numeric(critRate * 100)}%` }, { label: 'Crit. DMG', value: `${numeric(stats.critDamage)}%` }] })

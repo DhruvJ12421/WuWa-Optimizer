@@ -1,4 +1,4 @@
-import type { AggregatedStats, AttackDefinition, BuffEffect, Build, DamageResult, Echo, EnemyConfig, Resonator, RotationResult, StatKey, Team, Weapon } from './types'
+import type { AggregatedStats, AttackDefinition, BuffEffect, Build, DamageResult, Echo, EnemyConfig, Resonator, RotationResult, StatKey, StatLine, Team, Weapon } from './types'
 import { echoStatLines } from '../game-data/echo-main-stats'
 
 export const emptyStats = (): AggregatedStats => ({
@@ -12,7 +12,7 @@ function addStat(stats: AggregatedStats, key: StatKey, value: number) {
   if (key in stats) stats[key as keyof AggregatedStats] += value
 }
 
-export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Echo[]): AggregatedStats {
+export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Echo[], bonusLines: StatLine[] = []): AggregatedStats {
   const stats = emptyStats()
   const percent = { hp: 0, atk: 0, def: 0 }
   const flat = { hp: 0, atk: 0, def: 0 }
@@ -23,7 +23,7 @@ export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Ech
   stats.critRate = resonator.baseStats.critRate
   stats.critDamage = resonator.baseStats.critDamage
 
-  const lines = echoes.flatMap(echoStatLines)
+  const lines = [...echoes.flatMap(echoStatLines), ...bonusLines]
 
   if (weapon.stat) lines.push(weapon.stat)
   for (const line of lines) {
@@ -50,14 +50,18 @@ export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Ech
   return stats
 }
 
-export function defenseMultiplier(characterLevel: number, enemyLevel: number): number {
+export function defenseMultiplier(characterLevel: number, enemyLevel: number, defenseIgnorePercent = 0, defenseReductionPercent = 0): number {
   const safeCharacterLevel = Math.max(1, characterLevel)
   const safeEnemyLevel = Math.max(1, enemyLevel)
-  return (safeCharacterLevel + 100) / (safeCharacterLevel + 100 + safeEnemyLevel + 100)
+  const ignore = Math.max(0, Math.min(1, defenseIgnorePercent / 100))
+  const reduction = Math.max(0, Math.min(1, defenseReductionPercent / 100))
+  const characterDefenseTerm = 800 + 8 * safeCharacterLevel
+  const enemyDefenseTerm = (8 * safeEnemyLevel + 792) * (1 - ignore) * (1 - reduction)
+  return characterDefenseTerm / (characterDefenseTerm + enemyDefenseTerm)
 }
 
-export function resistanceMultiplier(resistancePercent: number): number {
-  const resistance = Math.max(-1, Math.min(1, resistancePercent / 100))
+export function resistanceMultiplier(resistancePercent: number, resistanceReductionPercent = 0, resistanceIgnorePercent = 0): number {
+  const resistance = (resistancePercent - resistanceReductionPercent - resistanceIgnorePercent) / 100
   if (resistance < 0) return 1 - resistance / 2
   if (resistance < 0.8) return 1 - resistance
   return 1 / (1 + 5 * resistance)
@@ -100,13 +104,14 @@ export function calculateDamage(stats: AggregatedStats, attack: AttackDefinition
     const total = stats.hp * attack.multiplier * attack.hits * Math.max(0, 1 + stats.healingBonus / 100)
     return { normal: total, critical: total, expected: total, hits: attack.hits, attackId: attack.id }
   }
-  const scaling = attack.scalesWith === 'hp' ? stats.hp : stats.atk
+  const scaling = attack.scalesWith === 'hp' ? stats.hp : attack.scalesWith === 'def' ? stats.def : stats.atk
   const raw = scaling * attack.multiplier * attack.hits
   const normal = raw * Math.max(0, 1 + damageBonus(stats, attack) / 100)
-    * defenseMultiplier(characterLevel, enemy.level)
-    * resistanceMultiplier(enemy.resistance)
+    * defenseMultiplier(characterLevel, enemy.level, enemy.defenseIgnore, enemy.defenseReduction)
+    * resistanceMultiplier(enemy.resistance, enemy.resistanceReduction, enemy.resistanceIgnore)
     * Math.max(0, 1 - enemy.damageReduction / 100)
     * Math.max(0, 1 + amplifyPercent / 100)
+    * Math.max(0, 1 + (enemy.specialMultiplier ?? 0) / 100)
   const critical = normal * Math.max(1, stats.critDamage / 100)
   const critRate = Math.min(1, Math.max(0, stats.critRate / 100))
   return { normal, critical, expected: normal * (1 + critRate * (Math.max(1, stats.critDamage / 100) - 1)), hits: attack.hits, attackId: attack.id }
