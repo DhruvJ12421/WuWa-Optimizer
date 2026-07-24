@@ -7,7 +7,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The Gauntlets pulsate with an uncontrollable force, emanating unspeakable anger from the depths of the unknown lake. As you don them, unleash your fury on helpless enemies. Feel its power surge through you.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -18,12 +18,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "11.2%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "14.4%"
       },
       {
@@ -48,17 +48,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "30.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "33.3%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -79,7 +79,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A pair of Gauntlets awarded to Gladiators of exceptional merit. Its engravings draw inspiration from Griffrexes—natural-born hunters and the first allies Septimontians found in this land. Their bond needs no words, radiant and pure, like the blazing sun that watches over all.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "40.5%",
     "levelStats": [
@@ -95,12 +95,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "16%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "19.5%"
       },
       {
@@ -120,17 +120,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "33.5%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "37%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "40.5%"
       }
     ],
@@ -151,7 +151,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Each swing of the blade reveals the flow of time and the change of the stars. The sword embodies all things, uniting them into one. Its gentle aura seems capable of dissolving the indestructible, whether it's millennia-old ice or the stagnation of time.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -162,12 +162,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -192,17 +192,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -223,7 +223,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A weapon designed to commemorate the Midnight Rangers' comradeship. \"Thin garments yield to icy moons, while armor withstands the chill of stars.\"",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "DEF",
     "secondaryStatValue": "61.6%",
     "levelStats": [
@@ -244,12 +244,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "29.6%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "35%"
       },
       {
@@ -264,17 +264,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "50.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "56.2%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "61.6%"
       }
     ],
@@ -295,7 +295,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This Rectifier is a ceremonial weapon used in Huanglong's Magistrate Inauguration Ceremonies. The golden ginkgo leaf pattern symbolizes Huanglong's resilience, thriving in a world that has left it behind.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "20.3%",
     "levelStats": [
@@ -311,12 +311,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -336,17 +336,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "16.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "20.3%"
       }
     ],
@@ -367,7 +367,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A Broadblade awarded to Gladiators of exceptional merit. Its engravings draw inspiration from Griffrexes—natural-born hunters and the first allies Septimontians found in this land. Their bond needs no words, radiant and pure, like the blazing sun that watches over all.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "40.5%",
     "levelStats": [
@@ -383,12 +383,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "16%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "19.5%"
       },
       {
@@ -408,17 +408,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "33.5%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "37%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "40.5%"
       }
     ],
@@ -439,7 +439,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This Broadblade is a ceremonial weapon used in Huanglong's Magistrate Inauguration Ceremonies. The golden ginkgo leaf pattern symbolizes Huanglong's resilience, thriving in a world that has left it behind.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "20.3%",
     "levelStats": [
@@ -455,12 +455,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -480,17 +480,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "16.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "20.3%"
       }
     ],
@@ -511,7 +511,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Forged of flowing wind, sheathed in the azure sky. Once the blade is drawn, all sound falls still.\nThat never-fading azure is her resolve, her vow, and her ideal.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -522,12 +522,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -552,17 +552,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -585,12 +585,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "type": "Broadblade",
     "baseAtk": 300,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 24,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -604,18 +604,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "14.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "17.2%"
       },
       {
         "level": 50,
         "baseAtk": 171,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -624,18 +624,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
         "baseAtk": 300,
-        "secondaryStatValue": "30.4%"
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Graceful Touch",
@@ -655,7 +655,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Forged from the very essence and feathers of a legendary bird, this weapon blazes with an intensity that bathes the world in its luminous glow. With each fiery surge, it consumes all in its path, leaving nothing but ashes in its wake.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -666,12 +666,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -696,17 +696,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -727,7 +727,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "It heralds justice, precise and inexorable as a clock's toll. All sins are cleansed in flame, dissipating like night beneath the dawn's gaze.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -738,12 +738,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -768,17 +768,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -799,7 +799,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon is a testament to the unbreakable blood pact: One shall never betray, never surrender, and fight until the last drop of blood is shed.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "38.9%",
     "levelStats": [
@@ -810,12 +810,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "12%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "15.4%"
       },
       {
@@ -840,17 +840,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "32.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "35.5%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "38.9%"
       }
     ],
@@ -882,7 +882,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 74,
+        "baseAtk": 73,
         "secondaryStatValue": "12%"
       },
       {
@@ -892,7 +892,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "18.7%"
       },
       {
@@ -907,7 +907,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 363,
+        "baseAtk": 362,
         "secondaryStatValue": "28.8%"
       },
       {
@@ -917,7 +917,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 80,
-        "baseAtk": 490,
+        "baseAtk": 489,
         "secondaryStatValue": "35.5%"
       },
       {
@@ -954,17 +954,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -979,12 +979,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -1036,12 +1036,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "15.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "18.4%"
       },
       {
@@ -1056,12 +1056,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "26.8%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "29.6%"
       },
       {
@@ -1087,7 +1087,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An improved version of a mass-produced broadblade model developed in Huanglong. With its formidable performance and innovative technologies, this broadblade carries a weight only to be wielded by seasoned warriors.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "32.4%",
     "levelStats": [
@@ -1103,12 +1103,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12.8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "15.6%"
       },
       {
@@ -1128,17 +1128,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "26.8%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "29.6%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "32.4%"
       }
     ],
@@ -1159,7 +1159,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An ascending crescendo. These pistols unleash bullets with the force of thunder, tearing through the heavens like a symphony of destruction.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -1180,12 +1180,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -1200,17 +1200,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -1231,7 +1231,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Held by the keepers of this land, this scepter was once a symbol of dominion over its people and the architectural marvels they achieved.\nHowever, it has long lost its luster, and its grandeur blends into the ripples of the pipe organ melodies of Rinascita.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -1252,12 +1252,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -1272,17 +1272,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -1303,7 +1303,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A prototype weapon designed by the Black Shores for elite combatants. These gauntlets take their name from the tragic demise of a blazar—a galactic nucleus whose blinding radiance pierces the cosmos, shining unmistakably across billions of light years.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -1319,7 +1319,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -1329,17 +1329,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -1354,7 +1354,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -1375,14 +1375,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A Rectifier born born from an aerial phenomenon. Capturing the essence of an alien star, its design is delicate and lightweight, yet it remains sturdy and adaptable.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "HP",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -1391,12 +1391,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -1407,7 +1407,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -1416,18 +1416,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Luminous Protection",
@@ -1447,14 +1447,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A weapon designed to commemorate the Midnight Rangers' courage. \"A thousand echoes carry the war's tale, as spirits unite in resounding gorges of valor.”",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -1463,12 +1463,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -1479,7 +1479,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -1488,18 +1488,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Unyielding",
@@ -1535,7 +1535,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "21.3%"
       },
       {
@@ -1545,7 +1545,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "30.7%"
       },
       {
@@ -1555,12 +1555,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "40%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "44.7%"
       },
       {
@@ -1591,7 +1591,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A weapon designed to commemorate the Midnight Rangers' preparedness. \"Autumn fades in endless nights, ready blades gleam with silent might.\"",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "DEF",
     "secondaryStatValue": "61.6%",
     "levelStats": [
@@ -1612,12 +1612,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "29.6%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "35%"
       },
       {
@@ -1632,17 +1632,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "50.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "56.2%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "61.6%"
       }
     ],
@@ -1663,7 +1663,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Those are not ridges of the mountains, but the spine of the earth, carrying the night. They protrude from the abdomen of darkness. From the incision spills the light of new life.\nYour shadow was nailed to the dying night. With the breaking dawn, your flesh shall rise.\nLet it knock open every door of denial.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -1674,12 +1674,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -1704,17 +1704,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -1735,7 +1735,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The surging tides force the crown of thorns upon the knight, out of which the knight forges this sword.\nUnburdened by the crown, the knight waded through the roaring waves unwaveringly.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "HP",
     "secondaryStatValue": "72.2%",
     "levelStats": [
@@ -1751,12 +1751,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "28.5%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "34.8%"
       },
       {
@@ -1776,17 +1776,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "59.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "66%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "72.2%"
       }
     ],
@@ -1807,7 +1807,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A descending adagio. This broadblade dominates the battlefield with the power of discordance. The curtain never falls on a masterpiece.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -1828,12 +1828,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -1848,17 +1848,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -1879,7 +1879,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Pay heed: the frigid blade reveals an icy current, amalgamating into a whirlpool of thoughts. Use this powerful sequence to effortlessly crush your enemies with the Sword.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -1890,12 +1890,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -1920,17 +1920,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -1951,7 +1951,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Bamboo, hollow yet full; People, whole yet seldom true.\nBamboo speaks without deceit, acts without conceit, seeks no vanity. Few ever measure up thus.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -1962,12 +1962,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -1992,17 +1992,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -2023,7 +2023,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A prototype weapon designed by the Black Shores for elite combatants. This sword takes its name from the heart of a blazar—a galactic nucleus whose blinding radiance pierces the cosmos, shining unmistakably across billions of light years.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -2039,7 +2039,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -2049,17 +2049,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -2074,7 +2074,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -2095,7 +2095,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "As you drift across the hushed sea of stars, stardust scatters beside you as time crumbles in your wake. All that remains is the unyielding loneliness, warped, diluted, and remade into the plumes of your wings.\nThe universe sends you on a tribulation of silence, yet you travel on, repaying in radiance.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -2106,12 +2106,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -2136,17 +2136,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -2167,7 +2167,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon draws its design inspiration from the play—Fables of Wisdom.\nA wayfarer once carried this sword, who spun fables of wisdom, passing on insights in the form of witty jests. Keen ears listened to the stories for the truth, while shallow minds heard only amusing punchlines.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -2183,7 +2183,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -2193,17 +2193,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -2218,7 +2218,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -2239,7 +2239,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A Sword awarded to Gladiators of exceptional merit. Its engravings draw inspiration from Griffrexes—natural-born hunters and the first allies Septimontians found in this land. Their bond needs no words, radiant and pure, like the blazing sun that watches over all.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "20.3%",
     "levelStats": [
@@ -2255,12 +2255,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -2280,17 +2280,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "16.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "20.3%"
       }
     ],
@@ -2311,7 +2311,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Dawn's glow my paper, morning dew my ink, with brush in hand, a scroll of ceaseless landscapes I paint.\nSo the legend goes: when the divine bird lowers its gaze, the mountains hush and the rivers still.\nYet, when it raises its head again to loose a piercing cry, the slumbering sun shall rise from beyond the sea of clouds.",
     "rarity": 5,
     "type": "Rectifier",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "77%",
     "levelStats": [
@@ -2327,12 +2327,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "30.4%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "37.1%"
       },
       {
@@ -2352,17 +2352,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "63.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "70.4%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "77%"
       }
     ],
@@ -2399,7 +2399,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -2409,7 +2409,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -2419,12 +2419,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {
@@ -2455,7 +2455,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "I remember the sunset spilling down, birds and insects threading their small songs through the greenhouse.\nI remember the quiet nights, my lone steps echoing the crescent moon's curve.\nI am my own freeze frame. I am my own afterimage.",
     "rarity": 5,
     "type": "Rectifier",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -2466,12 +2466,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -2496,17 +2496,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -2527,7 +2527,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "How keen a blade it takes to impale this unrelenting night?\nShe presses ever forward for the answer, those unbound wishes roaring in her veins.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -2538,12 +2538,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -2568,17 +2568,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -2599,7 +2599,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A prototype weapon designed by the Black Shores for elite combatants. This rectifier takes its name from the devastating might of a blazar—a galactic nucleus whose blinding radiance pierces the cosmos, shining unmistakably across billions of light years.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -2615,7 +2615,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -2625,17 +2625,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -2650,7 +2650,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -2682,17 +2682,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -2707,12 +2707,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -2754,17 +2754,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "9.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "12.2%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "14.8%"
       },
       {
@@ -2779,12 +2779,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "22.8%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "25.5%"
       },
       {
@@ -2815,7 +2815,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Huaxu Academy has independently improved and developed the first set of highly practical high-performance Gauntlets based on the previous source energy weapons, representing the care and warmth of the Academy, stable and lasting.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "38.9%",
     "levelStats": [
@@ -2826,7 +2826,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "12%"
       },
       {
@@ -2851,12 +2851,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "28.8%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "32.2%"
       },
       {
@@ -2866,7 +2866,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "38.9%"
       }
     ],
@@ -2898,17 +2898,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -2923,12 +2923,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -2980,12 +2980,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "21.8%"
       },
       {
@@ -3000,12 +3000,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "31.8%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "35.1%"
       },
       {
@@ -3033,12 +3033,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "type": "Pistols",
     "baseAtk": 300,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 24,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -3052,18 +3052,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "14.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "17.2%"
       },
       {
         "level": 50,
         "baseAtk": 171,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -3072,18 +3072,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
         "baseAtk": 300,
-        "secondaryStatValue": "30.4%"
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Unity",
@@ -3114,17 +3114,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -3139,12 +3139,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -3177,12 +3177,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "type": "Sword",
     "baseAtk": 300,
     "secondaryStat": "HP",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 24,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -3196,18 +3196,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "14.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "17.2%"
       },
       {
         "level": 50,
         "baseAtk": 171,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -3216,18 +3216,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
         "baseAtk": 300,
-        "secondaryStatValue": "30.4%"
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Unified",
@@ -3247,14 +3247,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The Broadblade born from the aerial phenomenon. The blacksmith incorporates the feelings of witnessing the alien star into the weapon, making it look hollow and light, but it can exert the invincible gravity of the starfall.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -3263,12 +3263,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -3279,7 +3279,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -3288,18 +3288,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Plasma Recoiler",
@@ -3319,14 +3319,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The Gauntlets born from the strange phenomenon in the sky. The blacksmith infused the feelings of witnessing the strange star into the weapon, making it look hollow and light, but it can exert a tremendous momentum while protecting the user.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -3335,12 +3335,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -3351,7 +3351,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -3360,18 +3360,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Celestial Blessing",
@@ -3391,7 +3391,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A weapon designed to commemorate the Midnight Rangers' vigilant protection of Jinzhou. \"Cast your gaze towards the north, where the city's silhouette fades, its gates veiled by the tranquil rain.\"",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -3402,7 +3402,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "11.2%"
       },
       {
@@ -3427,12 +3427,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "27%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "30.1%"
       },
       {
@@ -3442,7 +3442,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -3479,7 +3479,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -3489,7 +3489,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -3499,12 +3499,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {
@@ -3535,7 +3535,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Spacetrek Collective \"Synth Armament\" Series\nModel: SCSA-LHRi-SWD201052\n\nForged from compound technology that fuses Exostrider biomorphic components with Tacetite, this weapon offers two core features: frequency auto-adaptation and user binding. Its power scales directly with the wielder's Forte, growing sharper through dedicated Forte training.\n\nThe light patterns along the blade shift in response to the wielder's frequency fluctuations. Each strike expresses a refined intuition, a \"razor\" that cuts away unnecessary possibilities. Ideal for the signal catchers who discern the greater picture from the smallest details and make sound judgments.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "38.9%",
     "levelStats": [
@@ -3546,12 +3546,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "12%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "15.4%"
       },
       {
@@ -3576,17 +3576,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "32.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "35.5%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "38.9%"
       }
     ],
@@ -3607,7 +3607,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon draws its design inspiration from the play—Legend of Drunken Hero.\nFrom the cup flows a liquid that grants courage and strength, empowering the hero to defy fate and turn the tide with his gauntlets. Yet in this intoxicating delight lies peril—dulled senses become the hero's undoing as enemies close in. Thus, in those wine-stained pages, one always read about triumphs followed by defeats.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -3623,7 +3623,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -3633,17 +3633,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -3658,7 +3658,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -3679,7 +3679,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "I am not there. I do not die.\nI shall be death's companion—with euphoric delights I drown my fear, with the coming days I trade for the past.",
     "rarity": 5,
     "type": "Rectifier",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -3690,12 +3690,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -3720,17 +3720,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -3751,7 +3751,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This Sword is a ceremonial weapon used in Huanglong's Magistrate Inauguration Ceremonies. The golden ginkgo leaf pattern symbolizes Huanglong's resilience, thriving in a world that has left it behind.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -3762,7 +3762,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "11.2%"
       },
       {
@@ -3787,12 +3787,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "27%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "30.1%"
       },
       {
@@ -3802,7 +3802,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -3839,7 +3839,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -3849,7 +3849,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -3859,12 +3859,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {
@@ -3895,14 +3895,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The Sword born from the aerial phenomenon. The forger integrates the feelings of witnessing the alien star into the weapon, making it look light and sharp, but it can exert the energy of breaking the sky and cutting iron like mud.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -3911,12 +3911,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -3927,7 +3927,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -3936,18 +3936,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Preordained",
@@ -3967,7 +3967,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Gaze upon this Broadblade, its sharp edges gleaming in the frigid air. Wield it to feel power coursing through you like a raging river.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -3978,12 +3978,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "11.2%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "14.4%"
       },
       {
@@ -4008,17 +4008,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "30.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "33.3%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -4039,7 +4039,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "From darkness she seizes power, layering sins upon herself. To hunt. To kill. To deliver a relentless and fatal blow to all evil.\nFrom the light she falls, with her vows etched in her mind. For the deceased. For the living. For her pistols' true targets.",
     "rarity": 5,
     "type": "Pistols",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -4050,12 +4050,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -4080,17 +4080,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -4111,7 +4111,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A descending adagio. These gauntlets pulsate with the power of surging waves, shattering anything in their path like a deadly hymn.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -4132,12 +4132,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -4152,17 +4152,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -4183,7 +4183,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon draws its design inspiration from the play—Meditations on Mercy.\nIn the brief pauses between each swing, a warrior wrestles with an inner conflict: to bring down righteous punishment or extend a hand of redemption? Behind every clash of steel is the struggle between wrath and mercy.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -4199,7 +4199,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -4209,17 +4209,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -4234,7 +4234,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -4271,7 +4271,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -4281,7 +4281,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -4291,12 +4291,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {
@@ -4327,14 +4327,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Pistols born from the strange phenomena in the sky. The forger infused the weapon with the feelings from witnessing the strange star, making it look hollow and light, yet extremely stable, with the power of thunder when it fires.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -4343,12 +4343,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -4359,7 +4359,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -4368,18 +4368,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Ever-changing",
@@ -4399,7 +4399,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "To fishers, the sea is their field of harvest. Harvest means hope.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -4415,7 +4415,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -4425,17 +4425,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -4450,7 +4450,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -4492,12 +4492,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "21.8%"
       },
       {
@@ -4512,12 +4512,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "31.8%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "35.1%"
       },
       {
@@ -4554,17 +4554,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -4579,12 +4579,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -4626,17 +4626,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -4651,12 +4651,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -4708,12 +4708,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "19.5%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "23%"
       },
       {
@@ -4728,12 +4728,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "33.5%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "37%"
       },
       {
@@ -4761,12 +4761,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "type": "Rectifier",
     "baseAtk": 300,
     "secondaryStat": "HP",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 24,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -4780,18 +4780,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "14.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "17.2%"
       },
       {
         "level": 50,
         "baseAtk": 171,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -4800,18 +4800,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
         "baseAtk": 300,
-        "secondaryStatValue": "30.4%"
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Augment",
@@ -4831,7 +4831,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An ascending crescendo. This enchanting sword effortlessly cuts through anything in its way, like a glorious prelude.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -4852,12 +4852,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -4872,17 +4872,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -4903,7 +4903,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Spacetrek Collective \"Synth Armament\" Series\nModel: SCSA-LHRi-PSTL325052\n\nForged from compound technology that fuses Exostrider biomorphic components with Tacetite, this weapon offers two core features: frequency auto-adaptation and user binding. Its power scales directly with the wielder's Forte, growing sharper through dedicated Forte training.\n\nProjectile and rifling are spectrally tuned to unleash a potent frequency disturbance on impact, exposing and shattering a target's weak points. It serves as both a benchmark of precision and a weapon that pierces with unwavering focus. Ideal for insight bearers who act with deliberate caution and perceive what others overlook.",
     "rarity": 5,
     "type": "Pistols",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -4914,12 +4914,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -4944,17 +4944,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -4986,17 +4986,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -5011,12 +5011,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -5049,12 +5049,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "type": "Pistols",
     "baseAtk": 300,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 24,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -5068,18 +5068,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "14.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "17.2%"
       },
       {
         "level": 50,
         "baseAtk": 171,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -5088,18 +5088,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
         "baseAtk": 300,
-        "secondaryStatValue": "30.4%"
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Long Journey",
@@ -5119,7 +5119,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The Huaxu Academy has developed practical, high-performance pistols based on previous source energy weapons, showcasing their meticulous research and aiming for excellence.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -5130,7 +5130,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "11.2%"
       },
       {
@@ -5155,12 +5155,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "27%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "30.1%"
       },
       {
@@ -5170,7 +5170,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -5191,7 +5191,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Spacetrek Collective \"Synth Armament\" Series\nModel: SCSA-LHRi-GNTL522152\n\nForged from compound technology that fuses Exostrider biomorphic components with Tacetite, this weapon offers two core features: frequency auto-adaptation and user binding. Its power scales directly with the wielder's Forte, growing sharper through dedicated Forte training.\n\nThe armor's spectrum shifts as it restores kinetic energy. The Pulsation Bracer predicts the wearer's stance to amplify the stored reactive torque and release it in a single, instantaneous surge—a decisive force delivered at the critical moment. Ideal for the barrier breachers who advance with steady resolve and stand unshaken under pressure.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -5202,12 +5202,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -5232,17 +5232,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -5263,7 +5263,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Spacetrek Collective \"Synth Armament\" Series\nModel: SCSA-LHRi-BB325042\n\nForged from compound technology that fuses Exostrider biomorphic components with Tacetite, this weapon offers two core features: frequency auto-adaptation and user binding. Its power scales directly with the wielder's Forte, growing sharper through dedicated Forte training.\n\nThe light patterns along the blade shift in response to the wielder's frequency fluctuations. It crystallizes reason into a concentrated force—a tool to cut through obstacles as well as a measure for charting the unknown. Ideal for the edge breakers who carve their path forward with unwavering resolve.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -5274,12 +5274,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -5304,17 +5304,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -5335,7 +5335,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A Rectifier awarded to Gladiators of exceptional merit. Its engravings draw inspiration from Griffrexes—natural-born hunters and the first allies Septimontians found in this land. Their bond needs no words, radiant and pure, like the blazing sun that watches over all.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "40.5%",
     "levelStats": [
@@ -5351,12 +5351,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "16%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "19.5%"
       },
       {
@@ -5376,17 +5376,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "33.5%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "37%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "40.5%"
       }
     ],
@@ -5418,17 +5418,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -5443,12 +5443,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -5500,12 +5500,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "15.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "18.4%"
       },
       {
@@ -5520,12 +5520,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "26.8%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "29.6%"
       },
       {
@@ -5551,7 +5551,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An improved version of a Rectifier prototype from Huanglong's next-gen weaponry project. This device is characterized by its powerful, purified output and sound that resonates with the decisively strong-willed.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -5572,12 +5572,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -5592,17 +5592,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -5623,7 +5623,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A camellia bud silently unfurls. As promised, she holds this infinite world in bloom in her palms, where fine crimson vines twine around her fingertips.\nThe dull ache, like sand scratching against the heart, is proof of your fateful encounter.",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -5634,12 +5634,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -5664,17 +5664,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -5695,7 +5695,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A prototype weapon designed by the Black Shores for elite combatants. These pistols take their name from the incessant course of destruction of a blazar—a galactic nucleus whose blinding radiance pierces the cosmos, shining unmistakably across billions of light years.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -5711,7 +5711,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -5721,17 +5721,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -5746,7 +5746,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -5783,7 +5783,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "28.4%"
       },
       {
@@ -5793,7 +5793,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "40.9%"
       },
       {
@@ -5803,12 +5803,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "53.3%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "59.6%"
       },
       {
@@ -5839,7 +5839,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon draws its design inspiration from the play—Romance in Farewell.\nThis pistol was once the symbol of the aspiration for repute, the weight of unrequited love, and the tremors of unspoken words. When the trigger is pulled, and the curtain drops, it turns into a long farewell and a sign of lingering sorrow in the heart of the bereaved.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -5855,7 +5855,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -5865,17 +5865,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -5890,7 +5890,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -5927,7 +5927,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "28.4%"
       },
       {
@@ -5937,7 +5937,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "40.9%"
       },
       {
@@ -5947,12 +5947,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "53.3%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "59.6%"
       },
       {
@@ -5983,7 +5983,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A pair of Pistols awarded to Gladiators of exceptional merit. Its engravings draw inspiration from Griffrexes—natural-born hunters and the first allies Septimontians found in this land. Their bond needs no words, radiant and pure, like the blazing sun that watches over all.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "20.3%",
     "levelStats": [
@@ -5999,12 +5999,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -6024,17 +6024,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "16.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "20.3%"
       }
     ],
@@ -6055,7 +6055,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Sunlight gathers. The answer is made plain.\nWhat must be done awaits. The Rein is in your hand.\nStep forward, toward the sunlit end.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -6066,12 +6066,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -6096,17 +6096,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -6127,7 +6127,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An anchor once used by Ivory Gatekeeper to stabilize the Somnoire.\nHowever, it now looks different ever since Ivory Gatekeeper transformed into a white cat...",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -6143,7 +6143,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -6153,17 +6153,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -6178,7 +6178,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -6199,7 +6199,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A neon glow gilds this cage of memory, same as always. \nI wander along old city streets, spilling unspoken words to shadows long gone.\nI wanna stay lost here, but the dream is fraying. I must wake up.",
     "rarity": 5,
     "type": "Pistols",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -6210,12 +6210,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -6240,17 +6240,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -6271,7 +6271,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Prismatic light dances at her fingertips, arcs of color carving radiant trails.\nEvery rushing hue converges upon her aim, and at last, she reaches a sky where nothing lies beyond her sight.",
     "rarity": 5,
     "type": "Pistols",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -6282,12 +6282,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -6312,17 +6312,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -6343,7 +6343,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Every pattern can be observed. Every phenomenon can be understood.\nThe ideal may lie light-years away, yet the path toward it rests within her own hands.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "77%",
     "levelStats": [
@@ -6359,12 +6359,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "30.4%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "37.1%"
       },
       {
@@ -6384,17 +6384,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "63.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "70.4%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "77%"
       }
     ],
@@ -6415,7 +6415,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Grip the sleek frame and feel its cool surface as you aim down the sight. With a pull of the trigger, unleash a thick smoke barrage onto the battlefield with these powerful Pistols in your hands.",
     "rarity": 5,
     "type": "Pistols",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -6426,12 +6426,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -6456,17 +6456,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -6487,7 +6487,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A rectifier bearing an energy core that simulates the lifecycle of stars—an infinite loop that originates from a singularity and ends in explosive demise. The celestial debris collides in thunderous rumbles, heralding the birth of a new star.",
     "rarity": 5,
     "type": "Rectifier",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "77%",
     "levelStats": [
@@ -6503,12 +6503,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "30.4%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "37.1%"
       },
       {
@@ -6528,17 +6528,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "63.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "70.4%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "77%"
       }
     ],
@@ -6559,7 +6559,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "These Gauntlets are ceremonial weapons used in Huanglong's Magistrate Inauguration Ceremonies. The golden ginkgo leaf pattern symbolizes Huanglong's resilience, thriving in a world that has left it behind.",
     "rarity": 4,
     "type": "Gauntlets",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "20.3%",
     "levelStats": [
@@ -6575,12 +6575,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "8%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -6600,17 +6600,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "16.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "18.5%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "20.3%"
       }
     ],
@@ -6647,7 +6647,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -6657,7 +6657,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -6667,12 +6667,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {
@@ -6714,17 +6714,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 46,
+        "baseAtk": 45,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 85,
+        "baseAtk": 84,
         "secondaryStatValue": "9.6%"
       },
       {
         "level": 30,
-        "baseAtk": 107,
+        "baseAtk": 106,
         "secondaryStatValue": "11.7%"
       },
       {
@@ -6739,12 +6739,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "18%"
       },
       {
         "level": 70,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "20.1%"
       },
       {
@@ -6796,12 +6796,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 99,
+        "baseAtk": 98,
         "secondaryStatValue": "15.6%"
       },
       {
         "level": 40,
-        "baseAtk": 135,
+        "baseAtk": 134,
         "secondaryStatValue": "18.4%"
       },
       {
@@ -6816,12 +6816,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 244,
+        "baseAtk": 243,
         "secondaryStatValue": "26.8%"
       },
       {
         "level": 80,
-        "baseAtk": 280,
+        "baseAtk": 279,
         "secondaryStatValue": "29.6%"
       },
       {
@@ -6847,7 +6847,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "An improved version of a mass-produced sword model developed in Huanglong. With its sleek blade and minimalist design, this sword is exclusively crafted for the skilled hands of seasoned warriors.",
     "rarity": 4,
     "type": "Sword",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -6858,7 +6858,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "11.2%"
       },
       {
@@ -6883,12 +6883,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "27%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "30.1%"
       },
       {
@@ -6898,7 +6898,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -6935,7 +6935,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "28.4%"
       },
       {
@@ -6945,7 +6945,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "40.9%"
       },
       {
@@ -6955,12 +6955,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "53.3%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "59.6%"
       },
       {
@@ -6991,7 +6991,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "These Pistols are ceremonial weapons used in Huanglong's Magistrate Inauguration Ceremonies. The golden ginkgo leaf pattern symbolizes Huanglong's resilience, thriving in a world that has left it behind.",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 388,
+    "baseAtk": 387,
     "secondaryStat": "ATK",
     "secondaryStatValue": "36.5%",
     "levelStats": [
@@ -7002,7 +7002,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 55,
+        "baseAtk": 54,
         "secondaryStatValue": "11.2%"
       },
       {
@@ -7027,12 +7027,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 268,
+        "baseAtk": 267,
         "secondaryStatValue": "27%"
       },
       {
         "level": 70,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "30.1%"
       },
       {
@@ -7042,7 +7042,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 388,
+        "baseAtk": 387,
         "secondaryStatValue": "36.5%"
       }
     ],
@@ -7074,7 +7074,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 95,
+        "baseAtk": 94,
         "secondaryStatValue": "3.7%"
       },
       {
@@ -7084,7 +7084,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 222,
+        "baseAtk": 221,
         "secondaryStatValue": "5.8%"
       },
       {
@@ -7094,7 +7094,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "7.9%"
       },
       {
@@ -7104,7 +7104,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "10%"
       },
       {
@@ -7135,7 +7135,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The joys and sorrows of life dance in an endless circle; Pain and tears shift in an instant into a carnival.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -7146,12 +7146,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -7176,17 +7176,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -7238,17 +7238,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 143,
+        "baseAtk": 142,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 60,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "8.5%"
       },
       {
         "level": 70,
-        "baseAtk": 203,
+        "baseAtk": 202,
         "secondaryStatValue": "9.5%"
       },
       {
@@ -7310,17 +7310,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 143,
+        "baseAtk": 142,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 60,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "8.5%"
       },
       {
         "level": 70,
-        "baseAtk": 203,
+        "baseAtk": 202,
         "secondaryStatValue": "9.5%"
       },
       {
@@ -7382,17 +7382,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 143,
+        "baseAtk": 142,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 60,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "8.5%"
       },
       {
         "level": 70,
-        "baseAtk": 203,
+        "baseAtk": 202,
         "secondaryStatValue": "9.5%"
       },
       {
@@ -7454,17 +7454,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 143,
+        "baseAtk": 142,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 60,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "8.5%"
       },
       {
         "level": 70,
-        "baseAtk": 203,
+        "baseAtk": 202,
         "secondaryStatValue": "9.5%"
       },
       {
@@ -7526,17 +7526,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 50,
-        "baseAtk": 143,
+        "baseAtk": 142,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 60,
-        "baseAtk": 173,
+        "baseAtk": 172,
         "secondaryStatValue": "8.5%"
       },
       {
         "level": 70,
-        "baseAtk": 203,
+        "baseAtk": 202,
         "secondaryStatValue": "9.5%"
       },
       {
@@ -7578,12 +7578,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 39,
+        "baseAtk": 38,
         "secondaryStatValue": "4.6%"
       },
       {
         "level": 20,
-        "baseAtk": 72,
+        "baseAtk": 71,
         "secondaryStatValue": "5.9%"
       },
       {
@@ -7593,12 +7593,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 124,
+        "baseAtk": 123,
         "secondaryStatValue": "8.4%"
       },
       {
         "level": 50,
-        "baseAtk": 157,
+        "baseAtk": 156,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -7650,12 +7650,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 39,
+        "baseAtk": 38,
         "secondaryStatValue": "4.6%"
       },
       {
         "level": 20,
-        "baseAtk": 72,
+        "baseAtk": 71,
         "secondaryStatValue": "5.9%"
       },
       {
@@ -7665,12 +7665,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 124,
+        "baseAtk": 123,
         "secondaryStatValue": "8.4%"
       },
       {
         "level": 50,
-        "baseAtk": 157,
+        "baseAtk": 156,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -7722,12 +7722,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 39,
+        "baseAtk": 38,
         "secondaryStatValue": "4.6%"
       },
       {
         "level": 20,
-        "baseAtk": 72,
+        "baseAtk": 71,
         "secondaryStatValue": "5.9%"
       },
       {
@@ -7737,12 +7737,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 124,
+        "baseAtk": 123,
         "secondaryStatValue": "8.4%"
       },
       {
         "level": 50,
-        "baseAtk": 157,
+        "baseAtk": 156,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -7794,12 +7794,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 39,
+        "baseAtk": 38,
         "secondaryStatValue": "4.6%"
       },
       {
         "level": 20,
-        "baseAtk": 72,
+        "baseAtk": 71,
         "secondaryStatValue": "5.9%"
       },
       {
@@ -7809,12 +7809,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 124,
+        "baseAtk": 123,
         "secondaryStatValue": "8.4%"
       },
       {
         "level": 50,
-        "baseAtk": 157,
+        "baseAtk": 156,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -7866,12 +7866,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 39,
+        "baseAtk": 38,
         "secondaryStatValue": "4.6%"
       },
       {
         "level": 20,
-        "baseAtk": 72,
+        "baseAtk": 71,
         "secondaryStatValue": "5.9%"
       },
       {
@@ -7881,12 +7881,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 124,
+        "baseAtk": 123,
         "secondaryStatValue": "8.4%"
       },
       {
         "level": 50,
-        "baseAtk": 157,
+        "baseAtk": 156,
         "secondaryStatValue": "9.7%"
       },
       {
@@ -7927,14 +7927,14 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A weapon designed to commemorate the Midnight Rangers' dedication. \"Let my body ablaze, flames dance to banish all evil's haze.\"",
     "rarity": 4,
     "type": "Pistols",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "ATK",
-    "secondaryStatValue": "30.4%",
+    "secondaryStatValue": "30.3%",
     "levelStats": [
       {
         "level": 1,
         "baseAtk": 33,
-        "secondaryStatValue": "6.8%"
+        "secondaryStatValue": "6.7%"
       },
       {
         "level": 10,
@@ -7943,12 +7943,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "12%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "14.6%"
       },
       {
@@ -7959,7 +7959,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       {
         "level": 50,
         "baseAtk": 235,
-        "secondaryStatValue": "19.9%"
+        "secondaryStatValue": "19.8%"
       },
       {
         "level": 60,
@@ -7968,18 +7968,18 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "25.1%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "27.7%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
-        "secondaryStatValue": "30.4%"
+        "baseAtk": 412,
+        "secondaryStatValue": "30.3%"
       }
     ],
     "passiveName": "Loyalty",
@@ -7999,7 +7999,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Blistering winds and crashing waves, the sea devours all. Only a lonely boat lamp stands alight!\nOnwards! Towards the edge of the world you shall sail!",
     "rarity": 5,
     "type": "Sword",
-    "baseAtk": 413,
+    "baseAtk": 412,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "77%",
     "levelStats": [
@@ -8015,12 +8015,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 108,
+        "baseAtk": 107,
         "secondaryStatValue": "30.4%"
       },
       {
         "level": 30,
-        "baseAtk": 136,
+        "baseAtk": 135,
         "secondaryStatValue": "37.1%"
       },
       {
@@ -8040,17 +8040,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 335,
+        "baseAtk": 334,
         "secondaryStatValue": "63.7%"
       },
       {
         "level": 80,
-        "baseAtk": 385,
+        "baseAtk": 384,
         "secondaryStatValue": "70.4%"
       },
       {
         "level": 90,
-        "baseAtk": 413,
+        "baseAtk": 412,
         "secondaryStatValue": "77%"
       }
     ],
@@ -8071,7 +8071,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A descending adagio. This rectifier opens up an insightful window into the situation, changing the tune of the intense battle concerto.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 338,
+    "baseAtk": 337,
     "secondaryStat": "Energy Regen",
     "secondaryStatValue": "51.8%",
     "levelStats": [
@@ -8092,12 +8092,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 30,
-        "baseAtk": 111,
+        "baseAtk": 110,
         "secondaryStatValue": "25%"
       },
       {
         "level": 40,
-        "baseAtk": 152,
+        "baseAtk": 151,
         "secondaryStatValue": "29.4%"
       },
       {
@@ -8112,17 +8112,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 274,
+        "baseAtk": 273,
         "secondaryStatValue": "42.9%"
       },
       {
         "level": 80,
-        "baseAtk": 315,
+        "baseAtk": 314,
         "secondaryStatValue": "47.4%"
       },
       {
         "level": 90,
-        "baseAtk": 338,
+        "baseAtk": 337,
         "secondaryStatValue": "51.8%"
       }
     ],
@@ -8143,7 +8143,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The ancient mountain stands tall, its peak reaching towards the sky. A river flows for thousands of years, forming the blade of a powerful weapon. As it is unsheathed, a powerful dragon's roar echoes through the heavens and earth, causing the sea to churn. This awe-inspiring weapon strikes fear in all who witness its might.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -8154,12 +8154,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -8184,17 +8184,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -8215,7 +8215,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "Crafted with the lost art from the Court of Savantae, these gauntlets are solid and unbreakable, despite their lightweight materials. They are no tools of violence or aggression, but instruments for unraveling puzzles and pursuing the truth.",
     "rarity": 5,
     "type": "Gauntlets",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. Rate",
     "secondaryStatValue": "24.3%",
     "levelStats": [
@@ -8226,12 +8226,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "7.5%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "9.6%"
       },
       {
@@ -8256,17 +8256,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "20.1%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "22.2%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "24.3%"
       }
     ],
@@ -8287,7 +8287,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "This weapon draws its design inspiration from the play—Waltz in Masquerade.\nA waltz is a dance of spectacle and masquerade, where the grand symphony drowns whispered secrets and swirling dresses conceal the exchange of letters and promises. The dancers speak a silent language, as smooth and precise as the perfect resonance of a rectifier.",
     "rarity": 4,
     "type": "Rectifier",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -8303,7 +8303,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -8313,17 +8313,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -8338,7 +8338,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -8359,7 +8359,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "A prototype weapon designed by the Black Shores for elite combatants. This broadblade takes its name from the fate of a blazar—a galactic nucleus whose blinding radiance pierces the cosmos, shining unmistakably across billions of light years.",
     "rarity": 4,
     "type": "Broadblade",
-    "baseAtk": 463,
+    "baseAtk": 462,
     "secondaryStat": "ATK",
     "secondaryStatValue": "18.2%",
     "levelStats": [
@@ -8375,7 +8375,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 121,
+        "baseAtk": 120,
         "secondaryStatValue": "7.2%"
       },
       {
@@ -8385,17 +8385,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 208,
+        "baseAtk": 207,
         "secondaryStatValue": "10.3%"
       },
       {
         "level": 50,
-        "baseAtk": 264,
+        "baseAtk": 263,
         "secondaryStatValue": "11.9%"
       },
       {
         "level": 60,
-        "baseAtk": 320,
+        "baseAtk": 319,
         "secondaryStatValue": "13.5%"
       },
       {
@@ -8410,7 +8410,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 90,
-        "baseAtk": 463,
+        "baseAtk": 462,
         "secondaryStatValue": "18.2%"
       }
     ],
@@ -8447,7 +8447,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "28.4%"
       },
       {
@@ -8457,7 +8457,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "40.9%"
       },
       {
@@ -8467,12 +8467,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "53.3%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "59.6%"
       },
       {
@@ -8503,7 +8503,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
     "description": "The young wolf races through the wilds, shedding every shadow that once held her back.\nThe lone wolf strides into the arena, cutting down each obstacle in her path.\nShe seizes victory. She claims glory. She raises everything she has high above. She belongs to the arena, but even more, she belongs to herself.",
     "rarity": 5,
     "type": "Broadblade",
-    "baseAtk": 588,
+    "baseAtk": 587,
     "secondaryStat": "Crit. DMG",
     "secondaryStatValue": "48.6%",
     "levelStats": [
@@ -8514,12 +8514,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 10,
-        "baseAtk": 83,
+        "baseAtk": 82,
         "secondaryStatValue": "15%"
       },
       {
         "level": 20,
-        "baseAtk": 154,
+        "baseAtk": 153,
         "secondaryStatValue": "19.2%"
       },
       {
@@ -8544,17 +8544,17 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 70,
-        "baseAtk": 477,
+        "baseAtk": 476,
         "secondaryStatValue": "40.2%"
       },
       {
         "level": 80,
-        "baseAtk": 548,
+        "baseAtk": 547,
         "secondaryStatValue": "44.4%"
       },
       {
         "level": 90,
-        "baseAtk": 588,
+        "baseAtk": 587,
         "secondaryStatValue": "48.6%"
       }
     ],
@@ -8591,7 +8591,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 20,
-        "baseAtk": 131,
+        "baseAtk": 130,
         "secondaryStatValue": "14.2%"
       },
       {
@@ -8601,7 +8601,7 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 40,
-        "baseAtk": 225,
+        "baseAtk": 224,
         "secondaryStatValue": "20.4%"
       },
       {
@@ -8611,12 +8611,12 @@ export const generatedWeaponCatalog:GeneratedWeaponCatalogEntry[]=[
       },
       {
         "level": 60,
-        "baseAtk": 346,
+        "baseAtk": 345,
         "secondaryStatValue": "26.7%"
       },
       {
         "level": 70,
-        "baseAtk": 406,
+        "baseAtk": 405,
         "secondaryStatValue": "29.8%"
       },
       {

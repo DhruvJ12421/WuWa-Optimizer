@@ -3,7 +3,7 @@ import { statLabels } from '../game-data'
 import { setBuildEchoIds } from '../storage/database'
 import type { Build, Echo, EnemyConfig, FormulaResultMode, OptimizerObjective, OptimizerResult, OptimizerStatKey, OwnedCharacter, OwnedWeapon, TeamScenario } from '../domain/types'
 import { characterFormulaSheets, createBuildCalculationContext, FormulaCalculator, resolveRuntimeBuild } from '../domain/calculation'
-import { aggregateStats } from '../domain/damage'
+import { aggregateStats, formatDamage } from '../domain/damage'
 import { createLocalId } from '../domain/id'
 import { EchoMiniCard, formatStat, Icon, Panel } from './components'
 import { CalculatedValue, traceCalculationDetail } from './CalculationDetails'
@@ -131,7 +131,7 @@ export function OptimizerView({ echoes, builds, characters, ownedWeapons, refres
               <span className="optimizer-rank">#{index + 1}</span>
               <span><b>{result.complete ? 'OPTIMAL BUILD' : 'BEST FOUND'}</b><small>{(result.evaluations ?? 0).toLocaleString('en-US')} configurations evaluated</small></span>
               <span className="optimizer-score"><small>{formulaTarget?.label ?? attack?.name ?? 'Target score'}</small><strong>{Math.round(result.score).toLocaleString('en-US')}</strong></span>
-              <span className="optimizer-score-modes"><i>Non-CRIT <b>{Math.round(result.damage.normal).toLocaleString('en-US')}</b></i><i>Average <b>{Math.round(result.damage.expected).toLocaleString('en-US')}</b></i><i>CRIT <b>{Math.round(result.damage.critical).toLocaleString('en-US')}</b></i></span>
+              <span className="optimizer-score-modes"><i>Non-CRIT <b>{formatDamage(result.damage.normal)}</b></i><i>Average <b>{formatDamage(result.damage.expected)}</b></i><i>CRIT <b>{formatDamage(result.damage.critical)}</b></i></span>
               <span className="optimizer-chevron">⌄</span>
             </button>
             <button className="primary" onClick={() => apply(result)}>Equip build</button>
@@ -143,7 +143,7 @@ export function OptimizerView({ echoes, builds, characters, ownedWeapons, refres
               const delta = result.stats[key] - previous
               return <div key={key}><span>{statLabels[key]}</span>{resonator && weapon ? <CalculatedValue detail={runtimeStatDetail(resonator, weapon, resultEchoes, key, result.stats[key])}><b>{formatStat(key, result.stats[key])}</b></CalculatedValue> : <b>{formatStat(key, result.stats[key])}</b>}<small className={delta > 0 ? 'positive' : delta < 0 ? 'negative' : ''}>{delta === 0 ? '—' : `${delta > 0 ? '+' : ''}${formatStat(key, delta)}`}</small></div>
             })}</div></section>
-            <section><h3>Target comparison</h3><div className="optimizer-damage-table"><div><span>Optimized score</span><CalculatedValue detail={detailForResult(result)}><b>{Math.round(result.score).toLocaleString('en-US')}</b></CalculatedValue></div><div><span>Non-CRIT damage</span><b>{Math.round(result.damage.normal).toLocaleString('en-US')}</b></div><div><span>Average damage</span><b>{Math.round(result.damage.expected).toLocaleString('en-US')}</b></div><div><span>CRIT damage</span><b>{Math.round(result.damage.critical).toLocaleString('en-US')}</b></div><div><span>Search status</span><b>{result.complete ? 'Complete' : 'Capped'}</b></div></div></section>
+            <section><h3>Target comparison</h3><div className="optimizer-damage-table"><div><span>Optimized score</span><CalculatedValue detail={detailForResult(result)}><b>{Math.round(result.score).toLocaleString('en-US')}</b></CalculatedValue></div><div><span>Non-CRIT damage</span><b>{formatDamage(result.damage.normal)}</b></div><div><span>Average damage</span><b>{formatDamage(result.damage.expected)}</b></div><div><span>CRIT damage</span><b>{formatDamage(result.damage.critical)}</b></div><div><span>Search status</span><b>{result.complete ? 'Complete' : 'Capped'}</b></div></div></section>
           </div>}
         </Panel>
       })}</div>

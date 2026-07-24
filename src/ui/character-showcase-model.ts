@@ -1,5 +1,5 @@
 import type { AggregatedStats, Build, Echo, OwnedCharacter, OwnedWeapon, StatKey, StatLine } from '../domain/types'
-import { emptyStats } from '../domain/damage'
+import { emptyStats, floorGameValue } from '../domain/damage'
 import { echoStatLines } from '../game-data/echo-main-stats'
 import { characterCatalog, sonataCatalog, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
 import { generatedSonataIconSources } from '../game-data/sonatas.generated'
@@ -59,8 +59,10 @@ const nearestLevel = <T extends { level: number }>(rows: T[], level: number) => 
 )
 
 export function characterStatsAtLevel(catalog: CharacterCatalogEntry, level: number) {
-  if (!catalog.levelStats.length) return { level, hp: catalog.baseStats.hp, atk: catalog.baseStats.atk, def: catalog.baseStats.def }
-  return catalog.levelStats.find((entry) => entry.level === level) ?? nearestLevel(catalog.levelStats, level)
+  const stats = !catalog.levelStats.length
+    ? { level, hp: catalog.baseStats.hp, atk: catalog.baseStats.atk, def: catalog.baseStats.def }
+    : catalog.levelStats.find((entry) => entry.level === level) ?? nearestLevel(catalog.levelStats, level)
+  return { ...stats, hp: floorGameValue(stats.hp), atk: floorGameValue(stats.atk), def: floorGameValue(stats.def) }
 }
 
 export function weaponStatsAtLevel(catalog: WeaponCatalogEntry, level: number) {
@@ -104,9 +106,9 @@ function calculateFinalStats(
   stats.baseHp = baseHp
   stats.baseAtk = baseAtk
   stats.baseDef = baseDef
-  stats.hp = baseHp * (1 + (totals.hpPercent ?? 0) / 100) + (totals.hp ?? 0)
-  stats.atk = baseAtk * (1 + (totals.atkPercent ?? 0) / 100) + (totals.atk ?? 0)
-  stats.def = baseDef * (1 + (totals.defPercent ?? 0) / 100) + (totals.def ?? 0)
+  stats.hp = floorGameValue(baseHp * (1 + (totals.hpPercent ?? 0) / 100) + (totals.hp ?? 0))
+  stats.atk = floorGameValue(baseAtk * (1 + (totals.atkPercent ?? 0) / 100) + (totals.atk ?? 0))
+  stats.def = floorGameValue(baseDef * (1 + (totals.defPercent ?? 0) / 100) + (totals.def ?? 0))
   stats.critRate = character.baseStats.critRate + (totals.critRate ?? 0)
   stats.critDamage = character.baseStats.critDamage + (totals.critDamage ?? 0)
   stats.energyRegen += totals.energyRegen ?? 0

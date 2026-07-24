@@ -14,7 +14,7 @@ const echo = (id: string, mainKey: Echo['mainStat']['key'], value: number): Echo
 describe('damage pipeline', () => {
   it('aggregates base, percentage, flat, and weapon stats in the correct order', () => {
     const stats = aggregateStats(resonators[0], weapons[0], [echo('a', 'atkPercent', 20), echo('b', 'atk', 100)])
-    expect(stats.atk).toBeCloseTo((412 + 587) * 1.2 + 100)
+    expect(stats.atk).toBe(Math.floor((412 + 587) * 1.2 + 100))
     expect(stats.critRate).toBeCloseTo(29.3)
   })
 
@@ -30,6 +30,15 @@ describe('damage pipeline', () => {
     const result = calculateDamage(stats, resonators[0].attacks[0], { level: 100, resistance: 10, damageReduction: 0 })
     expect(result.critical).toBeGreaterThan(result.normal)
     expect(result.expected).toBe(result.critical)
+  })
+
+  it('floors calculated stats and each damage result', () => {
+    const stats = aggregateStats(resonators[0], weapons[0], [echo('a', 'atkPercent', 6.7)])
+    const result = calculateDamage({ ...stats, critRate: 5, critDamage: 150 }, resonators[0].attacks[0], { level: 100, resistance: 10, damageReduction: 0 })
+    expect(stats.atk).toBe(Math.floor((412 + 587) * 1.067))
+    expect(result.normal).toBe(Math.floor(result.normal))
+    expect(result.critical).toBe(Math.floor(result.normal * 1.5))
+    expect(result.expected).toBe(Math.floor(result.normal * 1.025))
   })
 
   it('activates a next-character buff after its trigger and consumes it once', () => {

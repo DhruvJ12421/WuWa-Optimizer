@@ -57,7 +57,7 @@ function StatIcon({ stat }: { stat: ShowcaseStatKey }) {
 
 function formatStat(key: ShowcaseStatKey, value: number) {
   return key === 'hp' || key === 'atk' || key === 'def'
-    ? Math.round(value).toLocaleString('en-US')
+    ? Math.floor(value + 1e-9).toLocaleString('en-US')
     : key === 'tuneBreakBoost' ? value.toFixed(1)
     : `${value.toFixed(1)}%`
 }

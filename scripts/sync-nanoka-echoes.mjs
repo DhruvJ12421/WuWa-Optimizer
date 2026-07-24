@@ -44,7 +44,15 @@ const titleCardByCharacter=new Map(titleDetails.flatMap(title=>{
   const owner=title.HonorDescription?.match(/^Fully activate (.+?)(?:'s|’s) Resonance Chain$/i)?.[1]
   return owner&&title.Image?[[owner,titleCardAsset(title.Image)]]:[]
 }))
-const combatType=skillType=>skillType==='Normal Attack'?'basic':skillType==='Resonance Liberation'?'liberation':'skill'
+const combatType=(skillType,name='')=>{
+  if(/Outro Skill DMG/i.test(name))return 'outro'
+  if(skillType==='Outro Skill')return 'outro'
+  if(skillType==='Intro Skill')return 'intro'
+  if(/Heavy Attack/i.test(name))return 'heavy'
+  if(skillType==='Normal Attack')return 'basic'
+  if(skillType==='Resonance Liberation')return 'liberation'
+  return 'skill'
+}
 const skillLevelIndex=skillType=>skillType==='Normal Attack'?0:skillType==='Resonance Skill'?1:skillType==='Forte Circuit'?2:skillType==='Resonance Liberation'?3:skillType==='Intro Skill'?4:1
 const fixedSkillValuePattern=/\b(?:sta(?:mina)?\s+cost|concerto\s+(?:regen|regeneration|recovery)|cooldown|duration|resonance(?:\s+energy)?\s+cost)\b/i
 const fixedSkillValues=(skill,nodeId)=>Object.entries(skill.level??{}).flatMap(([lineId,line])=>{
@@ -142,7 +150,7 @@ const characters=Object.entries(rawCharacters).map(([id,c])=>{
       const name=line?.name?`${skill.name} - ${line.name}`:skill.name
       if(fixedSkillValuePattern.test(name))return []
       const isHealing=components.length>0&&components.every(component=>Number(component.element)===0)
-      const type=isHealing?'healing':/heavy attack/i.test(name)?'heavy':combatType(skill.type)
+      const type=isHealing?'healing':combatType(skill.type,name)
       return [{id:`${id}-${nodeId}-${attackIndex++}`,name,type,skillLevelIndex:skillLevelIndex(skill.type),scalesWith:damage.related_property.toLowerCase(),multipliers,hitMultipliers}]
     })
   })
@@ -156,10 +164,12 @@ const weaponEntries=Object.entries(rawWeapons).filter(([,weapon])=>!/^Projection
 const weaponDetails=await mapLimit(weaponEntries.map(([id])=>id),8,async id=>[id,await load(`${base}/en/weapon/${id}.json`)])
 const weaponDetailById=new Map(weaponDetails)
 const weaponLevels=[1,10,20,30,40,50,60,70,80,90]
+const floorWeaponAtk=value=>Math.floor(Number(value??0)+Number.EPSILON*100)
+const floorWeaponStat=value=>Math.floor(Number(value??0)*10+Number.EPSILON*100)/10
 const formatWeaponStat=stat=>{
   if(!stat)return ''
   const value=stat.is_percent?stat.value/100:stat.is_ratio?stat.value*100:stat.value
-  return `${value.toFixed(1).replace(/\.0$/,'')}${stat.is_percent||stat.is_ratio?'%':''}`
+  return `${floorWeaponStat(value).toFixed(1).replace(/\.0$/,'')}${stat.is_percent||stat.is_ratio?'%':''}`
 }
 const weapons=weaponEntries.map(([id,w])=>{
   const detail=weaponDetailById.get(id),maxStats=detail?.stats?.['6']?.['90']??[]
@@ -167,10 +177,10 @@ const weapons=weaponEntries.map(([id,w])=>{
   const levelStats=weaponLevels.map(level=>{
     const candidates=Object.entries(detail?.stats??{}).flatMap(([ascension,levels])=>levels[String(level)]?[{ascension:Number(ascension),stats:levels[String(level)]}]:[]).sort((a,b)=>b.ascension-a.ascension)
     const stats=candidates[0]?.stats??[]
-    return {level,baseAtk:Math.round(stats[0]?.value??0),secondaryStatValue:formatWeaponStat(stats[1])}
+    return {level,baseAtk:floorWeaponAtk(stats[0]?.value),secondaryStatValue:formatWeaponStat(stats[1])}
   })
   const passiveEffects=Array.from({length:5},(_,rank)=>formatEffect(detail?.effect,(detail?.param??[]).map(values=>values[rank])))
-  return {id,name:w.en,description:w.desc,rarity:w.rank,type:weaponTypes[w.type]??'Unknown',baseAtk:Math.round(maxStats[0]?.value??w.atk??0),secondaryStat:w.sub??secondary?.name??'Unreleased',secondaryStatValue:formatWeaponStat(secondary),levelStats,passiveName:detail?.effect_name??'',passiveEffects,articleUrl:`https://ww.nanoka.cc/weapon/${id}`,iconSourceUrl:asset(w.icon)}
+  return {id,name:w.en,description:w.desc,rarity:w.rank,type:weaponTypes[w.type]??'Unknown',baseAtk:floorWeaponAtk(maxStats[0]?.value??w.atk),secondaryStat:w.sub??secondary?.name??'Unreleased',secondaryStatValue:formatWeaponStat(secondary),levelStats,passiveName:detail?.effect_name??'',passiveEffects,articleUrl:`https://ww.nanoka.cc/weapon/${id}`,iconSourceUrl:asset(w.icon)}
 }).sort((a,b)=>a.name.localeCompare(b.name))
 const echoes=Object.entries(rawEchoes).map(([id,e])=>({id,name:e.en,cost:e.intensity===0?1:e.intensity===1?3:4,sonatas:e.group.map(g=>names[g]),rarities:e.rank,intensity:e.intensity,articleUrl:`https://ww.nanoka.cc/echo/${id}`,iconPath:e.icon,iconSourceUrl:asset(e.icon)})).sort((a,b)=>a.name.localeCompare(b.name))
 if(echoes.length<170||echoes.some(e=>e.sonatas.includes(undefined)))throw Error('Incomplete Nanoka data')
@@ -186,7 +196,7 @@ const sonataIconSources=Object.fromEntries(await mapLimit(sonatas,8,async sonata
 if(characters.length<50||weapons.length<100||sonatas.length<30)throw Error('Incomplete Nanoka catalogs')
 const generatedAt=new Date().toISOString()
 const header='// Generated by scripts/sync-nanoka-echoes.mjs. Do not edit.\n'
-const types=`${header}export interface GeneratedCharacterAttackEntry {id:string;name:string;type:'basic'|'heavy'|'skill'|'liberation'|'healing';skillLevelIndex:number;scalesWith:'atk'|'hp'|'def';multipliers:number[];hitMultipliers:number[][]}
+const types=`${header}export interface GeneratedCharacterAttackEntry {id:string;name:string;type:'basic'|'heavy'|'skill'|'liberation'|'intro'|'outro'|'healing';skillLevelIndex:number;scalesWith:'atk'|'hp'|'def';multipliers:number[];hitMultipliers:number[][]}
 export interface GeneratedCharacterFlatSkillValueEntry {id:string;name:string;skillLevelIndex:number;values:string[]}
 export interface GeneratedCharacterLevelStats {level:number;hp:number;atk:number;def:number}
 export interface GeneratedCharacterSkillAsset {name:string;description:string;iconSourceUrl:string}

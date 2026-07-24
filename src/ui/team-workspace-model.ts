@@ -217,7 +217,7 @@ function activeBuffsAt(team: Team, sortedActions: RotationAction[], currentIndex
 
 export function formatWorkspaceStat(key: StatKey, value: number) {
   return key === 'hp' || key === 'atk' || key === 'def'
-    ? Math.round(value).toLocaleString('en-US')
+    ? Math.floor(value + 1e-9).toLocaleString('en-US')
     : `${value.toFixed(1)}%`
 }
 

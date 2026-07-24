@@ -46,7 +46,7 @@ function statGlyph(key: StatKey) {
 }
 
 export function formatStat(key: StatKey, value: number) {
-  return ['hp', 'atk', 'def'].includes(key) ? Math.round(value).toLocaleString('en-US') : `${value.toFixed(1)}%`
+  return ['hp', 'atk', 'def'].includes(key) ? Math.floor(value + 1e-9).toLocaleString('en-US') : `${value.toFixed(1)}%`
 }
 
 export function Confidence({ value }: { value: number }) {

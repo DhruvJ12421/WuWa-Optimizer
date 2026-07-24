@@ -60,6 +60,11 @@ const clampedPercent = (key: string, min: number, max: number) => formula.min(fo
 
 const elementKey = (element: string) => `${element.toLowerCase()}Damage`
 const typeKey = (type: DamageType) => type === 'basic' ? 'basicDamage' : type === 'heavy' ? 'heavyDamage' : type === 'skill' ? 'skillDamage' : type === 'liberation' ? 'liberationDamage' : undefined
+const attackGroup = (type: DamageType) => type === 'basic' || type === 'heavy' ? 'Basic Attack'
+  : type === 'skill' ? 'Resonance Skill / Forte'
+    : type === 'liberation' ? 'Resonance Liberation'
+      : type === 'intro' ? 'Intro Skill'
+        : type === 'outro' ? 'Outro Skill' : 'Damage'
 
 function damageTarget(characterId: string, element: string, attack: typeof characterCatalog[number]['attacks'][number]): FormulaTarget {
   const multipliers = Object.fromEntries(attack.multipliers.map((value, index) => [String(index + 1), formula.constant(value)]))
@@ -74,7 +79,7 @@ function damageTarget(characterId: string, element: string, attack: typeof chara
   }
   const scaling = formula.stat(attack.scalesWith, 0, attack.scalesWith.toUpperCase())
   if (attack.type === 'healing') {
-    const healing = formula.prod(scaling, multiplier, addPercent(formula.stat('healingBonus', 0, 'Healing Bonus')))
+    const healing = formula.floor(formula.prod(scaling, multiplier, addPercent(formula.stat('healingBonus', 0, 'Healing Bonus'))), 'Healing')
     return { id: `${characterId}:${attack.id}`, label: attack.name, group: 'Healing', kind: 'healing', damageType: attack.type, element: element.toLowerCase() as Element, normal: healing, critical: healing, expected: healing }
   }
   const typeBonus = typeKey(attack.type) ? formula.stat(typeKey(attack.type)!, 0, `${attack.type} DMG Bonus`) : formula.constant(0)
@@ -94,13 +99,14 @@ function damageTarget(characterId: string, element: string, attack: typeof chara
     reduction
   )
   const critMultiplier: FormulaNode = { op: 'max', operands: [one, formula.prod(formula.stat('critDamage', 0, 'CRIT DMG'), formula.constant(0.01))], label: 'CRIT multiplier' }
-  const critical = formula.prod(base, critMultiplier)
+  const normal = formula.floor(base, 'Normal damage')
+  const critical = formula.floor(formula.prod(normal, critMultiplier), 'Critical damage')
   const critRate: FormulaNode = { ...formula.prod(clampedPercent('effectiveCritRate', 0, 100), formula.constant(0.01)), label: 'Effective CRIT Rate' }
   const expectedFactor: FormulaNode = { op: 'sum', operands: [one, formula.prod(critRate, formula.sum(critMultiplier, formula.constant(-1)))], label: 'Expected CRIT factor' }
-  const expected = formula.prod(base, expectedFactor)
+  const expected = formula.floor(formula.prod(normal, expectedFactor), 'Average damage')
   return {
-    id: `${characterId}:${attack.id}`, label: attack.name, group: attack.type === 'basic' || attack.type === 'heavy' ? 'Basic Attack' : attack.type === 'skill' ? 'Resonance Skill / Forte' : 'Resonance Liberation',
-    kind: 'damage', damageType: attack.type, element: element.toLowerCase() as Element, normal: base, critical, expected
+    id: `${characterId}:${attack.id}`, label: attack.name, group: attackGroup(attack.type),
+    kind: 'damage', damageType: attack.type, element: element.toLowerCase() as Element, normal, critical, expected
   }
 }
 

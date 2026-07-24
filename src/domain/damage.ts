@@ -1,6 +1,8 @@
 import type { AggregatedStats, AttackDefinition, BuffEffect, Build, DamageResult, Echo, EnemyConfig, Resonator, RotationResult, StatKey, StatLine, Team, Weapon } from './types'
 import { echoStatLines } from '../game-data/echo-main-stats'
 
+export const floorGameValue = (value: number) => Math.floor(value + 1e-9)
+
 export const emptyStats = (): AggregatedStats => ({
   baseHp: 0, baseAtk: 0, baseDef: 0,
   hp: 0, atk: 0, def: 0, critRate: 0, critDamage: 0, energyRegen: 100,
@@ -16,7 +18,11 @@ export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Ech
   const stats = emptyStats()
   const percent = { hp: 0, atk: 0, def: 0 }
   const flat = { hp: 0, atk: 0, def: 0 }
-  const base = { hp: resonator.baseStats.hp, atk: resonator.baseStats.atk + weapon.baseAtk, def: resonator.baseStats.def }
+  const base = {
+    hp: floorGameValue(resonator.baseStats.hp),
+    atk: floorGameValue(resonator.baseStats.atk) + floorGameValue(weapon.baseAtk),
+    def: floorGameValue(resonator.baseStats.def)
+  }
   stats.baseHp = base.hp
   stats.baseAtk = base.atk
   stats.baseDef = base.def
@@ -44,9 +50,9 @@ export function aggregateStats(resonator: Resonator, weapon: Weapon, echoes: Ech
   if ((sonatas['Lingering Tunes'] ?? 0) >= 5) percent.atk += 20
   if ((sonatas['Rejuvenating Glow'] ?? 0) >= 5) stats.healingBonus += 10
 
-  stats.hp = base.hp * (1 + percent.hp / 100) + flat.hp
-  stats.atk = base.atk * (1 + percent.atk / 100) + flat.atk
-  stats.def = base.def * (1 + percent.def / 100) + flat.def
+  stats.hp = floorGameValue(base.hp * (1 + percent.hp / 100) + flat.hp)
+  stats.atk = floorGameValue(base.atk * (1 + percent.atk / 100) + flat.atk)
+  stats.def = floorGameValue(base.def * (1 + percent.def / 100) + flat.def)
   return stats
 }
 
@@ -96,25 +102,29 @@ export function applyBuffEffects(stats: AggregatedStats, effects: BuffEffect[]):
     else if (effect.stat === 'defPercent') next.def += next.baseDef * effect.value / 100
     else if (effect.stat in next) next[effect.stat as keyof AggregatedStats] += effect.value
   }
+  next.hp = floorGameValue(next.hp)
+  next.atk = floorGameValue(next.atk)
+  next.def = floorGameValue(next.def)
   return { stats: next, amplify }
 }
 
 export function calculateDamage(stats: AggregatedStats, attack: AttackDefinition, enemy: EnemyConfig, characterLevel = 90, amplifyPercent = 0): DamageResult {
   if (attack.type === 'healing') {
-    const total = stats.hp * attack.multiplier * attack.hits * Math.max(0, 1 + stats.healingBonus / 100)
+    const total = floorGameValue(stats.hp * attack.multiplier * attack.hits * Math.max(0, 1 + stats.healingBonus / 100))
     return { normal: total, critical: total, expected: total, hits: attack.hits, attackId: attack.id }
   }
   const scaling = attack.scalesWith === 'hp' ? stats.hp : attack.scalesWith === 'def' ? stats.def : stats.atk
   const raw = scaling * attack.multiplier * attack.hits
-  const normal = raw * Math.max(0, 1 + damageBonus(stats, attack) / 100)
+  const normal = floorGameValue(raw * Math.max(0, 1 + damageBonus(stats, attack) / 100)
     * defenseMultiplier(characterLevel, enemy.level, enemy.defenseIgnore, enemy.defenseReduction)
     * resistanceMultiplier(enemy.resistance, enemy.resistanceReduction, enemy.resistanceIgnore)
     * Math.max(0, 1 - enemy.damageReduction / 100)
     * Math.max(0, 1 + amplifyPercent / 100)
-    * Math.max(0, 1 + (enemy.specialMultiplier ?? 0) / 100)
-  const critical = normal * Math.max(1, stats.critDamage / 100)
+    * Math.max(0, 1 + (enemy.specialMultiplier ?? 0) / 100))
+  const critical = floorGameValue(normal * Math.max(1, stats.critDamage / 100))
   const critRate = Math.min(1, Math.max(0, stats.critRate / 100))
-  return { normal, critical, expected: normal * (1 + critRate * (Math.max(1, stats.critDamage / 100) - 1)), hits: attack.hits, attackId: attack.id }
+  const expected = floorGameValue(normal * (1 + critRate * (Math.max(1, stats.critDamage / 100) - 1)))
+  return { normal, critical, expected, hits: attack.hits, attackId: attack.id }
 }
 
 export function calculateBuild(build: Build, resonator: Resonator, weapon: Weapon, echoes: Echo[], attack: AttackDefinition, enemy: EnemyConfig) {
@@ -124,7 +134,7 @@ export function calculateBuild(build: Build, resonator: Resonator, weapon: Weapo
 }
 
 export function formatDamage(value: number) {
-  return Math.round(value).toLocaleString('en-US')
+  return floorGameValue(value).toLocaleString('en-US')
 }
 
 export function calculateRotation(team: Team, builds: Build[], resonators: Resonator[], weapons: Weapon[], echoes: Echo[]): RotationResult {

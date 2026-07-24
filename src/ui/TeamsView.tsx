@@ -582,7 +582,7 @@ function DetailedEchoCard({ echo, index }: { echo?: Echo; index: number }) {
 }
 
 function TraceBranch({ trace, depth = 0 }: { trace: CalculationTrace; depth?: number }) {
-  return <li style={{ '--trace-depth': depth } as CSSProperties}><span>{trace.label}</span><b>{typeof trace.value === 'number' ? Number(trace.value).toLocaleString('en-US', { maximumFractionDigits: 3 }) : String(trace.value)}</b>{trace.children.length > 0 && <ul>{trace.children.map((child, index) => <TraceBranch trace={child} depth={depth + 1} key={`${child.entryId ?? child.label}-${index}`}/>)}</ul>}</li>
+  return <li style={{ '--trace-depth': depth } as CSSProperties}><span>{trace.label}</span><b>{typeof trace.value === 'number' ? (depth === 0 ? Math.floor(trace.value + 1e-9).toLocaleString('en-US') : Number(trace.value).toLocaleString('en-US', { maximumFractionDigits: 3 })) : String(trace.value)}</b>{trace.children.length > 0 && <ul>{trace.children.map((child, index) => <TraceBranch trace={child} depth={depth + 1} key={`${child.entryId ?? child.label}-${index}`}/>)}</ul>}</li>
 }
 
 function FormulaResultSheet({ member, model, updateTeam }: { member: TeamMemberModel; model: TeamWorkspaceModel; updateTeam: (patch: Partial<Team>) => Promise<void> }) {

@@ -33,4 +33,10 @@ describe('declarative formula engine', () => {
     const range = estimateFormulaRange(formula.prod(formula.sum(formula.input('x'), formula.constant(2)), formula.constant(3)), context, { x: { min: 1, max: 4, monotonic: true } })
     expect(range).toEqual({ min: 9, max: 18, monotonic: true })
   })
+
+  it('floors formula results and preserves the unrounded child trace', () => {
+    const result = new FormulaCalculator(context).evaluate(formula.floor(formula.prod(formula.constant(10.9), formula.constant(1.5)), 'Damage'))
+    expect(result.value).toBe(16)
+    expect(result.trace.children[0].value).toBeCloseTo(16.35)
+  })
 })

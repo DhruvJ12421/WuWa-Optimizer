@@ -18,6 +18,7 @@ export type FormulaNode =
   | { op: 'constant'; value: FormulaScalar; label?: string }
   | { op: 'input'; key: string; fallback?: FormulaScalar; label?: string }
   | { op: 'stat'; key: string; fallback?: number; label?: string }
+  | { op: 'floor'; operand: FormulaNode; label?: string }
   | { op: 'sum' | 'prod' | 'min' | 'max'; operands: FormulaNode[]; label?: string }
   | { op: 'lookup'; key: FormulaNode; values: Record<string, FormulaNode>; fallback?: FormulaNode; label?: string }
   | { op: 'compare'; comparator: 'eq' | 'ne' | 'gt' | 'ge' | 'lt' | 'le'; left: FormulaNode; right: FormulaNode; label?: string }
@@ -119,6 +120,10 @@ export class FormulaCalculator {
     if (node.op === 'constant') return finish(node.value)
     if (node.op === 'input') return finish(this.context.inputs[node.key] ?? node.fallback ?? 0)
     if (node.op === 'stat') return finish(this.context.stats[node.key] ?? node.fallback ?? 0)
+    if (node.op === 'floor') {
+      const snapshot = child(node.operand)
+      return finish(Math.floor(numeric(snapshot.value, node.label ?? node.op) + 1e-9), [snapshot.trace])
+    }
     if (node.op === 'sum' || node.op === 'prod' || node.op === 'min' || node.op === 'max') {
       const snapshots = node.operands.map((operand) => child(operand))
       const values = snapshots.map((snapshot) => numeric(snapshot.value, node.label ?? node.op))
@@ -170,6 +175,10 @@ export function estimateFormulaRange(node: FormulaNode, context: CalculationCont
   const exact = (value: number): FormulaRange => ({ min: value, max: value, monotonic: true })
   if (node.op === 'constant') return typeof node.value === 'number' ? exact(node.value) : { min: -Infinity, max: Infinity, monotonic: false }
   if (node.op === 'stat') return exact(context.stats[node.key] ?? node.fallback ?? 0)
+  if (node.op === 'floor') {
+    const range = estimateFormulaRange(node.operand, context, inputRanges)
+    return { min: Math.floor(range.min + 1e-9), max: Math.floor(range.max + 1e-9), monotonic: range.monotonic }
+  }
   if (node.op === 'input') {
     const value = context.inputs[node.key] ?? node.fallback ?? 0
     return inputRanges[node.key] ?? (typeof value === 'number' ? exact(value) : { min: -Infinity, max: Infinity, monotonic: false })
@@ -204,6 +213,7 @@ export const formula = {
   constant: (value: FormulaScalar, label?: string): FormulaNode => ({ op: 'constant', value, label }),
   input: (key: string, fallback: FormulaScalar = 0, label?: string): FormulaNode => ({ op: 'input', key, fallback, label }),
   stat: (key: string, fallback = 0, label?: string): FormulaNode => ({ op: 'stat', key, fallback, label }),
+  floor: (operand: FormulaNode, label?: string): FormulaNode => ({ op: 'floor', operand, label }),
   sum: (...operands: FormulaNode[]): FormulaNode => ({ op: 'sum', operands }),
   prod: (...operands: FormulaNode[]): FormulaNode => ({ op: 'prod', operands }),
   min: (...operands: FormulaNode[]): FormulaNode => ({ op: 'min', operands }),

@@ -1,4 +1,4 @@
-import { aggregateStats, applyBuffEffects, defenseMultiplier, resistanceMultiplier } from '../damage'
+import { aggregateStats, applyBuffEffects, defenseMultiplier, floorGameValue, resistanceMultiplier } from '../damage'
 import type { AttackDefinition, BuffEffect, Build, Echo, EnemyConfig, OwnedCharacter, OwnedWeapon, Resonator, TeamScenario, Weapon } from '../types'
 import {
   characterConditionId, characterConditionInherentSkillIndex, characterConditionModes, characterConditionRequiresToggle, characterConditions, characterCatalog,
@@ -140,10 +140,18 @@ export function createBuildCalculationContext(input: BuildCalculationInput): Cal
       else if (key === 'HeavyAttackDMGBonus' && targetAttack.type === 'heavy') conditionBonusDamage += value * 100
       else if (key === 'ResonanceSkillDMGBonus' && targetAttack.type === 'skill') conditionBonusDamage += value * 100
       else if (key === 'ResonanceLiberationDMGBonus' && targetAttack.type === 'liberation') conditionBonusDamage += value * 100
+      else if (key === 'IntroSkillDMGBonus' && targetAttack.type === 'intro') conditionBonusDamage += value * 100
+      else if (key === 'OutroSkillDMGBonus' && targetAttack.type === 'outro') conditionBonusDamage += value * 100
       else if (key === 'DMGBonus') conditionBonusDamage += value * 100
       else if (key === 'DMGDeepen') conditionAmplification += value * 100
       else if (key === 'specialMultiplier') conditionSpecialMultiplier += value * 100
-      else if (key === 'talentModifierMultiply' || (!key && modifier.modifySpecificTalents?.length)) conditionMotionValueMultiplier += value * 100
+      else if (key === 'talentModifierMultiply') conditionMotionValueMultiplier += value * 100
+      else if (!key && modifier.modifySpecificTalents?.length) {
+        // Wuthering Tools leaves targeted DMG/healing increases untyped, while
+        // actual motion-value changes are explicitly talentModifierMultiply.
+        if (targetAttack.type === 'healing') conditionMotionValueMultiplier += value * 100
+        else conditionBonusDamage += value * 100
+      }
       else if (key === 'Talent' && modifier.modifierTalentKey && modifierTargetsAttack({ ...modifier, modifySpecificTalents: [modifier.modifierTalentKey] }, targetAttackReference)) conditionAdditionalMotionValue += value * 100
       else if (key === 'DEFIgnore' || key === `DEFIgnore:${character.element}`) conditionDefenseIgnore += value * 100
       else if (key === 'DefReduction') conditionDefenseReduction += value * 100
@@ -177,6 +185,9 @@ export function createBuildCalculationContext(input: BuildCalculationInput): Cal
       else if (effect.stat === 'defenseIgnore') conditionDefenseIgnore += value
     }
   }
+  stats.hp = floorGameValue(stats.hp)
+  stats.atk = floorGameValue(stats.atk)
+  stats.def = floorGameValue(stats.def)
   const defenseIgnore = (input.enemy.defenseIgnore ?? 0) + numericInput(conditions.defenseIgnore) + conditionDefenseIgnore
   const defenseReduction = (input.enemy.defenseReduction ?? 0) + numericInput(conditions.defenseReduction) + conditionDefenseReduction
   const resistanceIgnore = (input.enemy.resistanceIgnore ?? 0) + numericInput(conditions.resistanceIgnore) + conditionResistanceIgnore

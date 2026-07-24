@@ -24,9 +24,15 @@ describe('Nanoka 3.5 formula coverage', () => {
       inputs: { ...inputs, effectiveCritRate: 75, defenseMultiplier: 0.5, resistanceMultiplier: 0.9, damageReduction: 0, amplification: 0 }, entries: []
     })
     for (const sheet of characterFormulaSheets) for (const target of sheet.targets) {
-      expect(Number.isFinite(Number(calculator.evaluate(target.normal).value)), `${sheet.name}: ${target.label} normal`).toBe(true)
-      expect(Number.isFinite(Number(calculator.evaluate(target.critical).value)), `${sheet.name}: ${target.label} critical`).toBe(true)
-      expect(Number.isFinite(Number(calculator.evaluate(target.expected).value)), `${sheet.name}: ${target.label} expected`).toBe(true)
+      const normal = Number(calculator.evaluate(target.normal).value)
+      const critical = Number(calculator.evaluate(target.critical).value)
+      const expected = Number(calculator.evaluate(target.expected).value)
+      expect(Number.isFinite(normal), `${sheet.name}: ${target.label} normal`).toBe(true)
+      expect(Number.isFinite(critical), `${sheet.name}: ${target.label} critical`).toBe(true)
+      expect(Number.isFinite(expected), `${sheet.name}: ${target.label} expected`).toBe(true)
+      expect(Number.isInteger(normal), `${sheet.name}: ${target.label} normal floor`).toBe(true)
+      expect(Number.isInteger(critical), `${sheet.name}: ${target.label} critical floor`).toBe(true)
+      expect(Number.isInteger(expected), `${sheet.name}: ${target.label} expected floor`).toBe(true)
     }
   })
 })

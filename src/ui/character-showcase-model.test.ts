@@ -15,8 +15,8 @@ describe('character showcase passive stats', () => {
   it('includes enabled skill-tree nodes and the always-on weapon passive', () => {
     const catalog = characterCatalog.find((entry) => entry.id === ownedCharacter.catalogId)!
     const model = resolveCharacterShowcaseModel({ character: ownedCharacter, catalog, weapons: [ownedWeapon], echoes: [], builds: [] })!
-    expect(model.finalStats.hp).toBeCloseTo(model.characterBaseStats.hp * 1.281)
-    expect(model.finalStats.atk).toBeCloseTo((model.characterBaseStats.atk + 33) * 1.12)
+    expect(model.finalStats.hp).toBe(Math.floor(model.characterBaseStats.hp * 1.281))
+    expect(model.finalStats.atk).toBe(Math.floor((model.characterBaseStats.atk + 33) * 1.12))
     expect(model.finalStats.critRate).toBeCloseTo(13)
   })
 
@@ -30,7 +30,7 @@ describe('character showcase passive stats', () => {
   it('enables every skill-tree node by default when no saved selection exists', () => {
     const catalog = characterCatalog.find((entry) => entry.id === ownedCharacter.catalogId)!
     const model = resolveCharacterShowcaseModel({ character: { ...ownedCharacter, enabledSkillTreeBonusIds: undefined }, catalog, weapons: [], echoes: [], builds: [] })!
-    expect(model.finalStats.atk).toBeCloseTo(model.characterBaseStats.atk * 1.12)
+    expect(model.finalStats.atk).toBe(Math.floor(model.characterBaseStats.atk * 1.12))
     expect(model.finalStats.critRate).toBeCloseTo(13)
   })
 
@@ -41,7 +41,7 @@ describe('character showcase passive stats', () => {
       { sequence: 2, name: 'Triggered bonus', description: 'After casting Intro Skill, Crit. Rate is increased by 15% for 10s.', iconSourceUrl: '' }
     ] }
     const model = resolveCharacterShowcaseModel({ character: { ...ownedCharacter, sequence: 2, enabledSkillTreeBonusIds: [] }, catalog, weapons: [], echoes: [], builds: [] })!
-    expect(model.finalStats.atk).toBeCloseTo(model.characterBaseStats.atk * 1.2)
+    expect(model.finalStats.atk).toBe(Math.floor(model.characterBaseStats.atk * 1.2))
     expect(model.finalStats.critRate).toBeCloseTo(catalog.baseStats.critRate)
   })
 
@@ -52,7 +52,7 @@ describe('character showcase passive stats', () => {
       { name: 'Triggered training', description: 'After casting Intro Skill, Crit. Rate is increased by 15% for 10s.', iconSourceUrl: '' }
     ] } }
     const model = resolveCharacterShowcaseModel({ character: { ...ownedCharacter, enabledSkillTreeBonusIds: ['inherent:0', 'inherent:1'] }, catalog, weapons: [], echoes: [], builds: [] })!
-    expect(model.finalStats.atk).toBeCloseTo(model.characterBaseStats.atk * 1.1)
+    expect(model.finalStats.atk).toBe(Math.floor(model.characterBaseStats.atk * 1.1))
     expect(model.finalStats.critRate).toBeCloseTo(catalog.baseStats.critRate)
   })
 
