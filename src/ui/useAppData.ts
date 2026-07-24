@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { db, ensureSeedData, getSettings, repairEchoAssignmentConsistency, repairNamedEchoAssignments, repairWeaponAssignmentConsistency, requestPersistentStorage } from '../storage/database'
 import type { AppSettings, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
-import { defaultSettings } from '../game-data'
+import { defaultSettings } from '../game-data/core'
 
 export function useAppData() {
   const [echoes, setEchoes] = useState<Echo[]>([])

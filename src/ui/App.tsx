@@ -1,15 +1,16 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import type { AppView } from '../domain/types'
 import { clearAccount, exportAccount, importAccount, saveSettings, validateAccount } from '../storage/database'
-import { InventoryView } from './InventoryView'
-import { WeaponInventory } from './OwnedInventoryView'
-import { CharacterInventory } from './CharacterInventoryView'
-import { TeamsView } from './TeamsView'
-import { ScannerView } from './ScannerView'
-import { ArchiveView } from './ArchiveView'
-import { HomeView } from './HomeView'
-import { Icon, PageHeader, Panel } from './components'
+import { Icon, PageHeader, Panel } from './primitives'
 import { useAppData } from './useAppData'
+
+const ArchiveView = lazy(() => import('./ArchiveView').then((module) => ({ default: module.ArchiveView })))
+const CharacterInventory = lazy(() => import('./CharacterInventoryView').then((module) => ({ default: module.CharacterInventory })))
+const HomeView = lazy(() => import('./HomeView').then((module) => ({ default: module.HomeView })))
+const InventoryView = lazy(() => import('./InventoryView').then((module) => ({ default: module.InventoryView })))
+const ScannerView = lazy(() => import('./ScannerView').then((module) => ({ default: module.ScannerView })))
+const TeamsView = lazy(() => import('./TeamsView').then((module) => ({ default: module.TeamsView })))
+const WeaponInventory = lazy(() => import('./OwnedInventoryView').then((module) => ({ default: module.WeaponInventory })))
 
 const nav: Array<{ view: AppView; label: string; icon: Parameters<typeof Icon>[0]['name'] }> = [
   { view: 'dashboard', label: 'Home', icon: 'home' },
@@ -86,13 +87,15 @@ export default function App() {
     <main>
       <div className="topbar"><div><span className="pulse"/>PRIVATE SESSION</div><div><button onClick={() => importRef.current?.click()}><Icon name="upload"/>Import</button><button onClick={backup}><Icon name="download"/>Backup</button><input ref={importRef} hidden type="file" accept="application/json" onChange={(event) => restore(event.target.files?.[0])}/><button className="user-button" onClick={() => setSettingsOpen(true)}>{data.settings.privacyMode ? 'P' : data.settings.displayName[0]?.toUpperCase()}</button></div></div>
       <div className="content">
-        {view === 'dashboard' && <HomeView echoes={data.echoes} characters={data.characters} weapons={data.weapons} builds={data.builds} teams={data.teams} navigate={setView}/>}
-        {view === 'archive' && <ArchiveView roverGender={data.settings.roverGender}/>}
-        {view === 'scanner' && <ScannerView echoes={data.echoes} refresh={data.refresh} scanIntervalMs={data.settings.scanIntervalMs} onSessionRiskChange={setScannerSessionAtRisk}/>}
-        {view === 'echoes' && <InventoryView echoes={data.echoes} builds={data.builds} refresh={data.refresh} openScanner={() => setView('scanner')}/>} 
-        {view === 'weapons' && <><PageHeader eyebrow="Local collection" title="Weapons" description="Manage every weapon copy stored in this browser."/><WeaponInventory owned={data.weapons} characters={data.characters} builds={data.builds} refresh={data.refresh}/></>}
-        {view === 'characters' && <><PageHeader eyebrow="Local roster" title="Characters" description="Open a character to inspect their loadout and team links."/><CharacterInventory owned={data.characters} weapons={data.weapons} echoes={data.echoes} builds={data.builds} teams={data.teams} roverGender={data.settings.roverGender} refresh={data.refresh}/></>}
-        {view === 'teams' && <TeamsView echoes={data.echoes} builds={data.builds} teams={data.teams} characters={data.characters} weapons={data.weapons} refresh={data.refresh} openScanner={() => setView('scanner')}/>} 
+        <Suspense fallback={<div className="boot view-loading"><div className="brand-mark"><i/><i/><i/></div><span>LOADING WORKSPACE</span></div>}>
+          {view === 'dashboard' && <HomeView echoes={data.echoes} characters={data.characters} weapons={data.weapons} builds={data.builds} teams={data.teams} navigate={setView}/>}
+          {view === 'archive' && <ArchiveView roverGender={data.settings.roverGender}/>}
+          {view === 'scanner' && <ScannerView echoes={data.echoes} refresh={data.refresh} scanIntervalMs={data.settings.scanIntervalMs} onSessionRiskChange={setScannerSessionAtRisk}/>}
+          {view === 'echoes' && <InventoryView echoes={data.echoes} builds={data.builds} refresh={data.refresh} openScanner={() => setView('scanner')}/>}
+          {view === 'weapons' && <><PageHeader eyebrow="Local collection" title="Weapons" description="Manage every weapon copy stored in this browser."/><WeaponInventory owned={data.weapons} characters={data.characters} builds={data.builds} refresh={data.refresh}/></>}
+          {view === 'characters' && <><PageHeader eyebrow="Local roster" title="Characters" description="Open a character to inspect their loadout and team links."/><CharacterInventory owned={data.characters} weapons={data.weapons} echoes={data.echoes} builds={data.builds} teams={data.teams} roverGender={data.settings.roverGender} refresh={data.refresh}/></>}
+          {view === 'teams' && <TeamsView echoes={data.echoes} builds={data.builds} teams={data.teams} characters={data.characters} weapons={data.weapons} refresh={data.refresh} openScanner={() => setView('scanner')}/>}
+        </Suspense>
       </div>
       <footer className="site-footer"><span>Fan-made tool. Not affiliated with Kuro Games.</span><span>Catalog data: Nanoka 3.5</span></footer>
     </main>

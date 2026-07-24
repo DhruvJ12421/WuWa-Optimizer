@@ -1,8 +1,14 @@
-﻿import { characterCatalog, echoCatalog, sonataNames, statAliases, weaponCatalog, type EchoCatalogEntry } from '../game-data'
+﻿import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { statAliases } from '../game-data/core'
+import { echoCatalog, type EchoCatalogEntry } from '../game-data/echoes'
+import { generatedSonataCatalog } from '../game-data/sonatas.generated'
+import { generatedWeaponSummaries as weaponCatalog } from '../game-data/weapon-summaries.generated'
 import { closestTunableRoll, exactTunableRoll, tunableRolls } from '../game-data/tunable-rolls'
 import { fixedSecondaryMainStat, isMainStatAllowed, mainStatError, mainStatKeysByCost, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import type { Echo, ScanCandidate, StatKey, StatLine } from '../domain/types'
 import { createLocalId } from '../domain/id'
+
+const sonataNames = generatedSonataCatalog.map((sonata) => sonata.name)
 
 export interface VisualRecognition {
   rarity?: { value: Echo['rarity']; confidence: number }

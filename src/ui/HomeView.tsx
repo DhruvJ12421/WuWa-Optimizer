@@ -1,7 +1,8 @@
-import { characterCatalog, weaponCatalog } from '../game-data'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { generatedWeaponSummaries as weaponCatalog } from '../game-data/weapon-summaries.generated'
 import type { AppView, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 import { EchoWaveform } from './EchoWaveform'
-import { Icon } from './components'
+import { Icon } from './primitives'
 import './home-view.css'
 
 interface HomeViewProps {

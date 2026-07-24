@@ -1,6 +1,9 @@
 import { useDeferredValue, useMemo, useState } from 'react'
-import { characterCatalog, echoCatalog, sonataCatalog, weaponCatalog } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { echoCatalog } from '../game-data/echoes'
+import { generatedSonataCatalog as sonataCatalog } from '../game-data/sonatas.generated'
+import { generatedWeaponSummaries as weaponCatalog } from '../game-data/weapon-summaries.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 import { Icon, PageHeader, Panel } from './components'
 import { SonataPicker } from './SonataPicker'
 

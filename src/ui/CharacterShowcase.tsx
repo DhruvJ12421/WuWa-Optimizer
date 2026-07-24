@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { characterCatalog, sonataNames, statLabels, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 import { effectiveSubStats, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import { echoRollGrade, echoRollPoints, echoRollQuality } from '../domain/echo-grade'
 import { createLocalId } from '../domain/id'

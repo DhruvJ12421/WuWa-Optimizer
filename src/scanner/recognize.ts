@@ -4,7 +4,7 @@ import type { CalibrationProfile, DiagnosticScanCandidate, ScanEvidence, ScanFra
 import { PreprocessClient } from './preprocess'
 import { OcrPool } from './ocr-pool'
 import { SUBSTAT_BLOCK_ID, substatBlockFromRegions } from './regions'
-import { echoCatalog } from '../game-data'
+import { echoCatalog } from '../game-data/echoes'
 
 const syntheticFullPanelRegion: ScanRegion = {
   id: 'full-panel-fallback', kind: 'name', label: 'Full panel fallback',

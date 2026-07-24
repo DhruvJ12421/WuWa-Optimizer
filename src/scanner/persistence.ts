@@ -1,6 +1,7 @@
 import type { DiagnosticScanCandidate } from './types'
 import { candidateToEcho } from './parser'
-import { characterCatalog, weaponCatalog } from '../game-data'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { generatedWeaponSummaries as weaponCatalog } from '../game-data/weapon-summaries.generated'
 import { db } from '../storage/database'
 import { createLocalId } from '../domain/id'
 

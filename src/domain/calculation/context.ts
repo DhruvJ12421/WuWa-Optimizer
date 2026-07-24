@@ -79,7 +79,11 @@ export function createBuildCalculationContext(input: BuildCalculationInput): Cal
     catalog: character,
     weapons: [input.weapon],
     echoes: input.echoes,
-    builds: [input.build]
+    builds: [input.build],
+    // Sequence modifiers are applied below from the generated condition data.
+    // Excluding the showcase's parsed sequence stats prevents every always-on
+    // Sequence stat from being counted once here and a second time below.
+    includeSequenceBonuses: false
   })
   const baseStats = showcase?.finalStats ?? aggregateStats(runtimeCharacter, runtimeWeapon, input.echoes)
   const buffed = applyBuffEffects(baseStats, input.buffs ?? [])

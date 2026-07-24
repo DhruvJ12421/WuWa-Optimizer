@@ -8,7 +8,7 @@ import {
   characterCatalog, echoCatalog, isFixedSkillValueName, sonataCatalog, statLabels, weaponCatalog,
   type CharacterCatalogEntry
 } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 import {
   resolveCharacterShowcaseModel, weaponSecondaryStat,
   type CharacterShowcaseModel

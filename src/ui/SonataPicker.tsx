@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { sonataNames } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedSonataCatalog, generatedSonataIconSources } from '../game-data/sonatas.generated'
+
+const sonataNames = generatedSonataCatalog.map((sonata) => sonata.name)
 
 export function SonataPicker({ value, onChange, allowAll = false, allowedNames, id }: { value: string; onChange: (value: string) => void; allowAll?: boolean; allowedNames?: readonly string[]; id: string }) {
   const [open, setOpen] = useState(false)

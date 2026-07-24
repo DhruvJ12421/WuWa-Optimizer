@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { echoCatalog, sonataNames, statLabels } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { statLabels } from '../game-data/core'
+import { echoCatalog } from '../game-data/echoes'
+import { generatedSonataCatalog, generatedSonataIconSources } from '../game-data/sonatas.generated'
 import { effectiveSubStats, fixedSecondaryMainStat, mainStatError, mainStatKeysByCost, maxLevelByRarity, maxSubStatsForLevel, normalizeEchoMainStat } from '../game-data/echo-main-stats'
 import { tunableRolls } from '../game-data/tunable-rolls'
 import type { Echo, StatKey } from '../domain/types'
 import { EchoMiniCard, formatStat, Panel } from './components'
 
+const sonataNames = generatedSonataCatalog.map((sonata) => sonata.name)
 const subStatKeys = Object.keys(tunableRolls) as StatKey[]
 const levelStops = [0, 5, 10, 15, 20, 25]
 

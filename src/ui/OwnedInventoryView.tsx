@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { characterCatalog, weaponCatalog } from '../game-data'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { generatedWeaponCatalog as weaponCatalog } from '../game-data/weapons.generated'
 import { createLocalId } from '../domain/id'
 import { db, setBuildEchoIds, setOwnedWeaponOwner } from '../storage/database'
 import type { Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'

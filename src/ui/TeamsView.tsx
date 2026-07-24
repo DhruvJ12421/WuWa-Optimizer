@@ -86,7 +86,14 @@ function EchoThumbs({ member }: { member: TeamMemberModel }) {
 
 function WarningList({ warnings, compact = false }: { warnings: string[]; compact?: boolean }) {
   if (!warnings.length) return null
-  return <div className={`tw-warnings ${compact ? 'compact' : ''}`} role="status">{warnings.map((warning) => <p key={warning}><span aria-hidden="true">!</span>{warning}</p>)}</div>
+  return <aside className={`tw-warnings ${compact ? 'compact' : ''}`} role="status">
+    {!compact && <header>
+      <span aria-hidden="true">!</span>
+      <div><strong>Build checks</strong><small>Review these items before relying on the team result.</small></div>
+      <b>{warnings.length}</b>
+    </header>}
+    <div className="tw-warning-items">{warnings.map((warning) => <p key={warning}><i aria-hidden="true">!</i>{warning}</p>)}</div>
+  </aside>
 }
 
 function SonataChips({ member }: { member: TeamMemberModel }) {
@@ -95,9 +102,33 @@ function SonataChips({ member }: { member: TeamMemberModel }) {
   ) : <span className="tw-chip muted">No Sonata coverage</span>}</div>
 }
 
-function TeamMemberColumn({ member, model, onOpen }: { member: TeamMemberModel; model: TeamWorkspaceModel; onOpen: () => void }) {
+function TeamMemberColumn({ member, model, builds, onOpen, onAssign }: {
+  member: TeamMemberModel
+  model: TeamWorkspaceModel
+  builds: Build[]
+  onOpen: () => void
+  onAssign: (buildId: string) => Promise<void>
+}) {
   return <article className={`tw-member-column ${member.build ? '' : 'is-empty'}`}>
-    <header><MemberAvatar member={member}/><div><span className="eyebrow">Member {member.slot + 1}</span><h3>{member.catalog?.name ?? 'Empty slot'}</h3><p>{member.catalog?.role ?? 'Assign a saved character build'}</p></div><button className="tw-icon-button" onClick={onOpen} aria-label={`Open member ${member.slot + 1}`}>→</button></header>
+    {member.build
+      ? <header className="tw-member-open" role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen()
+        }
+      }} aria-label={`Open ${teamMemberName(member)}`}>
+        <MemberAvatar member={member}/><div><span className="eyebrow">Member {member.slot + 1}</span><h3>{member.catalog?.name ?? 'Empty slot'}</h3><p>{member.catalog?.role ?? 'Assign a saved character build'}</p></div>
+      </header>
+      : <label className="tw-empty-member-picker">
+        <MemberAvatar member={member}/><div><span className="eyebrow">Member {member.slot + 1}</span><h3>Empty slot</h3><p>{builds.length ? 'Click anywhere to add a saved character build' : 'Create a saved character build to add it here'}</p></div>
+        <select value="" disabled={!builds.length} onChange={(event) => void onAssign(event.target.value)} aria-label={`Add member ${member.slot + 1}`}>
+          <option value="" disabled>{builds.length ? 'Choose a saved build' : 'No saved builds available'}</option>
+          {builds.map((build) => {
+            const catalog = characterCatalog.find((entry) => entry.id === build.resonatorId)
+            return <option value={build.id} key={build.id} disabled={model.team.buildIds.includes(build.id)}>{catalog?.name ?? build.name} · {build.name}</option>
+          })}
+        </select>
+      </label>}
     {member.build ? <>
       <div className="tw-member-weapon">{member.showcase?.weapon?.catalog.iconSourceUrl && <img src={member.showcase.weapon.catalog.iconSourceUrl} alt=""/>}<span><small>Equipped weapon</small><b>{member.showcase?.weapon?.catalog.name ?? 'No weapon'}</b><em>{member.showcase?.weapon ? `Lv. ${member.showcase.weapon.owned.level} · R${member.showcase.weapon.owned.rank}` : 'Required for damage'}</em></span></div>
       <EchoThumbs member={member}/><SonataChips member={member}/>
@@ -234,9 +265,7 @@ function TeamOverview({ model, builds, updateTeam, openMember }: {
       <label><span>Duration</span><input type="number" min="1" max="600" step="0.1" value={model.team.rotationDuration} onChange={(event) => void updateTeam({ rotationDuration: Math.max(1, Math.min(600, Number(event.target.value))) })}/></label>
     </section>
 
-    <section className="tw-slot-selectors tw-panel"><header><div><span className="eyebrow">Composition</span><h2>Team members</h2></div><small>Saved builds and local inventory</small></header><div>{model.members.map((member) => <label key={member.slot}><span>Member {member.slot + 1}</span><select value={member.build?.id ?? ''} onChange={(event) => void chooseMember(member.slot, event.target.value)}><option value="">Empty slot</option>{builds.map((build) => { const catalog = characterCatalog.find((entry) => entry.id === build.resonatorId); return <option value={build.id} key={build.id} disabled={model.team.buildIds.includes(build.id) && member.build?.id !== build.id}>{catalog?.name ?? build.name} · {build.name}</option> })}</select></label>)}</div></section>
-
-    <section className="tw-member-columns">{model.members.map((member) => <TeamMemberColumn key={member.slot} member={member} model={model} onOpen={() => openMember(member.slot)}/>)}</section>
+    <section className="tw-member-columns">{model.members.map((member) => <TeamMemberColumn key={member.slot} member={member} model={model} builds={builds} onOpen={() => openMember(member.slot)} onAssign={(buildId) => chooseMember(member.slot, buildId)}/>)}</section>
     <BuffWorkspace model={model} updateTeam={updateTeam}/>
     <WarningList warnings={model.warnings}/>
   </div>
@@ -591,7 +620,7 @@ function FormulaResultSheet({ member, model, updateTeam }: { member: TeamMemberM
 }
 
 function MemberWorkspace({ member, model, section, setSection, updateTeam, echoes, builds, characters, weapons, openScanner, refresh }: { member: TeamMemberModel; model: TeamWorkspaceModel; section: MemberSection; setSection: (section: MemberSection) => void; updateTeam: (patch: Partial<Team>) => Promise<void>; echoes: Echo[]; builds: Build[]; characters: OwnedCharacter[]; weapons: OwnedWeapon[]; openScanner: () => void; refresh: () => Promise<void> }) {
-  if (!member.build || !member.catalog || !member.character || !member.showcase) return <section className="tw-member-empty tw-panel"><MemberAvatar member={member}/><h2>Member {member.slot + 1} is empty</h2><p>Assign a saved build from Team Settings. This slot remains part of the team workspace.</p></section>
+  if (!member.build || !member.catalog || !member.character || !member.showcase) return <section className="tw-member-empty tw-panel"><MemberAvatar member={member}/><h2>Member {member.slot + 1} is empty</h2><p>Return to Team Settings and click the empty member card to add a saved build.</p></section>
   const showcase = member.showcase
   const elementStat = `${member.catalog.element.toLowerCase()}Damage` as StatKey
   const weaponPassive = showcase.weapon?.catalog.passiveEffects[Math.max(0, (showcase.weapon?.owned.rank ?? 1) - 1)] ?? showcase.weapon?.catalog.passiveEffects[0]

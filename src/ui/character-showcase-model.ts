@@ -2,7 +2,7 @@ import type { AggregatedStats, Build, Echo, OwnedCharacter, OwnedWeapon, StatKey
 import { emptyStats } from '../domain/damage'
 import { echoStatLines } from '../game-data/echo-main-stats'
 import { characterCatalog, sonataCatalog, weaponCatalog, type CharacterCatalogEntry, type WeaponCatalogEntry } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 import { alwaysOnPassiveStatLines, alwaysOnSequenceStatLines, hasConditionalStatLines, skillTreeStatLine } from '../game-data/passive-stats'
 
 export const SHOWCASE_DATA_WARNING = 'Game data is generated from Nanoka 3.5 and has not yet been authoritatively verified against the current English in-game UI.'
@@ -13,6 +13,7 @@ export interface CharacterShowcaseInput {
   echoes: Echo[]
   builds: Build[]
   catalog?: CharacterCatalogEntry
+  includeSequenceBonuses?: boolean
 }
 
 export interface EquippedWeaponModel {
@@ -203,7 +204,7 @@ export function resolveCharacterShowcaseModel(input: CharacterShowcaseInput): Ch
   })
   const statBonusSources: CharacterStatBonusSource[] = [
     ...(skillTreeStats.lines.length || skillTreeStats.hasConditionalStats ? [{ id: 'skill-tree', label: 'Skill tree nodes', description: 'Selected stat bonus and inherent-skill nodes on this character card.', ...skillTreeStats }] : []),
-    ...catalog.sequenceIcons.filter((sequence) => sequence.sequence <= input.character.sequence).flatMap((sequence) => {
+    ...catalog.sequenceIcons.filter((sequence) => input.includeSequenceBonuses !== false && sequence.sequence <= input.character.sequence).flatMap((sequence) => {
       const lines = alwaysOnSequenceStatLines(sequence.description)
       const hasConditionalStats = hasConditionalStatLines(sequence.description)
       return lines.length || hasConditionalStats ? [{

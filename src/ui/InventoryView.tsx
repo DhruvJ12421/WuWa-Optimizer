@@ -1,6 +1,8 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
-import { characterCatalog, sonataNames, statLabels } from '../game-data'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { statLabels } from '../game-data/core'
+import { generatedSonataCatalog } from '../game-data/sonatas.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 import { echoRollGrade, echoRollPoints, echoRollQuality } from '../domain/echo-grade'
 import { effectiveSubStats, maxSubStatsForLevel } from '../game-data/echo-main-stats'
 import { db } from '../storage/database'
@@ -11,6 +13,7 @@ import { EchoEditModal } from './EchoEditModal'
 type SortKey = 'score' | 'newest' | 'name' | 'cost' | 'level'
 
 const echoScore = echoRollQuality
+const sonataNames = generatedSonataCatalog.map((sonata) => sonata.name)
 
 function MultiSelect({ label, values, options, emptyLabel, onChange, icon }: { label: string; values: string[]; options: Array<{ value: string; label: string }>; emptyLabel: string; onChange: (values: string[]) => void; icon?: (value: string) => ReactNode }) {
   const [open, setOpen] = useState(false)

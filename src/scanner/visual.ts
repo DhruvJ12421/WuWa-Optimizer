@@ -1,7 +1,7 @@
 import type { Echo } from '../domain/types'
 import type { VisualRecognition } from './parser'
 import type { ScanRect } from './types'
-import { generatedSonataIconSources } from '../game-data/catalog.generated'
+import { generatedSonataIconSources } from '../game-data/sonatas.generated'
 
 const DETAIL_VISUAL_CROPS = {
   sonata: { x: 0.54, y: 0.035, width: 0.13, height: 0.085 },

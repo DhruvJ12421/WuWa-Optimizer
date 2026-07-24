@@ -1,4 +1,4 @@
-import type { GeneratedCharacterCatalogEntry } from './catalog.generated'
+import type { GeneratedCharacterCatalogEntry } from './catalog-types.generated'
 import {
   generatedCharacterConditions,
   characterConditionProvenance,

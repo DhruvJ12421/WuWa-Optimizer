@@ -1,5 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
-import { characterCatalog, defaultSettings, GAME_DATA_VERSION, statLabels, weaponCatalog } from '../game-data'
+import { generatedCharacterSummaries as characterCatalog } from '../game-data/character-summaries.generated'
+import { defaultSettings, GAME_DATA_VERSION, statLabels } from '../game-data/core'
+import { generatedWeaponSummaries as weaponCatalog } from '../game-data/weapon-summaries.generated'
 import { effectiveSubStats, maxSubStatsForLevel, normalizeEchoMainStat } from '../game-data/echo-main-stats'
 import type { AccountDocument, AppSettings, Build, Echo, OwnedCharacter, OwnedWeapon, Team } from '../domain/types'
 import { createLocalId } from '../domain/id'
